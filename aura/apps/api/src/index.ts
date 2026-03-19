@@ -17,6 +17,7 @@ import { messageRoutes } from './routes/messages'
 import { discoveryRoutes } from './routes/discovery'
 import { mediaRoutes } from './routes/media'
 import { onboardingRoutes } from './routes/onboarding'
+import { paymentRoutes } from './routes/payments'
 
 const PORT = parseInt(process.env.API_PORT || '4000', 10)
 
@@ -55,6 +56,7 @@ async function bootstrap() {
   await app.register(matchRoutes, { prefix: '/api/matches' })
   await app.register(messageRoutes, { prefix: '/api/messages' })
   await app.register(mediaRoutes, { prefix: '/api/media' })
+  await app.register(paymentRoutes, { prefix: '/api/payments' })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
