@@ -133,7 +133,6 @@ ${schemasHtml}
 </head><body>${body}
 ${COOKIE_BANNER_HTML}
 <script>${COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
-fetch('/api/categories.json').then(r=>r.json()).then(cats=>{const nav=document.getElementById('main-nav');cats.slice(0,6).forEach(c=>{const li=document.createElement('li');li.innerHTML='<a href="/category/'+c.slug+'">'+c.name+'</a>';nav.appendChild(li)})}).catch(()=>{});
 </script></body></html>`}
 
 function header(site){return`

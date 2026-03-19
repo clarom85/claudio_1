@@ -193,16 +193,6 @@ ${COOKIE_BANNER_HTML}
 ${COOKIE_BANNER_JS}
 ${EMAIL_FORM_JS}
 ${NATIVE_ADS_JS}
-// Load nav categories
-fetch('/api/categories.json').then(r=>r.json()).then(cats=>{
-  const nav=document.getElementById('main-nav');
-  if(!nav)return;
-  cats.slice(0,6).forEach(c=>{
-    const li=document.createElement('li');
-    li.innerHTML='<a href="/category/'+c.slug+'">'+c.name+'</a>';
-    nav.appendChild(li);
-  });
-}).catch(()=>{});
 // Trending ticker
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{
   const el=document.getElementById('ticker-inner');
