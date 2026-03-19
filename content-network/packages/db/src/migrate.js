@@ -10,7 +10,16 @@ const sql = neon(process.env.DATABASE_URL);
 async function migrate() {
   console.log('Running migrations...');
   const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8');
-  await sql(schema);
+
+  // Neon non accetta multiple statements in una query — esegui uno per uno
+  const statements = schema
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && !s.startsWith('--'));
+
+  for (const statement of statements) {
+    await sql(statement + ';');
+  }
   console.log('Schema applied.');
 
   // Seed nicchie iniziali
