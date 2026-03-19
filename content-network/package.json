@@ -2,17 +2,21 @@
   "name": "content-network",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "keyword": "node packages/keyword-engine/src/index.js",
-    "content": "node packages/content-engine/src/index.js",
-    "spawn": "node packages/site-spawner/src/index.js",
-    "schedule": "node packages/scheduler/src/index.js",
-    "db:migrate": "node packages/db/src/migrate.js"
+    "keyword":    "node packages/keyword-engine/src/index.js",
+    "content":    "node packages/content-engine/src/index.js",
+    "spawn":      "node packages/site-spawner/src/index.js",
+    "schedule":   "node packages/scheduler/src/index.js",
+    "db:migrate": "node packages/db/src/migrate.js",
+    "pm2:start":  "pm2 start ecosystem.config.js",
+    "pm2:stop":   "pm2 stop content-scheduler",
+    "pm2:logs":   "pm2 logs content-scheduler"
   },
-  "devDependencies": {
+  "dependencies": {
     "dotenv": "^16.4.5"
   }
 }

@@ -1,32 +1,34 @@
 /**
- * Site Spawner
- * Crea un nuovo sito statico Astro a partire da un template,
- * lo popola con gli articoli del DB e lo deploya su Cloudflare Pages
+ * Site Spawner — VPS edition
+ * Crea directory nginx, virtual host, CSS, pagine statiche
+ * Niente Astro, niente build. HTML generato direttamente.
  *
  * Usage: node packages/site-spawner/src/index.js --niche home-improvement-costs --domain homecosthub.com
  */
 import 'dotenv/config';
+import { writeFileSync, mkdirSync, copyFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import fse from 'fs-extra';
-import { execSync } from 'child_process';
 import {
   getNicheBySlug, createSite, updateSiteStatus,
   getArticlesBySite, sql
 } from '@content-network/db';
-import { createPagesProject, uploadDeploy, getProjectUrl } from './cloudflare.js';
+import {
+  createSiteDirectory, createNginxConfig, reloadNginx,
+  generateRobotsTxt, generateSitemap, writeSiteFile
+} from '@content-network/vps';
+import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
 const TEMPLATES_DIR = join(ROOT, 'templates');
-const SITES_DIR = join(ROOT, 'sites');
+const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
-// Template rotation: 1 template ogni 10 siti
 const TEMPLATES = ['pulse', 'tribune', 'nexus', 'echo', 'vortex'];
 
-function getTemplateForSite(weekNumber, siteIndexInWeek) {
-  const globalIndex = (weekNumber - 1) * 10 + siteIndexInWeek;
-  return TEMPLATES[Math.floor(globalIndex / 10) % TEMPLATES.length];
+function getTemplateForWeek(weekNumber, siteIndex) {
+  const global = (weekNumber - 1) * 10 + siteIndex;
+  return TEMPLATES[Math.floor(global / 10) % TEMPLATES.length];
 }
 
 async function run() {
@@ -42,209 +44,231 @@ async function run() {
   }
 
   const niche = await getNicheBySlug(nicheSlug);
-  if (!niche) { console.error('Niche not found'); process.exit(1); }
+  if (!niche) { console.error('Niche not found. Run db:migrate first.'); process.exit(1); }
 
-  // Calcola settimana corrente e template
   const weekNumber = getWeekNumber();
-  const sitesThisWeek = await sql`
-    SELECT COUNT(*) as count FROM sites WHERE week_number = ${weekNumber}
-  `;
-  const siteIndex = parseInt(sitesThisWeek[0].count);
-  const template = getTemplateForSite(weekNumber, siteIndex);
+  const [{ count }] = await sql`SELECT COUNT(*) as count FROM sites WHERE week_number = ${weekNumber}`;
+  const template = getTemplateForWeek(weekNumber, parseInt(count));
+  const author = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
-  const projectName = domain.replace(/\./g, '-').replace(/[^a-z0-9-]/g, '');
-
-  console.log(`\n🚀 Site Spawner`);
-  console.log(`Domain: ${domain}`);
-  console.log(`Niche: ${niche.name}`);
+  console.log(`\n🚀 Site Spawner (VPS)`);
+  console.log(`Domain:   ${domain}`);
+  console.log(`Niche:    ${niche.name}`);
   console.log(`Template: ${template}`);
-  console.log(`Week: ${weekNumber}, Site #${siteIndex + 1}\n`);
+  console.log(`Author:   ${author.name}\n`);
 
-  // 1. Crea record nel DB
-  console.log('📝 Creating site record...');
+  // 1. DB record
   const site = await createSite({
-    nicheId: niche.id,
-    domain,
-    cfProjectName: projectName,
-    template,
-    weekNumber
+    nicheId: niche.id, domain,
+    cfProjectName: domain.replace(/\./g, '-'),
+    template, weekNumber
   });
 
+  const siteConfig = {
+    id: site.id, domain,
+    name: generateSiteName(domain),
+    url: `https://${domain}`,
+    template,
+    authorName: author.name,
+    authorTitle: author.title,
+    authorBio: author.bio,
+    authorAvatar: author.avatar,
+    adsenseId: process.env.ADSENSE_ID || '',
+    nicheSlug
+  };
+
   try {
-    // 2. Copia template
-    console.log(`📁 Copying template "${template}"...`);
-    const siteDir = join(SITES_DIR, domain);
-    await fse.remove(siteDir);
-    await fse.copy(join(TEMPLATES_DIR, template), siteDir);
+    // 2. Crea directory
+    console.log('📁 Creating site directory...');
+    createSiteDirectory(domain);
 
-    // 3. Configura .env per il sito
-    const siteName = generateSiteName(domain, niche.name);
-    const envContent = [
-      `SITE_URL=https://${domain}`,
-      `SITE_NAME=${siteName}`,
-      `ADSENSE_ID=${process.env.ADSENSE_ID || ''}`,
-    ].join('\n');
-    await fse.writeFile(join(siteDir, '.env'), envContent);
+    // 3. CSS dal template
+    console.log(`🎨 Writing CSS (template: ${template})...`);
+    const { CSS } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
+    writeSiteFile(domain, 'assets/style.css', CSS);
 
-    // 4. Genera pagine statiche essenziali (About, Privacy, Contact)
-    await generateStaticPages(siteDir, { siteName, domain, niche });
+    // 4. Immagine placeholder
+    writePlaceholderImage(domain);
 
-    // 5. Popola con articoli se ce ne sono
-    console.log('📰 Loading articles...');
-    const articles = await getArticlesBySite(site.id, 200);
-    if (articles.length > 0) {
-      await writeArticlesData(siteDir, articles);
-      console.log(`   → ${articles.length} articles loaded`);
-    } else {
-      await writeArticlesData(siteDir, []);
-      console.log('   → No articles yet (will be added by scheduler)');
-    }
+    // 5. robots.txt
+    generateRobotsTxt(domain);
 
-    // 6. Build Astro
-    console.log('🔨 Building site...');
-    await updateSiteStatus(site.id, 'building');
-    execSync('npm install --prefer-offline 2>&1', { cwd: siteDir, stdio: 'pipe' });
-    execSync('npm run build 2>&1', { cwd: siteDir, stdio: 'pipe' });
-    console.log('   → Build successful');
+    // 6. API endpoints JSON (vuoti inizialmente)
+    writeApiFiles(domain, [], niche);
 
-    // 7. Deploy su Cloudflare Pages
-    console.log('☁️  Creating Cloudflare Pages project...');
-    await createPagesProject(projectName, domain);
+    // 7. Pagine statiche (About, Privacy, Contact, Terms, 404)
+    console.log('📄 Generating static pages...');
+    await generateStaticPages(domain, siteConfig, template);
 
-    console.log('📤 Deploying to Cloudflare...');
-    await uploadDeploy(projectName, join(siteDir, 'dist'));
+    // 8. Homepage con articoli (vuota inizialmente)
+    await generateHomePage(domain, [], siteConfig, template);
 
-    const deployUrl = await getProjectUrl(projectName);
-    await updateSiteStatus(site.id, 'live', deployUrl);
+    // 9. Sitemap vuota
+    generateSitemap(domain, []);
 
-    console.log(`\n✅ Site live at: ${deployUrl}`);
-    console.log(`   Custom domain: https://${domain} (configure DNS in Cloudflare)`);
-    console.log(`\nNext steps:`);
-    console.log(`  1. Add DNS CNAME: ${domain} → ${projectName}.pages.dev`);
-    console.log(`  2. Run keyword engine: npm run keyword -- --niche ${nicheSlug}`);
-    console.log(`  3. Run content engine: npm run content -- --site-id ${site.id} --count 50`);
+    // 10. nginx virtual host
+    console.log('⚙️  Configuring nginx...');
+    createNginxConfig(domain);
+    const reloaded = reloadNginx();
+    if (!reloaded) console.warn('  ⚠️  nginx reload failed — check manually');
+
+    await updateSiteStatus(site.id, 'live', `http://${domain}`);
+
+    console.log(`\n✅ Site live: http://${domain}`);
+    console.log(`\n📋 Next steps:`);
+    console.log(`  1. Point DNS A record: ${domain} → this server IP`);
+    console.log(`  2. Enable SSL: certbot --nginx -d ${domain} -d www.${domain} -m you@email.com --agree-tos --redirect`);
+    console.log(`  3. Generate keywords: npm run keyword -- --niche ${nicheSlug}`);
+    console.log(`  4. Generate content:  npm run content -- --site-id ${site.id} --count 50`);
 
   } catch (err) {
     await updateSiteStatus(site.id, 'failed');
-    console.error('Site spawner error:', err);
+    console.error('❌ Spawn failed:', err);
     process.exit(1);
   }
 
   process.exit(0);
 }
 
-async function generateStaticPages(siteDir, { siteName, domain, niche }) {
-  const pagesDir = join(siteDir, 'src/pages');
+async function generateStaticPages(domain, siteConfig, template) {
+  const { renderBase } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
+  const siteName = siteConfig.name;
 
-  // robots.txt
-  await fse.writeFile(join(siteDir, 'public/robots.txt'), `User-agent: *
-Allow: /
-Sitemap: https://${domain}/sitemap-index.xml
-`);
+  const pages = {
+    'about/index.html': {
+      title: 'About Us',
+      description: `Learn about ${siteName} and our team of experts.`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:20px">About ${siteName}</h1>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          ${siteName} is dedicated to providing accurate, in-depth, and genuinely helpful
+          information. Our team of specialists brings years of hands-on experience to every
+          article we publish.
+        </p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          We believe everyone deserves access to clear, honest, expert-level guidance.
+          Everything we publish is thoroughly researched and reviewed by subject matter experts.
+        </p>
+        <h2 style="font-size:22px;margin:28px 0 12px">Our Editorial Standards</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Every article is written by a verified expert, fact-checked against authoritative sources,
+          and updated regularly. We do not accept payment to influence editorial content.
+        </p>
+        <h2 style="font-size:22px;margin:28px 0 12px">Meet Our Expert</h2>
+        <p style="font-size:16px;line-height:1.8">${siteConfig.authorBio}</p>
+      </div>`
+    },
+    'privacy/index.html': {
+      title: 'Privacy Policy',
+      description: `Privacy policy for ${domain}`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:8px">Privacy Policy</h1>
+        <p style="color:#999;margin-bottom:24px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">This Privacy Policy describes how ${domain} collects, uses, and shares information when you use our website.</p>
+        <h2 style="font-size:20px;margin:24px 0 10px">Information We Collect</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We collect information automatically through Google Analytics and advertising data through Google AdSense.</p>
+        <h2 style="font-size:20px;margin:24px 0 10px">Advertising</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We use Google AdSense. Google may use cookies to serve ads based on prior visits. Opt out at <a href="https://www.google.com/settings/ads">google.com/settings/ads</a>.</p>
+        <h2 style="font-size:20px;margin:24px 0 10px">Contact</h2>
+        <p style="font-size:16px;line-height:1.8">Privacy questions: privacy@${domain}</p>
+      </div>`
+    },
+    'terms/index.html': {
+      title: 'Terms of Service',
+      description: `Terms of service for ${domain}`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:8px">Terms of Service</h1>
+        <p style="color:#999;margin-bottom:24px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">By accessing ${domain}, you agree to these terms. Content is for informational purposes only.</p>
+        <h2 style="font-size:20px;margin:24px 0 10px">Disclaimer</h2>
+        <p style="font-size:16px;line-height:1.8">Information on this site does not constitute professional advice. Always consult qualified professionals for specific situations.</p>
+      </div>`
+    },
+    'disclaimer/index.html': {
+      title: 'Disclaimer',
+      description: `Disclaimer for ${domain}`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:16px">Disclaimer</h1>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The information provided on ${siteName} is for general informational purposes only. While we strive to keep information accurate and up-to-date, we make no representations or warranties of any kind.</p>
+        <p style="font-size:16px;line-height:1.8">We may earn commissions from affiliate links. This does not affect our editorial independence.</p>
+      </div>`
+    },
+    'contact/index.html': {
+      title: 'Contact Us',
+      description: `Contact ${siteName}`,
+      body: `<div style="max-width:600px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:16px">Contact Us</h1>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">Have a question, correction, or want to work with us? Reach out below.</p>
+        <p style="font-size:16px">📧 Email: <a href="mailto:contact@${domain}">contact@${domain}</a></p>
+      </div>`
+    },
+    'advertise/index.html': {
+      title: 'Advertise With Us',
+      description: `Advertising opportunities on ${siteName}`,
+      body: `<div style="max-width:700px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:16px">Advertise With Us</h1>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteName} reaches a highly targeted audience interested in ${siteName.toLowerCase()}. We offer display advertising, sponsored content, and affiliate partnerships.</p>
+        <p style="font-size:16px">Contact us: <a href="mailto:ads@${domain}">ads@${domain}</a></p>
+      </div>`
+    }
+  };
 
-  // About page
-  await fse.writeFile(join(pagesDir, 'about.astro'), `---
-import Base from '../layouts/Base.astro';
-const siteName = import.meta.env.SITE_NAME || '${siteName}';
----
-<Base title="About Us" description="Learn about ${siteName} and our expert team.">
-  <article style="background:white; padding:32px; border-radius:4px; max-width:800px;">
-    <h1 style="font-family:'Merriweather',serif; font-size:32px; margin-bottom:16px;">About ${siteName}</h1>
-    <p style="font-size:16px; line-height:1.8; margin-bottom:16px;">
-      ${siteName} is dedicated to providing accurate, in-depth, and genuinely helpful information
-      about ${niche.name.toLowerCase()}. Our team of specialists brings years of hands-on
-      experience to every article we publish.
-    </p>
-    <p style="font-size:16px; line-height:1.8; margin-bottom:16px;">
-      We believe that everyone deserves access to clear, honest, expert-level guidance without
-      having to navigate confusing or unreliable sources. That's why everything we publish is
-      thoroughly researched and reviewed by subject matter experts.
-    </p>
-    <h2 style="font-family:'Merriweather',serif; font-size:22px; margin: 24px 0 12px;">Our Editorial Standards</h2>
-    <p style="font-size:16px; line-height:1.8;">
-      Every article on ${siteName} is written by a verified expert, fact-checked against
-      authoritative sources, and updated regularly to reflect current best practices.
-      We do not accept payment to influence our editorial content.
-    </p>
-  </article>
-</Base>
-`);
-
-  // Privacy policy
-  await fse.writeFile(join(pagesDir, 'privacy.astro'), `---
-import Base from '../layouts/Base.astro';
----
-<Base title="Privacy Policy" description="Privacy policy for ${domain}">
-  <article style="background:white; padding:32px; border-radius:4px; max-width:800px;">
-    <h1 style="font-family:'Merriweather',serif; font-size:32px; margin-bottom:16px;">Privacy Policy</h1>
-    <p style="color:#666; margin-bottom:24px;">Last updated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-    <p style="font-size:16px; line-height:1.8; margin-bottom:16px;">
-      This Privacy Policy describes how ${domain} ("we", "us", or "our") collects, uses,
-      and shares information when you use our website.
-    </p>
-    <h2 style="font-size:20px; margin: 20px 0 10px;">Information We Collect</h2>
-    <p style="font-size:16px; line-height:1.8; margin-bottom:16px;">
-      We collect information you provide directly (such as newsletter subscriptions) and
-      information collected automatically (such as usage data through Google Analytics and
-      advertising data through Google AdSense).
-    </p>
-    <h2 style="font-size:20px; margin: 20px 0 10px;">Advertising</h2>
-    <p style="font-size:16px; line-height:1.8; margin-bottom:16px;">
-      We use Google AdSense to display advertisements. Google may use cookies to serve ads
-      based on your prior visits. You can opt out at <a href="https://www.google.com/settings/ads">google.com/settings/ads</a>.
-    </p>
-    <h2 style="font-size:20px; margin: 20px 0 10px;">Contact</h2>
-    <p style="font-size:16px; line-height:1.8;">
-      For privacy questions, contact us at: privacy@${domain}
-    </p>
-  </article>
-</Base>
-`);
+  for (const [path, page] of Object.entries(pages)) {
+    const dir = join(WWW_ROOT, domain, path.replace('/index.html', ''));
+    mkdirSync(dir, { recursive: true });
+    // Wrap body in a basic layout (can't use renderBase without full template context)
+    const html = simplePageWrapper(page.title, page.description, page.body, siteConfig);
+    writeFileSync(join(WWW_ROOT, domain, path), html, 'utf-8');
+  }
 }
 
-async function writeArticlesData(siteDir, articles) {
-  const contentDir = join(siteDir, 'src/content');
-  await fse.ensureDir(contentDir);
-
-  const articlesForFrontend = articles.map(a => ({
-    slug: a.slug,
-    title: a.title,
-    metaDescription: a.meta_description,
-    excerpt: a.meta_description?.slice(0, 120) + '...',
-    content: a.content,
-    schemas: a.schema_markup,
-    tags: [],
-    author: a.author_name || 'Editorial Team',
-    category: 'Guide',
-    date: a.published_at || a.created_at,
-    wordCount: a.word_count
-  }));
-
-  await fse.writeJSON(join(contentDir, 'articles.json'), articlesForFrontend, { spaces: 0 });
-
-  // API endpoints per JS client-side
-  const apiDir = join(siteDir, 'public/api');
-  await fse.ensureDir(apiDir);
-  await fse.writeJSON(join(apiDir, 'articles.json'), articlesForFrontend.map(a => ({
-    slug: a.slug, title: a.title, excerpt: a.excerpt, tags: a.tags, category: a.category
-  })));
-
-  // Trending (top 10 più recenti)
-  await fse.writeJSON(join(apiDir, 'trending.json'), articlesForFrontend.slice(0, 10).map(a => ({
-    slug: a.slug, title: a.title
-  })));
-
-  // Categories
-  const categories = [...new Set(articlesForFrontend.map(a => a.category))];
-  await fse.writeJSON(join(apiDir, 'categories.json'), categories.map(c => ({
-    name: c, slug: c.toLowerCase().replace(/\s+/g, '-')
-  })));
+async function generateHomePage(domain, articles, siteConfig, template) {
+  const { renderHomePage } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
+  const html = renderHomePage(articles, siteConfig);
+  writeFileSync(join(WWW_ROOT, domain, 'index.html'), html, 'utf-8');
 }
 
-function generateSiteName(domain, nicheName) {
+function writeApiFiles(domain, articles, niche) {
+  const apiDir = join(WWW_ROOT, domain, 'api');
+  mkdirSync(apiDir, { recursive: true });
+
+  const lite = articles.map(a => ({ slug: a.slug, title: a.title, excerpt: a.excerpt || '', tags: a.tags || [], category: a.category || 'Guide' }));
+  writeFileSync(join(apiDir, 'articles.json'), JSON.stringify(lite), 'utf-8');
+  writeFileSync(join(apiDir, 'trending.json'), JSON.stringify(lite.slice(0, 8)), 'utf-8');
+
+  const cats = [{ name: niche.name, slug: niche.slug }];
+  writeFileSync(join(apiDir, 'categories.json'), JSON.stringify(cats), 'utf-8');
+}
+
+function writePlaceholderImage(domain) {
+  // SVG placeholder — no external dependency
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+    <rect width="800" height="450" fill="#e8e8e8"/>
+    <text x="400" y="225" text-anchor="middle" fill="#aaa" font-size="24" font-family="sans-serif">Image</text>
+  </svg>`;
+  writeFileSync(join(WWW_ROOT, domain, 'images/placeholder.webp'), svg, 'utf-8');
+}
+
+function simplePageWrapper(title, description, content, site) {
+  return `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${title} | ${site.name}</title>
+<meta name="description" content="${description}"/>
+<link rel="stylesheet" href="/assets/style.css"/>
+</head><body>
+<header style="background:#1a1a2e;padding:14px 20px">
+  <a href="/" style="color:#fff;text-decoration:none;font-size:22px;font-weight:800">${site.name}</a>
+</header>
+<main style="padding:20px 0;min-height:60vh">${content}</main>
+<footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
+  <p>© ${new Date().getFullYear()} ${site.name} · <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> · <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a></p>
+</footer>
+</body></html>`;
+}
+
+function generateSiteName(domain) {
   const base = domain.split('.')[0];
-  const words = base.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  return `The ${words}`;
+  return base.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function getWeekNumber() {
@@ -253,7 +277,4 @@ function getWeekNumber() {
   return Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
 }
 
-run().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+run().catch(err => { console.error(err); process.exit(1); });

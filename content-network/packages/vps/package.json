@@ -1,0 +1,10 @@
+{
+  "name": "@content-network/vps",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@content-network/db": "*",
+    "dotenv": "^16.4.5"
+  }
+}

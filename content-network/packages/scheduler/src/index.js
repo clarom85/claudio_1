@@ -1,168 +1,250 @@
 /**
- * Scheduler — gira ogni ora via cron
- * Pubblica articoli accodati e triggera la generazione di nuovi
+ * Scheduler — VPS edition
+ * Gira ogni ora. Pubblica articoli, genera nuovi, aggiorna file HTML direttamente.
+ * Niente build, niente deploy — scrivi file e nginx serve subito.
  *
- * Cron: 0 * * * * (ogni ora)
- * Usage: node packages/scheduler/src/index.js
+ * Cron: 0 * * * * cd /opt/content-network/content-network && node packages/scheduler/src/index.js
  */
 import 'dotenv/config';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
-import fse from 'fs-extra';
 import {
   getDueItems, updateQueueItem, updateArticleStatus,
-  getSitesByStatus, getUnusedKeywords, sql
+  getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql
 } from '@content-network/db';
+import { generateSitemap, writeSiteFile } from '@content-network/vps';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
-const SITES_DIR = join(ROOT, 'sites');
-
+const TEMPLATES_DIR = join(ROOT, 'templates');
+const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 const ARTICLES_PER_DAY = parseInt(process.env.ARTICLES_PER_DAY || '50');
-const BATCH_SIZE = Math.ceil(ARTICLES_PER_DAY / 24); // distribuiti in 24 ore
+const BATCH_PER_HOUR = Math.ceil(ARTICLES_PER_DAY / 24);
 
 async function run() {
   const now = new Date();
-  console.log(`\n⏰ Scheduler run: ${now.toISOString()}`);
+  console.log(`\n⏰ Scheduler: ${now.toISOString()}`);
 
-  // 1. Pubblica articoli accodati
-  await publishDueArticles();
+  const stats = { published: 0, failed: 0, rebuilt: 0 };
 
-  // 2. Se siamo a inizio giornata (00:xx), genera nuovi articoli
-  if (now.getHours() === 0) {
+  // 1. Pubblica articoli in coda
+  await publishDueArticles(stats);
+
+  // 2. Genera nuovi articoli (ogni giorno alle 01:xx)
+  if (now.getHours() === 1) {
     await triggerDailyGeneration();
   }
 
-  // 3. Rebuild siti con nuovi articoli
-  await rebuildLiveSites();
+  // 3. Aggiorna homepage + sitemap dei siti con nuovi articoli
+  await rebuildAffectedSites(stats);
 
-  console.log('✅ Scheduler run complete\n');
+  console.log(`\n📊 Done — published: ${stats.published}, failed: ${stats.failed}, rebuilt: ${stats.rebuilt}`);
   process.exit(0);
 }
 
-async function publishDueArticles() {
-  const dueItems = await getDueItems(BATCH_SIZE);
-  if (dueItems.length === 0) {
-    console.log('  No articles due for publishing');
-    return;
-  }
+async function publishDueArticles(stats) {
+  const due = await getDueItems(BATCH_PER_HOUR);
+  if (!due.length) { console.log('  No articles due'); return; }
 
-  console.log(`  Publishing ${dueItems.length} articles...`);
+  console.log(`  Publishing ${due.length} articles...`);
 
-  for (const item of dueItems) {
+  for (const item of due) {
     try {
       await updateQueueItem(item.id, 'processing');
+
+      // Recupera articolo completo
+      const [article] = await sql`
+        SELECT a.*, n.slug as niche_slug FROM articles a
+        JOIN sites s ON a.site_id = s.id
+        JOIN niches n ON s.niche_id = n.id
+        WHERE a.id = ${item.article_id}
+      `;
+      if (!article) throw new Error('Article not found');
+
+      const [site] = await sql`SELECT * FROM sites WHERE id = ${item.site_id}`;
+      const siteConfig = await buildSiteConfig(site, article.niche_slug);
+
+      // Genera HTML articolo
+      await writeArticlePage(article, siteConfig, site.template);
+
+      // Aggiorna stato DB
       await updateArticleStatus(item.article_id, 'published');
+      await sql`UPDATE sites SET articles_count = articles_count + 1 WHERE id = ${item.site_id}`;
       await updateQueueItem(item.id, 'done');
-      console.log(`  ✅ Published: ${item.title?.slice(0, 50)}`);
+
+      stats.published++;
+      console.log(`  ✅ ${article.title?.slice(0, 60)}`);
     } catch (err) {
       await updateQueueItem(item.id, 'failed', err.message);
-      console.log(`  ❌ Failed: ${err.message}`);
+      stats.failed++;
+      console.log(`  ❌ ${err.message}`);
     }
   }
 }
 
-async function triggerDailyGeneration() {
-  console.log('  🌅 Daily generation trigger...');
+async function writeArticlePage(article, siteConfig, template) {
+  const { renderArticlePage } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
 
-  const liveSites = await getSitesByStatus('live');
-  for (const site of liveSites) {
-    // Verifica se il sito ha abbastanza keywords in coda
-    const unusedKws = await getUnusedKeywords(site.niche_id, 1);
-    if (unusedKws.length < ARTICLES_PER_DAY) {
-      console.log(`  ⚠️  Site ${site.domain}: low keywords, running keyword engine...`);
-      try {
-        const nicheSlug = await getNicheSlug(site.niche_id);
-        execSync(`node packages/keyword-engine/src/index.js --niche ${nicheSlug}`, {
-          cwd: ROOT, stdio: 'pipe', timeout: 120000
-        });
-      } catch (e) {
-        console.log(`  ❌ Keyword engine failed: ${e.message}`);
-      }
-    }
+  // Recupera articoli correlati (stessa nicchia, diverso slug)
+  const related = await sql`
+    SELECT a.slug, a.title, a.meta_description FROM articles a
+    JOIN sites s ON a.site_id = s.id
+    WHERE s.domain = ${siteConfig.domain}
+      AND a.status = 'published'
+      AND a.slug != ${article.slug}
+    ORDER BY RANDOM()
+    LIMIT 5
+  `;
 
-    // Genera articoli per oggi
-    console.log(`  ✍️  Generating articles for ${site.domain}...`);
-    try {
-      execSync(
-        `node packages/content-engine/src/index.js --site-id ${site.id} --count ${ARTICLES_PER_DAY}`,
-        { cwd: ROOT, stdio: 'pipe', timeout: 300000 }
-      );
-    } catch (e) {
-      console.log(`  ❌ Content engine failed for ${site.domain}: ${e.message}`);
-    }
-  }
+  const articleData = {
+    slug: article.slug,
+    title: article.title,
+    metaDescription: article.meta_description,
+    excerpt: (article.meta_description || '').slice(0, 120) + '...',
+    content: article.content,
+    schemas: article.schema_markup || [],
+    category: categoryFromNiche(siteConfig.nicheSlug),
+    date: article.published_at || article.created_at
+  };
+
+  const html = renderArticlePage(articleData, siteConfig, related.map(r => ({
+    slug: r.slug, title: r.title
+  })));
+
+  const dir = join(WWW_ROOT, siteConfig.domain, article.slug);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), html, 'utf-8');
 }
 
-async function rebuildLiveSites() {
-  // Trova siti con articoli pubblicati di recente che necessitano rebuild
-  const sitesNeedingRebuild = await sql`
-    SELECT DISTINCT s.id, s.domain, s.cf_project_name, s.niche_id
+async function rebuildAffectedSites(stats) {
+  // Siti che hanno avuto nuove pubblicazioni nelle ultime 2 ore
+  const affected = await sql`
+    SELECT DISTINCT s.id, s.domain, s.template, s.niche_id,
+           n.slug as niche_slug, n.name as niche_name
     FROM sites s
     JOIN articles a ON a.site_id = s.id
+    JOIN niches n ON s.niche_id = n.id
     WHERE s.status = 'live'
       AND a.status = 'published'
       AND a.published_at > NOW() - INTERVAL '2 hours'
   `;
 
-  if (sitesNeedingRebuild.length === 0) return;
+  if (!affected.length) return;
+  console.log(`  🏗️  Rebuilding ${affected.length} sites...`);
 
-  console.log(`  🔨 Rebuilding ${sitesNeedingRebuild.length} sites...`);
-
-  for (const site of sitesNeedingRebuild) {
-    const siteDir = join(SITES_DIR, site.domain);
-    if (!await fse.pathExists(siteDir)) continue;
-
+  for (const site of affected) {
     try {
-      // Aggiorna articles.json con gli ultimi pubblicati
-      const { getArticlesBySite } = await import('@content-network/db');
-      const articles = await getArticlesBySite(site.id, 500);
-      await updateArticlesJson(siteDir, articles);
+      const { renderHomePage } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
 
-      // Rebuild
-      execSync('npm run build', { cwd: siteDir, stdio: 'pipe', timeout: 120000 });
+      const articles = await getArticlesBySite(site.id, 300);
+      const published = articles.filter(a => a.status === 'published');
 
-      // Re-deploy
-      const { uploadDeploy } = await import('@content-network/site-spawner/src/cloudflare.js');
-      await uploadDeploy(site.cf_project_name, join(siteDir, 'dist'));
+      const siteConfig = await buildSiteConfig(site, site.niche_slug);
 
-      console.log(`  ✅ Rebuilt: ${site.domain}`);
+      // Articoli per il frontend
+      const articlesData = published.map(a => ({
+        slug: a.slug,
+        title: a.title,
+        metaDescription: a.meta_description,
+        excerpt: (a.meta_description || '').slice(0, 120) + '...',
+        content: a.content,
+        schemas: a.schema_markup || [],
+        category: categoryFromNiche(site.niche_slug),
+        author: siteConfig.authorName,
+        date: a.published_at || a.created_at,
+        tags: []
+      }));
+
+      // Homepage
+      const homeHtml = renderHomePage(articlesData, siteConfig);
+      writeFileSync(join(WWW_ROOT, site.domain, 'index.html'), homeHtml, 'utf-8');
+
+      // API JSON
+      updateApiFiles(site.domain, articlesData, { name: site.niche_name, slug: site.niche_slug });
+
+      // Sitemap
+      generateSitemap(site.domain, published);
+
+      stats.rebuilt++;
+      console.log(`  ✅ Rebuilt: ${site.domain} (${published.length} articles)`);
     } catch (err) {
-      console.log(`  ❌ Rebuild failed for ${site.domain}: ${err.message}`);
+      console.log(`  ❌ Rebuild failed ${site.domain}: ${err.message}`);
     }
   }
 }
 
-async function updateArticlesJson(siteDir, articles) {
-  const contentDir = join(siteDir, 'src/content');
-  await fse.ensureDir(contentDir);
+async function triggerDailyGeneration() {
+  console.log('  🌅 Daily generation...');
+  const liveSites = await getSitesByStatus('live');
 
-  const data = articles
-    .filter(a => a.status === 'published')
-    .map(a => ({
-      slug: a.slug,
-      title: a.title,
-      metaDescription: a.meta_description,
-      excerpt: (a.meta_description || '').slice(0, 120) + '...',
-      content: a.content,
-      schemas: a.schema_markup,
-      tags: [],
-      author: 'Editorial Team',
-      category: 'Guide',
-      date: a.published_at || a.created_at,
-      wordCount: a.word_count
-    }));
+  for (const site of liveSites) {
+    const unused = await getUnusedKeywords(site.niche_id, 1);
 
-  await fse.writeJSON(join(contentDir, 'articles.json'), data, { spaces: 0 });
+    // Se keywords basse, triggera keyword engine
+    if (unused.length < ARTICLES_PER_DAY) {
+      const [niche] = await sql`SELECT slug FROM niches WHERE id = ${site.niche_id}`;
+      console.log(`  📡 Replenishing keywords for ${site.domain}...`);
+      try {
+        execSync(`node packages/keyword-engine/src/index.js --niche ${niche.slug}`, {
+          cwd: ROOT, stdio: 'pipe', timeout: 180000
+        });
+      } catch (e) {
+        console.log(`  ⚠️  Keyword engine: ${e.message?.slice(0, 80)}`);
+      }
+    }
+
+    // Genera articoli
+    console.log(`  ✍️  Generating ${ARTICLES_PER_DAY} articles for ${site.domain}...`);
+    try {
+      execSync(
+        `node packages/content-engine/src/index.js --site-id ${site.id} --count ${ARTICLES_PER_DAY}`,
+        { cwd: ROOT, stdio: 'pipe', timeout: 600000 }
+      );
+    } catch (e) {
+      console.log(`  ⚠️  Content engine: ${e.message?.slice(0, 80)}`);
+    }
+  }
 }
 
-async function getNicheSlug(nicheId) {
-  const [row] = await sql`SELECT slug FROM niches WHERE id = ${nicheId}`;
-  return row?.slug;
+function updateApiFiles(domain, articles, niche) {
+  const apiDir = join(WWW_ROOT, domain, 'api');
+  mkdirSync(apiDir, { recursive: true });
+
+  const lite = articles.map(a => ({ slug: a.slug, title: a.title, excerpt: a.excerpt, tags: a.tags || [], category: a.category }));
+  writeFileSync(join(apiDir, 'articles.json'), JSON.stringify(lite), 'utf-8');
+  writeFileSync(join(apiDir, 'trending.json'), JSON.stringify(lite.slice(0, 8)), 'utf-8');
+  writeFileSync(join(apiDir, 'categories.json'), JSON.stringify([{ name: niche.name, slug: niche.slug }]), 'utf-8');
 }
 
-run().catch(err => {
-  console.error('Scheduler error:', err);
-  process.exit(1);
-});
+async function buildSiteConfig(site, nicheSlug) {
+  const { AUTHOR_PERSONAS } = await import('@content-network/content-engine/src/prompts.js');
+  const author = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  return {
+    id: site.id,
+    domain: site.domain,
+    name: site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    url: `https://${site.domain}`,
+    template: site.template,
+    authorName: author.name,
+    authorTitle: author.title,
+    authorBio: author.bio,
+    authorAvatar: author.avatar,
+    adsenseId: process.env.ADSENSE_ID || '',
+    nicheSlug
+  };
+}
+
+function categoryFromNiche(nicheSlug) {
+  const map = {
+    'home-improvement-costs': 'Home Improvement',
+    'pet-care-by-breed': 'Pet Care',
+    'software-error-fixes': 'Tech Support',
+    'diet-specific-recipes': 'Recipes',
+    'small-town-tourism': 'Travel'
+  };
+  return map[nicheSlug] || 'Guide';
+}
+
+run().catch(err => { console.error('Scheduler error:', err); process.exit(1); });

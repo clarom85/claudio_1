@@ -1,0 +1,146 @@
+/**
+ * VPS Manager — nginx + filesystem
+ * Gestisce creazione siti, virtual hosts, SSL, sitemap
+ * Gira direttamente sul VPS (no SSH remoto)
+ */
+import { execSync } from 'child_process';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+
+const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
+const NGINX_AVAILABLE = '/etc/nginx/sites-available';
+const NGINX_ENABLED = '/etc/nginx/sites-enabled';
+
+// ── Directory sito ───────────────────────────────────────────
+export function createSiteDirectory(domain) {
+  const siteDir = join(WWW_ROOT, domain);
+  mkdirSync(join(siteDir, 'assets'), { recursive: true });
+  mkdirSync(join(siteDir, 'images'), { recursive: true });
+  return siteDir;
+}
+
+export function getSiteDir(domain) {
+  return join(WWW_ROOT, domain);
+}
+
+// ── Scrivi file ──────────────────────────────────────────────
+export function writeHtmlFile(domain, slug, html) {
+  const dir = join(WWW_ROOT, domain, slug);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+}
+
+export function writeSiteFile(domain, filename, content) {
+  writeFileSync(join(WWW_ROOT, domain, filename), content, 'utf-8');
+}
+
+// ── Nginx virtual host ───────────────────────────────────────
+export function createNginxConfig(domain) {
+  const config = `server {
+    listen 80;
+    listen [::]:80;
+    server_name ${domain} www.${domain};
+    root /var/www/${domain};
+    index index.html;
+
+    # Clean URLs
+    location / {
+        try_files $uri $uri/ $uri/index.html =404;
+    }
+
+    # Assets cache 1 anno
+    location ~* \\.(css|js|png|jpg|jpeg|webp|ico|svg|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Sitemap e robots no cache
+    location ~* \\.(xml|txt)$ {
+        expires 1d;
+        add_header Cache-Control "public";
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Gzip
+    gzip on;
+    gzip_types text/html text/css application/javascript application/json;
+
+    error_page 404 /404.html;
+    access_log /var/log/nginx/${domain}.access.log;
+    error_log /var/log/nginx/${domain}.error.log;
+}`;
+
+  writeFileSync(join(NGINX_AVAILABLE, domain), config, 'utf-8');
+
+  // Enable
+  const enabledPath = join(NGINX_ENABLED, domain);
+  if (!existsSync(enabledPath)) {
+    execSync(`ln -s ${join(NGINX_AVAILABLE, domain)} ${enabledPath}`);
+  }
+}
+
+export function reloadNginx() {
+  try {
+    execSync('nginx -t 2>&1', { stdio: 'pipe' });
+    execSync('nginx -s reload');
+    return true;
+  } catch (err) {
+    console.error('Nginx reload failed:', err.message);
+    return false;
+  }
+}
+
+// ── SSL con Certbot ──────────────────────────────────────────
+export function enableSSL(domain, email) {
+  try {
+    execSync(
+      `certbot --nginx -d ${domain} -d www.${domain} --non-interactive --agree-tos -m ${email} --redirect`,
+      { stdio: 'pipe', timeout: 60000 }
+    );
+    console.log(`  ✅ SSL enabled for ${domain}`);
+    return true;
+  } catch (err) {
+    console.warn(`  ⚠️  SSL failed for ${domain}: ${err.message}`);
+    return false;
+  }
+}
+
+// ── Sitemap ──────────────────────────────────────────────────
+export function generateSitemap(domain, articles) {
+  const urls = [
+    { loc: `https://${domain}/`, priority: '1.0', changefreq: 'daily' },
+    { loc: `https://${domain}/about/`, priority: '0.3', changefreq: 'monthly' },
+    ...articles.map(a => ({
+      loc: `https://${domain}/${a.slug}/`,
+      priority: '0.8',
+      changefreq: 'weekly',
+      lastmod: a.published_at ? new Date(a.published_at).toISOString().split('T')[0] : undefined
+    }))
+  ];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+    ${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}
+  </url>`).join('\n')}
+</urlset>`;
+
+  writeSiteFile(domain, 'sitemap.xml', xml);
+}
+
+export function generateRobotsTxt(domain) {
+  writeSiteFile(domain, 'robots.txt', `User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://${domain}/sitemap.xml
+`);
+}
