@@ -1,0 +1,355 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector"), pg_trgm, uuid_ossp(map: "uuid-ossp")]
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+}
+
+enum SexualOrientation {
+  STRAIGHT
+  GAY
+  LESBIAN
+  BISEXUAL
+  PANSEXUAL
+  ASEXUAL
+  OTHER
+}
+
+enum RelationshipGoal {
+  LONG_TERM
+  SHORT_TERM
+  FRIENDSHIP
+  CASUAL
+  MARRIAGE
+  UNSURE
+}
+
+enum MatchStatus {
+  PENDING
+  MATCHED
+  REJECTED
+  BLOCKED
+  UNMATCHED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+  GIF
+  REACTION
+}
+
+enum RevealStage {
+  AURA_ONLY      // Only aura visible (0-30% compatibility)
+  SILHOUETTE     // Blurred silhouette (30-60%)
+  PARTIAL        // 1 photo revealed (60-80%)
+  FULL           // All photos visible (80-100%)
+}
+
+enum NotificationType {
+  NEW_MATCH
+  NEW_MESSAGE
+  PROFILE_LIKE
+  COMPATIBILITY_UPDATE
+  VIBE_CHECK
+}
+
+// ─── USER ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique
+  phone         String?   @unique
+  passwordHash  String?
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  isBanned      Boolean   @default(false)
+  isPremium     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastSeenAt    DateTime?
+
+  profile       Profile?
+  oauthAccounts OAuthAccount[]
+  sentMatches   Match[]       @relation("SentMatches")
+  receivedMatches Match[]     @relation("ReceivedMatches")
+  sentMessages  Message[]     @relation("SentMessages")
+  notifications Notification[]
+  reports       Report[]      @relation("ReportedBy")
+  reportedReports Report[]    @relation("Reported")
+  subscription  Subscription?
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model OAuthAccount {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @db.Uuid
+  provider     String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@map("oauth_accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @db.Uuid
+  token        String   @unique
+  deviceInfo   Json?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ─── PROFILE ──────────────────────────────────────────────────────────────────
+
+model Profile {
+  id                 String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId             String             @unique @db.Uuid
+  name               String
+  birthDate          DateTime
+  gender             Gender
+  sexualOrientation  SexualOrientation
+  relationshipGoal   RelationshipGoal
+  bio                String?            @db.Text
+  occupation         String?
+  education          String?
+  height             Int?               // cm
+  latitude           Float?
+  longitude          Float?
+  city               String?
+  country            String?
+  isVisible          Boolean            @default(true)
+  searchRadius       Int                @default(50) // km
+  minAgePreference   Int                @default(18)
+  maxAgePreference   Int                @default(99)
+  genderPreference   Gender[]
+  completionScore    Int                @default(0) // 0-100
+  auraData           Json?              // Generated aura visual data
+  personalityVector  Unsupported("vector(1536)")? // pgvector embedding
+  personalityScores  Json?              // OCEAN model scores
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos            Photo[]
+  interests         ProfileInterest[]
+  prompts           ProfilePrompt[]
+  compatibilityFrom CompatibilityScore[] @relation("FromProfile")
+  compatibilityTo   CompatibilityScore[] @relation("ToProfile")
+
+  @@map("profiles")
+}
+
+model Photo {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  profileId   String      @db.Uuid
+  url         String
+  blurredUrl  String?
+  silhouetteUrl String?
+  order       Int         @default(0)
+  isVerified  Boolean     @default(false)
+  faceVector  Unsupported("vector(512)")? // for face similarity
+  createdAt   DateTime    @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+
+model Interest {
+  id       String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name     String            @unique
+  emoji    String?
+  category String
+  profiles ProfileInterest[]
+
+  @@map("interests")
+}
+
+model ProfileInterest {
+  profileId  String @db.Uuid
+  interestId String @db.Uuid
+
+  profile  Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, interestId])
+  @@map("profile_interests")
+}
+
+model Prompt {
+  id       String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  question String
+  category String
+  prompts  ProfilePrompt[]
+
+  @@map("prompts")
+}
+
+model ProfilePrompt {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  profileId String   @db.Uuid
+  promptId  String   @db.Uuid
+  answer    String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  prompt  Prompt  @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@map("profile_prompts")
+}
+
+// ─── MATCHING ─────────────────────────────────────────────────────────────────
+
+model Match {
+  id             String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  fromUserId     String      @db.Uuid
+  toUserId       String      @db.Uuid
+  status         MatchStatus @default(PENDING)
+  compatibilityScore Float?
+  revealStage    RevealStage @default(AURA_ONLY)
+  isSuperLike    Boolean     @default(false)
+  matchedAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  fromUser  User       @relation("SentMatches", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser    User       @relation("ReceivedMatches", fields: [toUserId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  vibeCheck VibeCheck?
+
+  @@unique([fromUserId, toUserId])
+  @@map("matches")
+}
+
+model CompatibilityScore {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  fromProfileId String   @db.Uuid
+  toProfileId   String   @db.Uuid
+  overallScore  Float    // 0-100
+  dimensions    Json     // { values, communication, interests, lifestyle, ... }
+  aiInsight     String?  @db.Text
+  calculatedAt  DateTime @default(now())
+
+  fromProfile Profile @relation("FromProfile", fields: [fromProfileId], references: [id], onDelete: Cascade)
+  toProfile   Profile @relation("ToProfile", fields: [toProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([fromProfileId, toProfileId])
+  @@map("compatibility_scores")
+}
+
+// ─── MESSAGING ────────────────────────────────────────────────────────────────
+
+model Message {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  matchId     String      @db.Uuid
+  senderId    String      @db.Uuid
+  type        MessageType @default(TEXT)
+  content     String?     @db.Text
+  mediaUrl    String?
+  replyToId   String?     @db.Uuid
+  isRead      Boolean     @default(false)
+  readAt      DateTime?
+  isDeleted   Boolean     @default(false)
+  reactions   Json?       // { emoji: userId[] }
+  sentimentScore Float?   // -1 to 1 (AI analyzed)
+  createdAt   DateTime    @default(now())
+
+  match   Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender  User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo Message? @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies Message[] @relation("MessageReplies")
+
+  @@map("messages")
+}
+
+model VibeCheck {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  matchId         String   @unique @db.Uuid
+  score           Float    // 0-100
+  trend           String   // "rising", "stable", "declining"
+  insights        Json     // AI-generated insights
+  suggestedTopics Json     // AI conversation suggestions
+  lastAnalyzedAt  DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@map("vibe_checks")
+}
+
+// ─── NOTIFICATIONS & GAMIFICATION ────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Report {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  reportedById String   @db.Uuid
+  reportedId   String   @db.Uuid
+  reason       String
+  details      String?  @db.Text
+  isResolved   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  reportedBy User @relation("ReportedBy", fields: [reportedById], references: [id], onDelete: Cascade)
+  reported   User @relation("Reported", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model Subscription {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId          String    @unique @db.Uuid
+  plan            String    // "gold", "platinum"
+  stripeCustomerId String?
+  stripeSubId     String?
+  currentPeriodEnd DateTime
+  cancelAtEnd     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}

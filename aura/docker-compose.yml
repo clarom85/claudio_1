@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: aura_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aura
+      POSTGRES_PASSWORD: aura_secret
+      POSTGRES_DB: aura_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: aura_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  minio:
+    image: minio/minio
+    container_name: aura_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: aura_minio
+      MINIO_ROOT_PASSWORD: aura_minio_secret
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
