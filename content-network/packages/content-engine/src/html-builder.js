@@ -5,12 +5,14 @@
 
 import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema } from './schema.js';
 
-// Inserisce ads inline ogni N sezioni
-const AD_UNIT_INLINE = `<div class="ad-unit ad-unit--inline" data-ad-slot="inline">
-  <ins class="adsbygoogle" data-ad-format="fluid" data-ad-layout="in-article"></ins>
+// Inserisce ads inline — usa classi CSS del template (.ad .ad-inline)
+const AD_UNIT_INLINE = `<div class="ad ad-inline">
+  <ins class="adsbygoogle" style="display:block;text-align:center" data-ad-format="fluid" data-ad-layout="in-article"></ins>
 </div>`;
 
-const AD_UNIT_SIDEBAR = `<div class="ad-unit ad-unit--sidebar" data-ad-slot="sidebar"></div>`;
+const AD_UNIT_SIDEBAR = `<div class="ad ad-sidebar">
+  <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
+</div>`;
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword }) {
   const { title, metaDescription, intro, sections, faq, conclusion, authorNote, tags } = articleData;
