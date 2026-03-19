@@ -2,6 +2,7 @@
  * ECHO — Lifestyle magazine style
  * Beige/terracotta/sage, serif elegante, immagini grandi, font morbido
  */
+import { COOKIE_BANNER_CSS, COOKIE_BANNER_HTML, COOKIE_BANNER_JS, EMAIL_FORM_JS, NATIVE_ADS_CSS, NATIVE_ADS_JS } from '../../shared/snippets.js';
 function esc(str=''){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 export const CSS=`
@@ -110,13 +111,12 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .footer-col a{color:rgba(255,255,255,.65);text-decoration:none;font-size:13px}
 .footer-col a:hover{color:#fff}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:16px;text-align:center;font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.5px}
-`;
+${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
-  const adsenseScript=adsenseId?`<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>`:'';
-  return`<!DOCTYPE html><html lang="en"><head>
+  return`<!DOCTYPE html><html lang="en" data-adsense="${adsenseId}"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="index,follow,max-image-preview:large"/>
 <title>${esc(title)} | ${esc(siteName)}</title>
@@ -126,12 +126,13 @@ function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,ads
 <meta property="og:description" content="${esc(description)}"/>
 <meta property="og:url" content="${canonical}"/>
 <meta property="og:type" content="${slug?'article':'website'}"/>
-${schemasHtml}${adsenseScript}
+${schemasHtml}
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@400;700&display=swap"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 </head><body>${body}
-<script>document.querySelectorAll('.adsbygoogle').forEach(el=>{try{(adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}});
+${COOKIE_BANNER_HTML}
+<script>${COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
 fetch('/api/categories.json').then(r=>r.json()).then(cats=>{const nav=document.getElementById('main-nav');cats.slice(0,6).forEach(c=>{const li=document.createElement('li');li.innerHTML='<a href="/category/'+c.slug+'">'+c.name+'</a>';nav.appendChild(li)})}).catch(()=>{});
 </script></body></html>`}
 
@@ -171,7 +172,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <aside>
         <div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>
         ${relatedHtml?`<div class="sidebar-box"><h3>You May Also Like</h3>${relatedHtml}</div>`:''}
-        <div class="nl-box"><h3>Weekly Inspiration</h3><p>Expert tips delivered to your inbox</p><form onsubmit="return false"><input type="email" placeholder="your@email.com"/><button>Subscribe</button></form></div>
+        <div class="nl-box"><h3>Weekly Inspiration</h3><p>Expert tips delivered to your inbox</p><form class="nl-form" onsubmit="return false"><input type="email" placeholder="your@email.com"/><button>Subscribe</button></form></div>
         <div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>
       </aside>
     </div>

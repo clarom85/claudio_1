@@ -2,6 +2,7 @@
  * PULSE — Tabloid style
  * Rosso/navy, breaking ticker, header bold, sidebar ad-heavy
  */
+import { COOKIE_BANNER_CSS, COOKIE_BANNER_HTML, COOKIE_BANNER_JS, EMAIL_FORM_JS, NATIVE_ADS_CSS, NATIVE_ADS_JS } from '../../shared/snippets.js';
 
 export const CSS = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -154,7 +155,7 @@ img{max-width:100%;height:auto;display:block}
   .hdr-ad{display:none}
   .art-body{padding:16px}
 }
-`;
+${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '' }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
@@ -162,12 +163,8 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
   ).join('\n');
 
-  const adsenseScript = adsenseId
-    ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>`
-    : '';
-
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-adsense="${adsenseId}">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -184,7 +181,6 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
 <meta name="twitter:title" content="${esc(title)}"/>
 <meta name="twitter:description" content="${esc(description)}"/>
 ${schemasHtml}
-${adsenseScript}
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap"/>
@@ -192,11 +188,11 @@ ${adsenseScript}
 </head>
 <body>
 ${body}
+${COOKIE_BANNER_HTML}
 <script>
-// Init AdSense
-document.querySelectorAll('.adsbygoogle').forEach(el=>{
-  try{(adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}
-});
+${COOKIE_BANNER_JS}
+${EMAIL_FORM_JS}
+${NATIVE_ADS_JS}
 // Load nav categories
 fetch('/api/categories.json').then(r=>r.json()).then(cats=>{
   const nav=document.getElementById('main-nav');

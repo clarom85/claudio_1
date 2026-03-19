@@ -31,8 +31,8 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
   let sectionsHTML = '';
   sections.forEach((section, i) => {
-    // Ad after every 2nd section
-    const adAfter = (i + 1) % 2 === 0 ? AD_UNIT_INLINE : '';
+    // Ad after every section
+    const adAfter = AD_UNIT_INLINE;
 
     let listHTML = '';
     if (section.hasList && section.listItems?.length) {
@@ -116,6 +116,11 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         ${conclusion.split('\n\n').map(p => `<p>${p}</p>`).join('')}
       </section>
 
+      <div class="native-ads" id="native-ads-block">
+        <span class="native-ads-label">Sponsored Content</span>
+        <div class="native-ads-grid" id="native-ads-grid"></div>
+      </div>
+
       <div class="article-tags">
         <span class="tags-label">Topics:</span>
         ${tagsHTML}
@@ -131,7 +136,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       ${AD_UNIT_SIDEBAR}
       <div class="sidebar-newsletter">
         <h3>Get Expert Tips Weekly</h3>
-        <form class="newsletter-form">
+        <form class="nl-form newsletter-form">
           <input type="email" placeholder="your@email.com" />
           <button type="submit">Subscribe Free</button>
         </form>

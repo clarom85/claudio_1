@@ -2,7 +2,7 @@
  * TRIBUNE — Broadsheet newspaper style
  * Verde/grigio scuro, layout a colonne, serif classico, autorevolezza
  */
-import { readFileSync } from 'fs';
+import { COOKIE_BANNER_CSS, COOKIE_BANNER_HTML, COOKIE_BANNER_JS, EMAIL_FORM_JS, NATIVE_ADS_CSS, NATIVE_ADS_JS } from '../../shared/snippets.js';
 
 export const CSS = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -109,7 +109,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .footer-col a{color:rgba(255,255,255,.65);text-decoration:none;font-size:13px}
 .footer-col a:hover{color:#fff}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:14px;text-align:center;font-size:12px;color:rgba(255,255,255,.45)}
-`;
+${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function esc(str=''){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
@@ -141,8 +141,7 @@ function footer(site){return`
 function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
-  const adsenseScript=adsenseId?`<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>`:'';
-  return`<!DOCTYPE html><html lang="en"><head>
+  return`<!DOCTYPE html><html lang="en" data-adsense="${adsenseId}"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="index,follow,max-image-preview:large"/>
 <title>${esc(title)} | ${esc(siteName)}</title>
@@ -150,12 +149,13 @@ function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,ads
 <link rel="canonical" href="${canonical}"/>
 <meta property="og:title" content="${esc(title)}"/><meta property="og:description" content="${esc(description)}"/>
 <meta property="og:url" content="${canonical}"/><meta property="og:type" content="${slug?'article':'website'}"/>
-${schemasHtml}${adsenseScript}
+${schemasHtml}
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Serif+4:wght@400;600&display=swap"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 </head><body>${body}
-<script>document.querySelectorAll('.adsbygoogle').forEach(el=>{try{(adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}});
+${COOKIE_BANNER_HTML}
+<script>${COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
 fetch('/api/categories.json').then(r=>r.json()).then(cats=>{const nav=document.getElementById('main-nav');cats.slice(0,6).forEach(c=>{const li=document.createElement('li');li.innerHTML='<a href="/category/'+c.slug+'">'+c.name+'</a>';nav.appendChild(li)})}).catch(()=>{});
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{const el=document.getElementById('ticker-inner');if(el&&arts.length)el.innerHTML=arts.slice(0,8).map(a=>'<a href="/'+a.slug+'/">'+a.title+'</a>').join(' • ')}).catch(()=>{});
 </script></body></html>`}
@@ -176,7 +176,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <aside>
         <div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>
         ${relatedHtml?`<div class="sidebar-box"><h3>Related</h3>${relatedHtml}</div>`:''}
-        <div class="nl-box"><h3>Weekly Expert Tips</h3><form onsubmit="return false"><input type="email" placeholder="your@email.com"/><button>Subscribe</button></form></div>
+        <div class="nl-box"><h3>Weekly Expert Tips</h3><form class="nl-form" onsubmit="return false"><input type="email" placeholder="your@email.com"/><button>Subscribe</button></form></div>
         <div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>
       </aside>
     </div>
