@@ -1,0 +1,18 @@
+{
+  "name": "content-network",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "keyword": "node packages/keyword-engine/src/index.js",
+    "content": "node packages/content-engine/src/index.js",
+    "spawn": "node packages/site-spawner/src/index.js",
+    "schedule": "node packages/scheduler/src/index.js",
+    "db:migrate": "node packages/db/src/migrate.js"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

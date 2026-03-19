@@ -1,0 +1,171 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  slug?: string;
+  schemas?: object[];
+  ogImage?: string;
+}
+
+const { title, description, slug, schemas = [], ogImage } = Astro.props;
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const siteUrl = import.meta.env.SITE_URL || Astro.site?.href || '';
+const adsenseId = import.meta.env.ADSENSE_ID || '';
+const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+
+  <title>{title} | {siteName}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:site_name" content={siteName} />
+  <meta property="og:type" content={slug ? 'article' : 'website'} />
+  {ogImage && <meta property="og:image" content={ogImage} />}
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+
+  <!-- JSON-LD Schemas -->
+  {schemas.map(schema => (
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  ))}
+
+  <!-- Google AdSense -->
+  {adsenseId && (
+    <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`} crossorigin="anonymous"></script>
+  )}
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap" />
+
+  <link rel="stylesheet" href="/styles/pulse.css" />
+</head>
+<body>
+  <!-- Breaking News Ticker -->
+  <div class="breaking-ticker" id="breaking-ticker">
+    <span class="ticker-label">TRENDING</span>
+    <div class="ticker-content">
+      <div class="ticker-items" id="ticker-items">
+        Loading latest stories...
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-date">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        <nav class="header-nav-top">
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/privacy">Privacy</a>
+        </nav>
+      </div>
+    </div>
+    <div class="header-main">
+      <div class="container">
+        <a href="/" class="site-logo">
+          <span class="logo-the">The</span>
+          <span class="logo-name">{siteName.replace('The ', '')}</span>
+        </a>
+        <div class="header-ad" data-ad-slot="header-banner">
+          <ins class="adsbygoogle" data-ad-format="banner" style="display:block"></ins>
+        </div>
+      </div>
+    </div>
+    <nav class="header-nav-main">
+      <div class="container">
+        <ul class="nav-list" id="main-nav">
+          <li><a href="/">Home</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="site-main">
+    <div class="container">
+      <slot />
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-ad" data-ad-slot="footer-leaderboard">
+      <ins class="adsbygoogle" data-ad-format="leaderboard" style="display:block"></ins>
+    </div>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-about">
+          <h3>{siteName}</h3>
+          <p>Your trusted source for expert guides, how-to articles, and actionable information.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="/about">About Us</a></li>
+            <li><a href="/contact">Contact</a></li>
+            <li><a href="/advertise">Advertise</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/disclaimer">Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; {new Date().getFullYear()} {siteName}. All rights reserved.</p>
+        <p class="footer-disclaimer">Content is for informational purposes only. Always consult a professional for specific advice.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // AdSense init
+    (function() {
+      if (typeof window.adsbygoogle !== 'undefined') {
+        document.querySelectorAll('.adsbygoogle').forEach(el => {
+          try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+        });
+      }
+    })();
+
+    // Dynamic nav from categories
+    fetch('/api/categories.json').then(r => r.json()).then(cats => {
+      const nav = document.getElementById('main-nav');
+      cats.slice(0, 6).forEach(cat => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="/category/${cat.slug}">${cat.name}</a>`;
+        nav.appendChild(li);
+      });
+    }).catch(() => {});
+
+    // Trending ticker
+    fetch('/api/trending.json').then(r => r.json()).then(articles => {
+      const items = document.getElementById('ticker-items');
+      items.innerHTML = articles.slice(0, 8).map(a =>
+        `<a href="/${a.slug}" class="ticker-item">${a.title}</a>`
+      ).join('<span class="ticker-sep">•</span>');
+    }).catch(() => {});
+  </script>
+</body>
+</html>

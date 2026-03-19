@@ -1,0 +1,12 @@
+{
+  "name": "@content-network/scheduler",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@content-network/db": "*",
+    "@content-network/content-engine": "*",
+    "dotenv": "^16.4.5",
+    "fs-extra": "^11.2.0"
+  }
+}

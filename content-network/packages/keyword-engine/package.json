@@ -1,0 +1,11 @@
+{
+  "name": "@content-network/keyword-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@content-network/db": "*",
+    "google-trends-api": "^4.9.2",
+    "dotenv": "^16.4.5"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@content-network/db",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.3",
+    "dotenv": "^16.4.5"
+  }
+}

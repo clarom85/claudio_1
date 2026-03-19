@@ -1,0 +1,12 @@
+{
+  "name": "@content-network/content-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.3",
+    "@content-network/db": "*",
+    "dotenv": "^16.4.5",
+    "slugify": "^1.6.6"
+  }
+}
