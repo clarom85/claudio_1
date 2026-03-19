@@ -86,7 +86,7 @@ export async function markKeywordUsed(keywordId) {
 export async function insertArticle({ siteId, keywordId, slug, title, metaDescription, content, wordCount, schemaMarkup }) {
   const [article] = await sql`
     INSERT INTO articles (site_id, keyword_id, slug, title, meta_description, content, word_count, schema_markup)
-    VALUES (${siteId}, ${keywordId}, ${slug}, ${title}, ${metaDescription}, ${content}, ${wordCount}, ${schemaMarkup})
+    VALUES (${siteId}, ${keywordId}, ${slug}, ${title}, ${metaDescription}, ${content}, ${wordCount}, ${JSON.stringify(schemaMarkup || [])})
     ON CONFLICT (site_id, slug) DO NOTHING
     RETURNING *
   `;
