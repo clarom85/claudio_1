@@ -75,7 +75,8 @@ async function run() {
     authorBio: author.bio,
     authorAvatar: author.avatar,
     adsenseId: process.env.ADSENSE_ID || '',
-    nicheSlug
+    nicheSlug,
+    categories: getCategoriesForNiche(niche.slug).slice(0, 7)
   };
 
   try {

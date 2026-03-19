@@ -123,7 +123,7 @@ function header(site){return`
       <div class="hdr-rule"></div>
     </div>
   </div>
-  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li></ul></nav>
+  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
 </header>`}
 
 function footer(site){return`

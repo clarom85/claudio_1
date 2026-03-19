@@ -423,6 +423,7 @@ function header(site) {
     <div class="wrap">
       <ul id="main-nav" style="list-style:none;display:flex">
         <li><a href="/">Home</a></li>
+        ${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}
       </ul>
     </div>
   </nav>

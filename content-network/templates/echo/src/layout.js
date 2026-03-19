@@ -143,7 +143,7 @@ function header(site){return`
     <a href="/" class="logo"><span class="logo-name">${esc(site.name)}</span><span class="logo-sub">Living · Wellness · Inspiration</span></a>
     <div class="hdr-ad ad">Advertisement</div>
   </div></div>
-  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li></ul></nav>
+  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
 </header>`}
 
 function footer(site){return`

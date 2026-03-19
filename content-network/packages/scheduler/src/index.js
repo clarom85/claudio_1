@@ -6,7 +6,7 @@
  * Cron: 0 * * * * cd /opt/content-network/content-network && node packages/scheduler/src/index.js
  */
 import 'dotenv/config';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
@@ -268,6 +268,16 @@ function buildCategoryUrls(articles) {
 async function buildSiteConfig(site, nicheSlug) {
   const { AUTHOR_PERSONAS } = await import('@content-network/content-engine/src/prompts.js');
   const author = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
+
+  // Load categories from api/categories.json (written by updateApiFiles)
+  let categories = [];
+  try {
+    const catsFile = join(WWW_ROOT, site.domain, 'api', 'categories.json');
+    categories = JSON.parse(readFileSync(catsFile, 'utf-8')).slice(0, 7);
+  } catch (e) {
+    categories = getCategoriesForNiche(nicheSlug).slice(0, 7);
+  }
+
   return {
     id: site.id,
     domain: site.domain,
@@ -279,7 +289,8 @@ async function buildSiteConfig(site, nicheSlug) {
     authorBio: author.bio,
     authorAvatar: author.avatar,
     adsenseId: process.env.ADSENSE_ID || '',
-    nicheSlug
+    nicheSlug,
+    categories
   };
 }
 
