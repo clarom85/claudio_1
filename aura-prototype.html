@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AURA — Dating App Prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --dark: #0a0a0f;
+    --surface: #12121a;
+    --elevated: #1a1a26;
+    --border: rgba(255,255,255,0.08);
+    --violet: #8b5cf6;
+    --fuchsia: #d946ef;
+    --gold: #f59e0b;
+  }
+
+  body {
+    background: var(--dark);
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--dark);
+    border-radius: 50px;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 80px rgba(139,92,246,0.2), 0 40px 120px rgba(0,0,0,0.8);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 44px;
+    padding: 12px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* Screens */
+  .screen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* Glass */
+  .glass {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Gradient text */
+  .grad {
+    background: linear-gradient(135deg, #a78bfa, #e879f9, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #a855f7, #d946ef);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: scale(0.98); }
+  .btn-primary:active { transform: scale(0.95); }
+
+  .btn-glass {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-glass:hover { background: rgba(255,255,255,0.1); }
+
+  /* ── ONBOARDING ── */
+  #screen-onboarding {
+    background: radial-gradient(ellipse at 50% -20%, rgba(139,92,246,0.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(217,70,239,0.15) 0%, transparent 50%),
+                var(--dark);
+    padding: 24px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .aura-orb {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    position: relative;
+    margin: 0 auto 32px;
+  }
+
+  .aura-orb canvas {
+    width: 160px !important;
+    height: 160px !important;
+    border-radius: 50%;
+  }
+
+  .aura-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, rgba(139,92,246,0.6), rgba(217,70,239,0.6)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    animation: spin 8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { opacity:0.7; transform:scale(1); } 50% { opacity:1; transform:scale(1.05); } }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes glow { 0%,100% { box-shadow:0 0 20px rgba(139,92,246,0.4); } 50% { box-shadow:0 0 60px rgba(217,70,239,0.6); } }
+  @keyframes swipeRight { to { transform: translateX(150%) rotate(20deg); opacity:0; } }
+  @keyframes swipeLeft { to { transform: translateX(-150%) rotate(-20deg); opacity:0; } }
+  @keyframes matchPop { 0% { transform:scale(0) rotate(-10deg); opacity:0; } 60% { transform:scale(1.1); } 100% { transform:scale(1); opacity:1; } }
+
+  /* ── DISCOVER ── */
+  #screen-discover {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    padding: 16px 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .card-stack {
+    flex: 1;
+    position: relative;
+    padding: 0 16px;
+  }
+
+  .profile-card {
+    position: absolute;
+    inset: 0;
+    margin: 0 4px;
+    border-radius: 28px;
+    overflow: hidden;
+    cursor: grab;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+  }
+
+  .profile-card:active { cursor: grabbing; }
+
+  .card-bg {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(10,10,15,0.9) 70%, rgba(10,10,15,1) 100%);
+  }
+
+  .card-aura-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+  }
+
+  .compat-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .compat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .mini-aura {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+  }
+
+  .interest-tag {
+    display: inline-block;
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    font-size: 11px;
+    margin: 3px 2px;
+  }
+
+  .like-indicator {
+    position: absolute;
+    top: 32px;
+    left: 24px;
+    padding: 6px 16px;
+    border: 3px solid #22c55e;
+    color: #22c55e;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 22px;
+    transform: rotate(-15deg);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .nope-indicator {
+    position: absolute;
+    top: 32px;
+    right: 24px;
+    padding: 6px 16px;
+    border: 3px solid #ef4444;
+    color: #ef4444;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 22px;
+    transform: rotate(15deg);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .action-btns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 0 8px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .action-btn:hover { transform: scale(1.1); }
+  .action-btn:active { transform: scale(0.9); }
+  .action-btn.pass { width: 58px; height: 58px; }
+  .action-btn.like { width: 58px; height: 58px; }
+  .action-btn.star { width: 48px; height: 48px; }
+
+  /* ── MATCH MODAL ── */
+  .match-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,15,0.95);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .match-modal.show { display: flex; animation: slideUp 0.4s ease; }
+
+  .match-hearts {
+    font-size: 64px;
+    animation: matchPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-bottom: 16px;
+  }
+
+  .match-auras {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  /* ── MESSAGES ── */
+  #screen-messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .msg-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+  }
+
+  .messages-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .message {
+    max-width: 72%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: slideUp 0.3s ease;
+  }
+
+  .message.sent {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #7c3aed, #d946ef);
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.received {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-time { font-size: 10px; opacity: 0.4; margin-top: 4px; }
+
+  .typing-indicator {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 16px;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    display: none;
+  }
+
+  .typing-dots { display: flex; gap: 4px; }
+  .typing-dots span {
+    width: 8px; height: 8px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-8px); } }
+
+  .msg-input-row {
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+  }
+
+  .msg-input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 22px;
+    padding: 10px 16px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+  }
+  .msg-input::placeholder { color: rgba(255,255,255,0.3); }
+
+  /* ── PREMIUM ── */
+  #screen-premium {
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .plan-card {
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    transition: all 0.3s;
+  }
+
+  .plan-card.gold { border-color: rgba(245,158,11,0.3); box-shadow: 0 0 30px rgba(245,158,11,0.1); }
+  .plan-card.platinum { border-color: rgba(139,92,246,0.4); box-shadow: 0 0 30px rgba(139,92,246,0.15); }
+  .plan-card.platinum .badge {
+    display: inline-block;
+    background: linear-gradient(135deg,#7c3aed,#d946ef);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .feature-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,0.75); }
+  .feature-check { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+
+  /* ── VIBE CHECK ── */
+  .vibe-bar-container { padding: 12px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .vibe-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+  .vibe-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+  /* ── AI SUGGESTIONS ── */
+  .ai-suggestions { padding: 10px 16px; display: flex; gap: 8px; overflow-x: auto; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+  .ai-suggestions::-webkit-scrollbar { display:none; }
+  .ai-chip {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    background: rgba(139,92,246,0.15);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .ai-chip:hover { background: rgba(139,92,246,0.3); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    height: 80px;
+    background: rgba(18,18,26,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 16px;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: rgba(255,255,255,0.35);
+    transition: all 0.2s;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .nav-item.active {
+    color: #a78bfa;
+  }
+
+  .nav-item svg { transition: all 0.2s; }
+  .nav-item.active svg { filter: drop-shadow(0 0 8px rgba(167,139,250,0.8)); }
+
+  /* Canvas for aura */
+  canvas { display: block; }
+
+  /* Matches screen */
+  #screen-matches { flex:1; display:flex; flex-direction:column; }
+  .match-list { flex:1; overflow-y:auto; padding:12px 16px; }
+  .match-item {
+    display:flex; align-items:center; gap:12px;
+    padding:12px; border-radius:20px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.06);
+    margin-bottom:10px; cursor:pointer;
+    transition:all 0.2s;
+  }
+  .match-item:hover { background:rgba(255,255,255,0.07); }
+  .match-avatar { width:52px; height:52px; border-radius:50%; position:relative; flex-shrink:0; }
+  .online-dot { position:absolute; bottom:1px; right:1px; width:13px; height:13px; border-radius:50%; background:#22c55e; border:2px solid var(--dark); }
+
+  /* Demo nav label */
+  .demo-label {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(139,92,246,0.2);
+    border: 1px solid rgba(139,92,246,0.4);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #a78bfa;
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-label">✨ AURA — Interactive Prototype</div>
+
+<div class="phone" id="app">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="white" opacity=".8"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/></svg>
+      🔋
+    </span>
+  </div>
+
+  <!-- ═══ SCREEN: DISCOVER ═══ -->
+  <div class="screen active" id="screen-discover">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 2L9 9H2l5.5 4-2 7L12 16l6.5 4-2-7L22 9h-7L12 2z" fill="#a78bfa" stroke="#a78bfa"/></svg>
+        <span style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AURA</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="goTo('screen-premium')" style="padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(245,158,11,0.1));border:1px solid rgba(245,158,11,0.4);color:#f59e0b;font-size:12px;font-weight:700;cursor:pointer">⭐ Gold</button>
+        <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="goTo('screen-matches')">
+          <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,0.6)" viewBox="0 0 24 24" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.81a19.79 19.79 0 01-3.07-8.59A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card stack -->
+    <div class="card-stack" id="cardStack">
+      <!-- Cards injected by JS -->
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-btns">
+      <button class="action-btn pass" onclick="swipe('left')" title="Pass">
+        <svg width="26" height="26" fill="none" stroke="#ef4444" viewBox="0 0 24 24" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button class="action-btn star" onclick="superLike()" title="Super Like">
+        <svg width="22" height="22" fill="#f59e0b" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </button>
+      <button class="action-btn like" onclick="swipe('right')" title="Like">
+        <svg width="26" height="26" fill="#22c55e" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </button>
+    </div>
+
+    <!-- Match modal -->
+    <div class="match-modal" id="matchModal">
+      <div class="match-hearts">💜</div>
+      <h2 style="font-size:28px;font-weight:800" class="grad">It's a Match!</h2>
+      <p style="color:rgba(255,255,255,0.5);margin-top:8px">Your auras aligned perfectly</p>
+      <div class="match-auras" id="matchAuras"></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:32px" id="matchInsight"></div>
+      <button class="btn-primary" style="width:100%;padding:16px;font-size:16px" onclick="openChat()">Say Hello ✨</button>
+      <button class="btn-glass" style="width:100%;padding:14px;margin-top:12px;font-size:14px" onclick="closeMatch()">Keep Swiping</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: MATCHES ═══ -->
+  <div class="screen" id="screen-matches">
+    <div class="topbar">
+      <button onclick="goTo('screen-discover')" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;padding:4px">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h2 style="font-size:20px;font-weight:800" class="grad">Matches</h2>
+      <div style="width:28px"></div>
+    </div>
+    <div class="match-list" id="matchList">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: MESSAGES ═══ -->
+  <div class="screen" id="screen-messages">
+    <div class="msg-header">
+      <button onclick="goTo('screen-matches')" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,0.05)" id="chatAuraThumb">
+        <canvas id="chatAuraCanvas" width="42" height="42"></canvas>
+      </div>
+      <div>
+        <div style="font-weight:700" id="chatName">Sofia</div>
+        <div style="font-size:11px;color:#a78bfa">● Online</div>
+      </div>
+      <div style="flex:1"></div>
+      <button onclick="goTo('screen-premium')" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);border-radius:16px;padding:5px 10px;color:#a78bfa;font-size:11px;font-weight:600;cursor:pointer">🤖 AI</button>
+    </div>
+
+    <!-- Vibe check bar -->
+    <div class="vibe-bar-container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:rgba(255,255,255,0.4);display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" fill="#a78bfa" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Vibe Check
+        </span>
+        <span style="font-size:11px;color:#10b981;font-weight:600">78 📈 Rising</span>
+      </div>
+      <div class="vibe-bar">
+        <div class="vibe-fill" style="width:78%;background:linear-gradient(90deg,#8b5cf6,#10b981)"></div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-list" id="messagesList">
+      <div class="message received">Hey! Your aura caught my eye ✨</div>
+      <div class="message sent">I was thinking the same about yours! That violet pattern is stunning 💜</div>
+      <div class="message received">Right?! The app matched us at 91% — I was curious who could possibly be that compatible 😄</div>
+      <div class="message sent">Haha, guilty as charged. I saw you're into photography — what do you usually shoot?</div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div class="typing-indicator" id="typingIndicator">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <!-- AI suggestions -->
+    <div class="ai-suggestions" id="aiSuggestions">
+      <div class="ai-chip" onclick="useSuggestion(this)">Tell me your favorite spot to shoot 📸</div>
+      <div class="ai-chip" onclick="useSuggestion(this)">What drew you to photography?</div>
+      <div class="ai-chip" onclick="useSuggestion(this)">Film or digital?</div>
+      <div class="ai-chip" onclick="useSuggestion(this)">Show me your best shot! 🤩</div>
+    </div>
+
+    <!-- Input -->
+    <div class="msg-input-row">
+      <button onclick="toggleAiSuggestions()" style="width:36px;height:36px;border-radius:12px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <svg width="16" height="16" fill="#a78bfa" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </button>
+      <input class="msg-input" id="msgInput" placeholder="Message..." onkeydown="handleMsgKey(event)">
+      <button onclick="sendMessage()" style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#d946ef);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: PREMIUM ═══ -->
+  <div class="screen" id="screen-premium" style="overflow-y:auto">
+    <div style="padding:20px">
+      <div class="topbar" style="padding:0 0 20px">
+        <button onclick="goBack()" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div>
+          <h2 style="font-size:20px;font-weight:800" class="grad">Premium</h2>
+          <p style="font-size:11px;color:rgba(255,255,255,0.4)">Unlock your full potential</p>
+        </div>
+        <div style="width:28px"></div>
+      </div>
+
+      <!-- Features preview -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px">
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:6px">❤️</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);line-height:1.3">Unlimited<br>Likes</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:6px">👁️</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);line-height:1.3">See Who<br>Liked You</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:6px">🤖</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);line-height:1.3">AI<br>Ghostwriter</div>
+        </div>
+      </div>
+
+      <!-- Billing toggle -->
+      <div style="display:flex;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:4px;margin-bottom:20px;position:relative">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#22c55e,#16a34a);padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700">Save 33%</div>
+        <button id="billMonthly" onclick="setBilling('monthly')" style="flex:1;padding:10px;border-radius:10px;border:none;color:rgba(255,255,255,0.5);cursor:pointer;background:none;font-weight:600;font-size:13px">Monthly</button>
+        <button id="billYearly" onclick="setBilling('yearly')" style="flex:1;padding:10px;border-radius:10px;border:none;color:white;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#d946ef);font-weight:600;font-size:13px">Yearly</button>
+      </div>
+
+      <!-- Gold Plan -->
+      <div class="plan-card gold">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:24px">⭐</span>
+            <div>
+              <div style="font-size:18px;font-weight:800;color:#f59e0b">Gold</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="goldPeriod">Billed 79.99€/year</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:800" id="goldPrice">6.67€</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4)">/month</div>
+          </div>
+        </div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#f59e0b,#d97706)">✓</div>Unlimited likes</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#f59e0b,#d97706)">✓</div>5 Super Likes/day</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#f59e0b,#d97706)">✓</div>See who liked you</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#f59e0b,#d97706)">✓</div>Priority in discovery</div>
+        <div class="feature-row"><div class="feature-check" style="background:rgba(255,255,255,0.1)">–</div><span style="color:rgba(255,255,255,0.3)">AI Ghostwriter</span></div>
+        <button onclick="showToast('Redirecting to Stripe Checkout... 🔒')" class="btn-primary" style="width:100%;padding:14px;font-size:14px;margin-top:16px;border-radius:14px">Get Gold →</button>
+      </div>
+
+      <!-- Platinum Plan -->
+      <div class="plan-card platinum" style="box-shadow:0 0 40px rgba(139,92,246,0.2)">
+        <div class="badge">Most Popular</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:24px">💜</span>
+            <div>
+              <div style="font-size:18px;font-weight:800" class="grad">Platinum</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="platPeriod">Billed 159.99€/year</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:800" id="platPrice">13.33€</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4)">/month</div>
+          </div>
+        </div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#7c3aed,#d946ef)">✓</div>Everything in Gold</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#7c3aed,#d946ef)">✓</div>AI Ghostwriter ✨</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#7c3aed,#d946ef)">✓</div>Unlimited AI suggestions</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#7c3aed,#d946ef)">✓</div>Monthly Boost</div>
+        <div class="feature-row"><div class="feature-check" style="background:linear-gradient(135deg,#7c3aed,#d946ef)">✓</div>Exclusive Platinum aura</div>
+        <button onclick="showToast('Redirecting to Stripe Checkout... 🔒')" class="btn-primary" style="width:100%;padding:14px;font-size:14px;margin-top:16px;border-radius:14px">Get Platinum →</button>
+      </div>
+
+      <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.25);margin-top:12px;line-height:1.8">
+        ✓ Cancel anytime &nbsp;·&nbsp; ✓ Secure via Stripe<br>✓ No hidden fees
+      </p>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-discover" onclick="goTo('screen-discover');setNav('nav-discover')">
+      <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Discover
+    </button>
+    <button class="nav-item" id="nav-matches" onclick="goTo('screen-matches');setNav('nav-matches')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      Matches
+    </button>
+    <button class="nav-item" id="nav-messages" onclick="goTo('screen-messages');setNav('nav-messages')">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat
+    </button>
+    <button class="nav-item" id="nav-premium" onclick="goTo('screen-premium');setNav('nav-premium')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 3a1 1 0 000 2h14a1 1 0 000-2H5z"/></svg>
+      Premium
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:120px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(26,26,38,0.95);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);padding:12px 20px;border-radius:16px;font-size:13px;opacity:0;transition:all 0.3s;pointer-events:none;z-index:999;white-space:nowrap"></div>
+
+<script>
+// ──────────────────────────────
+// AURA SHADER (Canvas 2D fallback)
+// ──────────────────────────────
+
+function createAuraRenderer(canvas, config) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  let t = 0;
+
+  const colors = config.colors || ['#8b5cf6', '#d946ef', '#f472b6'];
+  const speed = config.speed || 0.4;
+  const complexity = config.complexity || 0.6;
+
+  function noise(x, y, t) {
+    return (Math.sin(x * complexity * 3 + t * speed) *
+            Math.cos(y * complexity * 2 + t * speed * 0.7) * 0.5 + 0.5);
+  }
+
+  function render() {
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
+
+    // Radial base
+    for (let layer = 0; layer < 3; layer++) {
+      const colorIdx = layer % colors.length;
+      const n = noise(layer * 0.5, layer * 0.3, t + layer);
+
+      const grd = ctx.createRadialGradient(
+        W/2 + Math.sin(t * speed * 0.7 + layer) * W * 0.15,
+        H/2 + Math.cos(t * speed * 0.5 + layer) * H * 0.15,
+        0,
+        W/2, H/2, W * 0.55
+      );
+      grd.addColorStop(0, colors[colorIdx] + 'cc');
+      grd.addColorStop(0.5, colors[(colorIdx+1) % colors.length] + '55');
+      grd.addColorStop(1, 'transparent');
+
+      ctx.globalAlpha = 0.3 + n * 0.3;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(W/2, H/2, W/2, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Pulsing core
+    const corePulse = 0.6 + Math.sin(t * 1.5) * 0.2;
+    const grdCore = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W * 0.3);
+    grdCore.addColorStop(0, colors[0] + 'ff');
+    grdCore.addColorStop(1, 'transparent');
+    ctx.globalAlpha = corePulse * 0.6;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = grdCore;
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, W/2, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(render);
+  }
+
+  render();
+}
+
+// ──────────────────────────────
+// PROFILE DATA
+// ──────────────────────────────
+
+const profiles = [
+  {
+    name: 'Sofia', age: 27, city: 'Milano',
+    bio: 'Street photographer and coffee addict. Looking for someone to explore hidden corners of the city with.',
+    occupation: 'Photographer',
+    colors: ['#8b5cf6', '#d946ef', '#f472b6'],
+    compat: 91, interest: '#10b981',
+    interests: ['Photography', 'Coffee', 'Travel', 'Music'],
+    prompt: { q: 'What's your perfect Sunday?', a: 'Farmers market, then darkroom hours, then good wine.' },
+    revealStage: 'PARTIAL',
+  },
+  {
+    name: 'Luca', age: 29, city: 'Roma',
+    bio: 'Product designer by day, amateur chef by night. I speak fluent sarcasm.',
+    occupation: 'Product Designer',
+    colors: ['#3b82f6', '#06b6d4', '#8b5cf6'],
+    compat: 78, interest: '#f59e0b',
+    interests: ['Cooking', 'Design', 'Books', 'Yoga'],
+    prompt: { q: 'Confess something nerdy.', a: 'I have a spreadsheet tracking every restaurant I've ever eaten at.' },
+    revealStage: 'SILHOUETTE',
+  },
+  {
+    name: 'Mia', age: 25, city: 'Firenze',
+    bio: 'Art historian meets tech enthusiast. I like long walks through museums and short espressos.',
+    occupation: 'UX Researcher',
+    colors: ['#f59e0b', '#ef4444', '#ec4899'],
+    compat: 85, interest: '#ec4899',
+    interests: ['Art', 'Tech', 'Travel', 'Philosophy'],
+    prompt: { q: 'What's your love language?', a: 'Acts of service, but make them intellectually stimulating.' },
+    revealStage: 'AURA_ONLY',
+  },
+  {
+    name: 'Marco', age: 31, city: 'Napoli',
+    bio: 'Architect dreaming of building bridges — metaphorical and literal. Rock climber on weekends.',
+    occupation: 'Architect',
+    colors: ['#10b981', '#3b82f6', '#6366f1'],
+    compat: 73, interest: '#6366f1',
+    interests: ['Architecture', 'Climbing', 'Fitness', 'Music'],
+    prompt: { q: 'Two truths and a lie.', a: 'I've summited 3 peaks. I hate coffee. I once cooked for 40 people.' },
+    revealStage: 'FULL',
+  },
+];
+
+let currentCardIndex = 0;
+let isDragging = false;
+let startX, startY, currentX;
+const canvases = {};
+let previousScreen = 'screen-discover';
+
+function buildCards() {
+  const stack = document.getElementById('cardStack');
+  stack.innerHTML = '';
+
+  const visible = profiles.slice(currentCardIndex, currentCardIndex + 3);
+  visible.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.id = `card-${currentCardIndex + i}`;
+    card.style.zIndex = 10 - i;
+    card.style.transform = `scale(${1 - i * 0.04}) translateY(${i * 14}px)`;
+    card.style.filter = i > 0 ? 'brightness(0.7)' : 'none';
+
+    // Aura background
+    const bgColor = `radial-gradient(ellipse at 30% 40%, ${p.colors[0]}33 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 60%, ${p.colors[1]}22 0%, transparent 50%),
+      linear-gradient(135deg, #12121a 0%, #1a1a26 100%)`;
+
+    card.innerHTML = `
+      <div class="card-bg" style="background:${bgColor}">
+        <div class="card-aura-bg">
+          <canvas id="aura-${currentCardIndex+i}" width="260" height="260" style="border-radius:50%;animation:float 6s ease-in-out infinite;animation-delay:${i*0.5}s"></canvas>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="compat-badge">
+        <div class="compat-dot" style="background:${p.interest}"></div>
+        ${p.compat}% match
+      </div>
+
+      <div class="mini-aura">
+        <canvas id="mini-${currentCardIndex+i}" width="40" height="40" style="border-radius:50%;box-shadow:0 0 16px ${p.colors[0]}88"></canvas>
+      </div>
+
+      <div class="like-indicator" id="like-${currentCardIndex+i}">AURA ✓</div>
+      <div class="nope-indicator" id="nope-${currentCardIndex+i}">NOPE</div>
+
+      <div class="card-info">
+        <div style="margin-bottom:8px">
+          <div style="font-size:22px;font-weight:800">${p.name}, ${p.age}</div>
+          <div style="color:rgba(255,255,255,0.5);font-size:13px">📍 ${p.city} · ${p.occupation}</div>
+        </div>
+
+        ${p.revealStage === 'AURA_ONLY' ? `
+          <div style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#c4b5fd;text-align:center">
+            ✨ Chat to reveal their photos
+          </div>
+        ` : ''}
+
+        <div style="margin-bottom:10px">
+          ${p.interests.map(int => `<span class="interest-tag">${int}</span>`).join('')}
+        </div>
+
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px">
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:4px">${p.prompt.q}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.85)">${p.prompt.a}</div>
+        </div>
+      </div>
+    `;
+
+    // Drag on top card only
+    if (i === 0) {
+      card.addEventListener('mousedown', dragStart);
+      card.addEventListener('touchstart', dragStart, { passive: true });
+    }
+
+    stack.appendChild(card);
+
+    // Render auras
+    setTimeout(() => {
+      const c = document.getElementById(`aura-${currentCardIndex+i}`);
+      const m = document.getElementById(`mini-${currentCardIndex+i}`);
+      if (c) createAuraRenderer(c, { colors: p.colors, speed: 0.3 + i * 0.1, complexity: 0.5 });
+      if (m) createAuraRenderer(m, { colors: p.colors, speed: 0.5, complexity: 0.6 });
+    }, 50);
+  });
+}
+
+// ──────────────────────────────
+// DRAG / SWIPE
+// ──────────────────────────────
+
+function dragStart(e) {
+  isDragging = true;
+  const pos = e.touches ? e.touches[0] : e;
+  startX = pos.clientX;
+  startY = pos.clientY;
+  currentX = 0;
+
+  document.addEventListener('mousemove', dragMove);
+  document.addEventListener('mouseup', dragEnd);
+  document.addEventListener('touchmove', dragMove, { passive: false });
+  document.addEventListener('touchend', dragEnd);
+}
+
+function dragMove(e) {
+  if (!isDragging) return;
+  if (e.touches) e.preventDefault();
+  const pos = e.touches ? e.touches[0] : e;
+  currentX = pos.clientX - startX;
+  const currentY = pos.clientY - startY;
+
+  const topCard = document.getElementById(`card-${currentCardIndex}`);
+  if (!topCard) return;
+
+  const rotate = currentX * 0.1;
+  topCard.style.transform = `translateX(${currentX}px) translateY(${currentY * 0.3}px) rotate(${rotate}deg)`;
+
+  const likeEl = document.getElementById(`like-${currentCardIndex}`);
+  const nopeEl = document.getElementById(`nope-${currentCardIndex}`);
+  if (likeEl) likeEl.style.opacity = Math.max(0, currentX / 100);
+  if (nopeEl) nopeEl.style.opacity = Math.max(0, -currentX / 100);
+}
+
+function dragEnd() {
+  isDragging = false;
+  document.removeEventListener('mousemove', dragMove);
+  document.removeEventListener('mouseup', dragEnd);
+  document.removeEventListener('touchmove', dragMove);
+  document.removeEventListener('touchend', dragEnd);
+
+  if (Math.abs(currentX) > 90) {
+    if (currentX > 0) swipe('right');
+    else swipe('left');
+  } else {
+    // Snap back
+    const topCard = document.getElementById(`card-${currentCardIndex}`);
+    if (topCard) topCard.style.transform = `scale(1) translateY(0)`;
+    const likeEl = document.getElementById(`like-${currentCardIndex}`);
+    const nopeEl = document.getElementById(`nope-${currentCardIndex}`);
+    if (likeEl) likeEl.style.opacity = 0;
+    if (nopeEl) nopeEl.style.opacity = 0;
+  }
+}
+
+function swipe(dir) {
+  const topCard = document.getElementById(`card-${currentCardIndex}`);
+  if (!topCard) return;
+
+  const likeEl = document.getElementById(`like-${currentCardIndex}`);
+  const nopeEl = document.getElementById(`nope-${currentCardIndex}`);
+  if (likeEl) likeEl.style.opacity = dir === 'right' ? 1 : 0;
+  if (nopeEl) nopeEl.style.opacity = dir === 'left' ? 1 : 0;
+
+  topCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+  topCard.style.transform = dir === 'right'
+    ? 'translateX(500px) rotate(30deg)'
+    : 'translateX(-500px) rotate(-30deg)';
+  topCard.style.opacity = '0';
+
+  setTimeout(() => {
+    if (dir === 'right' && currentCardIndex === 0) {
+      showMatch();
+    } else {
+      currentCardIndex++;
+      if (currentCardIndex >= profiles.length) currentCardIndex = 0;
+      buildCards();
+    }
+  }, 400);
+}
+
+function superLike() {
+  const topCard = document.getElementById(`card-${currentCardIndex}`);
+  if (!topCard) return;
+  topCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+  topCard.style.transform = 'translateY(-500px) scale(1.1)';
+  topCard.style.opacity = '0';
+  showToast('⭐ Super Like sent!');
+  setTimeout(() => {
+    currentCardIndex++;
+    if (currentCardIndex >= profiles.length) currentCardIndex = 0;
+    buildCards();
+  }, 400);
+}
+
+// ──────────────────────────────
+// MATCH MODAL
+// ──────────────────────────────
+
+function showMatch() {
+  const modal = document.getElementById('matchModal');
+  const auraDiv = document.getElementById('matchAuras');
+  const p = profiles[0];
+
+  auraDiv.innerHTML = `
+    <div style="text-align:center">
+      <canvas id="matchAura1" width="80" height="80" style="border-radius:50%;border:2px solid rgba(139,92,246,0.5)"></canvas>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px">You</div>
+    </div>
+    <div style="font-size:28px;color:#d946ef">💞</div>
+    <div style="text-align:center">
+      <canvas id="matchAura2" width="80" height="80" style="border-radius:50%;border:2px solid rgba(217,70,239,0.5)"></canvas>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px">${p.name}</div>
+    </div>
+  `;
+
+  document.getElementById('matchInsight').textContent =
+    `${p.compat}% compatibility — Your curiosity and creativity align beautifully.`;
+
+  modal.classList.add('show');
+
+  setTimeout(() => {
+    createAuraRenderer(document.getElementById('matchAura1'), { colors: ['#6366f1','#8b5cf6','#a78bfa'], speed: 0.5 });
+    createAuraRenderer(document.getElementById('matchAura2'), { colors: p.colors, speed: 0.4 });
+    addMatch(p);
+  }, 100);
+}
+
+function closeMatch() {
+  document.getElementById('matchModal').classList.remove('show');
+  currentCardIndex++;
+  if (currentCardIndex >= profiles.length) currentCardIndex = 0;
+  buildCards();
+}
+
+function openChat() {
+  document.getElementById('matchModal').classList.remove('show');
+  currentCardIndex++;
+  if (currentCardIndex >= profiles.length) currentCardIndex = 0;
+  buildCards();
+  setTimeout(() => goTo('screen-messages'), 100);
+}
+
+// ──────────────────────────────
+// MATCHES LIST
+// ──────────────────────────────
+
+const matchedProfiles = [
+  { name:'Sofia', city:'Milano', colors:['#8b5cf6','#d946ef','#f472b6'], lastMsg:'Hey! Your aura caught my eye ✨', time:'2m', online:true, unread:2 },
+  { name:'Chiara', city:'Torino', colors:['#f59e0b','#ef4444','#ec4899'], lastMsg:'You: Tell me about your weekend!', time:'1h', online:false, unread:0 },
+  { name:'Valentina', city:'Venezia', colors:['#10b981','#3b82f6','#6366f1'], lastMsg:'That sounds amazing 😍', time:'3h', online:true, unread:1 },
+];
+
+function addMatch(p) {
+  matchedProfiles.unshift({ name:p.name, city:p.city, colors:p.colors, lastMsg:'Say hello! ✨', time:'now', online:true, unread:0 });
+}
+
+function buildMatchList() {
+  const list = document.getElementById('matchList');
+  list.innerHTML = matchedProfiles.map((m, i) => `
+    <div class="match-item" onclick="goToChat(${i})">
+      <div class="match-avatar">
+        <canvas id="mav-${i}" width="52" height="52" style="border-radius:50%"></canvas>
+        ${m.online ? '<div class="online-dot"></div>' : ''}
+        ${m.unread ? `<div style="position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#8b5cf6;border:2px solid #0a0a0f;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${m.unread}</div>` : ''}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;margin-bottom:3px">${m.name}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,${m.unread ? '0.8' : '0.4'});${m.unread ? 'font-weight:600' : ''};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.lastMsg}</div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);flex-shrink:0">${m.time}</div>
+    </div>
+  `).join('');
+
+  matchedProfiles.forEach((m, i) => {
+    setTimeout(() => {
+      const c = document.getElementById(`mav-${i}`);
+      if (c) createAuraRenderer(c, { colors: m.colors, speed: 0.3 });
+    }, i * 50);
+  });
+}
+
+function goToChat(i) {
+  const m = matchedProfiles[i];
+  document.getElementById('chatName').textContent = m.name;
+  createAuraRenderer(document.getElementById('chatAuraCanvas'), { colors: m.colors, speed: 0.4 });
+  goTo('screen-messages');
+  setNav('nav-messages');
+}
+
+// ──────────────────────────────
+// MESSAGES
+// ──────────────────────────────
+
+const msgSuggestions = ['Tell me your favorite spot to shoot 📸', 'What drew you to photography?', 'Film or digital?', 'Show me your best shot! 🤩'];
+let showingSuggestions = true;
+
+function toggleAiSuggestions() {
+  const el = document.getElementById('aiSuggestions');
+  showingSuggestions = !showingSuggestions;
+  el.style.display = showingSuggestions ? 'flex' : 'none';
+  if (showingSuggestions) showToast('🤖 AI suggestions loaded');
+}
+
+function useSuggestion(el) {
+  document.getElementById('msgInput').value = el.textContent;
+  document.getElementById('msgInput').focus();
+}
+
+function handleMsgKey(e) {
+  if (e.key === 'Enter') sendMessage();
+}
+
+function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const list = document.getElementById('messagesList');
+  const msg = document.createElement('div');
+  msg.className = 'message sent';
+  msg.textContent = text;
+  list.appendChild(msg);
+  input.value = '';
+  list.scrollTop = list.scrollHeight;
+
+  // Show typing
+  const typing = document.getElementById('typingIndicator');
+  typing.style.display = 'block';
+  list.scrollTop = list.scrollHeight;
+
+  // Auto reply
+  const replies = [
+    'Oh I love that question! 😊',
+    'Haha yes exactly!! How did you know? 👀',
+    'That\'s so interesting — tell me more!',
+    'You have great taste 😄',
+    'I was just thinking about that actually ✨'
+  ];
+  setTimeout(() => {
+    typing.style.display = 'none';
+    const reply = document.createElement('div');
+    reply.className = 'message received';
+    reply.textContent = replies[Math.floor(Math.random() * replies.length)];
+    list.appendChild(reply);
+    list.scrollTop = list.scrollHeight;
+  }, 1500 + Math.random() * 1000);
+}
+
+// ──────────────────────────────
+// PREMIUM BILLING TOGGLE
+// ──────────────────────────────
+
+function setBilling(type) {
+  const monthly = document.getElementById('billMonthly');
+  const yearly = document.getElementById('billYearly');
+  const goldPrice = document.getElementById('goldPrice');
+  const platPrice = document.getElementById('platPrice');
+  const goldPeriod = document.getElementById('goldPeriod');
+  const platPeriod = document.getElementById('platPeriod');
+
+  if (type === 'yearly') {
+    yearly.style.background = 'linear-gradient(135deg,#7c3aed,#d946ef)';
+    yearly.style.color = 'white';
+    monthly.style.background = 'none';
+    monthly.style.color = 'rgba(255,255,255,0.5)';
+    goldPrice.textContent = '6.67€';
+    platPrice.textContent = '13.33€';
+    goldPeriod.textContent = 'Billed 79.99€/year';
+    platPeriod.textContent = 'Billed 159.99€/year';
+  } else {
+    monthly.style.background = 'linear-gradient(135deg,#7c3aed,#d946ef)';
+    monthly.style.color = 'white';
+    yearly.style.background = 'none';
+    yearly.style.color = 'rgba(255,255,255,0.5)';
+    goldPrice.textContent = '9.99€';
+    platPrice.textContent = '19.99€';
+    goldPeriod.textContent = 'Billed monthly';
+    platPeriod.textContent = 'Billed monthly';
+  }
+}
+
+// ──────────────────────────────
+// NAVIGATION
+// ──────────────────────────────
+
+function goTo(screenId) {
+  previousScreen = document.querySelector('.screen.active')?.id || previousScreen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+
+  if (screenId === 'screen-matches') buildMatchList();
+  if (screenId === 'screen-messages') {
+    setTimeout(() => {
+      const list = document.getElementById('messagesList');
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 100);
+  }
+}
+
+function goBack() {
+  goTo(previousScreen);
+  setNav(previousScreen === 'screen-matches' ? 'nav-matches' : previousScreen === 'screen-messages' ? 'nav-messages' : 'nav-discover');
+}
+
+function setNav(activeId) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(activeId);
+  if (el) el.classList.add('active');
+}
+
+// ──────────────────────────────
+// TOAST
+// ──────────────────────────────
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 2500);
+}
+
+// ──────────────────────────────
+// INIT
+// ──────────────────────────────
+
+buildCards();
+
+// Init chat aura
+setTimeout(() => {
+  const chatCanvas = document.getElementById('chatAuraCanvas');
+  if (chatCanvas) createAuraRenderer(chatCanvas, { colors: ['#8b5cf6','#d946ef','#f472b6'], speed: 0.4 });
+}, 200);
+</script>
+</body>
+</html>
