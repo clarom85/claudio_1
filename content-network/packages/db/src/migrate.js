@@ -14,8 +14,14 @@ async function migrate() {
   // Neon non accetta multiple statements in una query — esegui uno per uno
   const statements = schema
     .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.startsWith('--'));
+    .map(s => {
+      // Rimuovi righe che sono solo commenti dall'inizio
+      return s.split('\n')
+        .filter(line => !line.trim().startsWith('--'))
+        .join('\n')
+        .trim();
+    })
+    .filter(s => s.length > 0);
 
   for (const statement of statements) {
     await sql(statement + ';');
