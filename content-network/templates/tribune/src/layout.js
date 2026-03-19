@@ -165,7 +165,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="/images/${r.slug}.webp" alt="${esc(r.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
   const body=`${header(site)}<main class="site-main"><div class="wrap">
     <header class="art-hdr">
-      <div class="art-kicker">${esc(article.category||'Expert Guide')}</div>
+      <div class="art-kicker"><a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'Expert Guide')}</a></div>
       <h1 class="art-title">${esc(article.title)}</h1>
       <div class="art-deck">${esc(article.metaDescription)}</div>
       <div class="art-byline"><span>By <strong>${esc(site.authorName)}</strong></span><span>${esc(site.authorTitle)}</span><time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
@@ -193,6 +193,13 @@ export function renderHomePage(articles,site){
   const gridHtml=latest.length?`<section><h2 class="section-title">Latest Coverage</h2><div class="art-grid">${latest.map(a=>`<article class="card"><div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3><p class="card-excerpt">${esc(a.excerpt)}</p></div></article>`).join('')}</div></section>`:'';
   const body=`${header(site)}<main class="site-main"><div class="wrap"><div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>${heroHtml}<div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>${gridHtml}</div></main>${footer(site)}`;
   return renderBase({title:`${site.name} — Expert Coverage & Analysis`,description:`${site.name}: authoritative expert-backed articles.`,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId});
+}
+
+export function renderCategoryPage(articles,category,site){
+  const gridHtml=articles.map(a=>`<article class="card"><div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div><div class="card-body"><div class="card-cat">${esc(category.name)}</div><h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2><p class="card-excerpt">${esc(a.excerpt||'')}</p><div class="card-meta">${esc(a.author||site.authorName)}</div></div></article>`).join('');
+  const schema={'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:`${site.url}/`},{'@type':'ListItem',position:2,name:category.name,item:`${site.url}/category/${category.slug}/`}]};
+  const body=`${header(site)}<main class="site-main"><div class="wrap"><div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div><div style="margin:20px 0 4px;font-size:13px;color:var(--muted)"><a href="/" style="color:var(--green)">Home</a> › <span>${esc(category.name)}</span></div><h1 class="section-title">${esc(category.name)}</h1><p style="color:var(--muted);margin-bottom:28px;font-size:14px">${articles.length} expert article${articles.length!==1?'s':''}</p><div class="art-grid">${gridHtml}</div><div class="ad ad-leader" style="margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div></div></main>${footer(site)}`;
+  return renderBase({title:`${category.name} — ${site.name}`,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:[schema],body,adsenseId:site.adsenseId});
 }
 
 export function render404Page(site){

@@ -18,6 +18,7 @@ import {
   generateRobotsTxt, generateSitemap, writeSiteFile
 } from '@content-network/vps';
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -236,7 +237,9 @@ function writeApiFiles(domain, articles, niche) {
   writeFileSync(join(apiDir, 'articles.json'), JSON.stringify(lite), 'utf-8');
   writeFileSync(join(apiDir, 'trending.json'), JSON.stringify(lite.slice(0, 8)), 'utf-8');
 
-  const cats = [{ name: niche.name, slug: niche.slug }];
+  // Pre-populate with niche sub-categories so nav shows from day 1
+  const nicheCats = getCategoriesForNiche(niche.slug);
+  const cats = nicheCats.length ? nicheCats : [{ name: niche.name, slug: niche.slug }];
   writeFileSync(join(apiDir, 'categories.json'), JSON.stringify(cats), 'utf-8');
 }
 

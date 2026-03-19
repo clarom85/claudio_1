@@ -15,6 +15,7 @@ import {
   getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql
 } from '@content-network/db';
 import { generateSitemap, writeSiteFile } from '@content-network/vps';
+import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -98,6 +99,7 @@ async function writeArticlePage(article, siteConfig, template) {
     LIMIT 5
   `;
 
+  const cat = classifyArticle(siteConfig.nicheSlug, article.keyword || '', article.title);
   const articleData = {
     slug: article.slug,
     title: article.title,
@@ -105,7 +107,8 @@ async function writeArticlePage(article, siteConfig, template) {
     excerpt: (article.meta_description || '').slice(0, 120) + '...',
     content: article.content,
     schemas: article.schema_markup || [],
-    category: categoryFromNiche(siteConfig.nicheSlug),
+    category: cat.name,
+    categorySlug: cat.slug,
     date: article.published_at || article.created_at
   };
 
@@ -144,28 +147,36 @@ async function rebuildAffectedSites(stats) {
       const siteConfig = await buildSiteConfig(site, site.niche_slug);
 
       // Articoli per il frontend
-      const articlesData = published.map(a => ({
-        slug: a.slug,
-        title: a.title,
-        metaDescription: a.meta_description,
-        excerpt: (a.meta_description || '').slice(0, 120) + '...',
-        content: a.content,
-        schemas: a.schema_markup || [],
-        category: categoryFromNiche(site.niche_slug),
-        author: siteConfig.authorName,
-        date: a.published_at || a.created_at,
-        tags: []
-      }));
+      const articlesData = published.map(a => {
+        const cat = classifyArticle(site.niche_slug, a.keyword || '', a.title);
+        return {
+          slug: a.slug,
+          title: a.title,
+          metaDescription: a.meta_description,
+          excerpt: (a.meta_description || '').slice(0, 120) + '...',
+          content: a.content,
+          schemas: a.schema_markup || [],
+          category: cat.name,
+          categorySlug: cat.slug,
+          author: siteConfig.authorName,
+          date: a.published_at || a.created_at,
+          tags: []
+        };
+      });
 
       // Homepage
       const homeHtml = renderHomePage(articlesData, siteConfig);
       writeFileSync(join(WWW_ROOT, site.domain, 'index.html'), homeHtml, 'utf-8');
 
-      // API JSON
+      // API JSON (include derived categories)
       updateApiFiles(site.domain, articlesData, { name: site.niche_name, slug: site.niche_slug });
 
-      // Sitemap
-      generateSitemap(site.domain, published);
+      // Category pages
+      await generateCategoryPages(site.domain, articlesData, siteConfig, site.template);
+
+      // Sitemap (include category pages)
+      const categoryUrls = buildCategoryUrls(articlesData);
+      generateSitemap(site.domain, [...published, ...categoryUrls]);
 
       stats.rebuilt++;
       console.log(`  ✅ Rebuilt: ${site.domain} (${published.length} articles)`);
@@ -212,10 +223,46 @@ function updateApiFiles(domain, articles, niche) {
   const apiDir = join(WWW_ROOT, domain, 'api');
   mkdirSync(apiDir, { recursive: true });
 
-  const lite = articles.map(a => ({ slug: a.slug, title: a.title, excerpt: a.excerpt, tags: a.tags || [], category: a.category }));
+  const lite = articles.map(a => ({ slug: a.slug, title: a.title, excerpt: a.excerpt, tags: a.tags || [], category: a.category, categorySlug: a.categorySlug }));
   writeFileSync(join(apiDir, 'articles.json'), JSON.stringify(lite), 'utf-8');
   writeFileSync(join(apiDir, 'trending.json'), JSON.stringify(lite.slice(0, 8)), 'utf-8');
-  writeFileSync(join(apiDir, 'categories.json'), JSON.stringify([{ name: niche.name, slug: niche.slug }]), 'utf-8');
+
+  // Build category list with counts, sorted by article count desc
+  const catMap = {};
+  for (const a of articles) {
+    const slug = a.categorySlug || niche.slug;
+    const name = a.category || niche.name;
+    if (!catMap[slug]) catMap[slug] = { name, slug, count: 0 };
+    catMap[slug].count++;
+  }
+  const cats = Object.values(catMap).sort((a, b) => b.count - a.count).slice(0, 8);
+  writeFileSync(join(apiDir, 'categories.json'), JSON.stringify(cats), 'utf-8');
+}
+
+async function generateCategoryPages(domain, articles, siteConfig, template) {
+  const { renderCategoryPage } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
+
+  // Group articles by category
+  const catMap = {};
+  for (const a of articles) {
+    const slug = a.categorySlug || siteConfig.nicheSlug;
+    if (!catMap[slug]) catMap[slug] = { name: a.category, slug, articles: [] };
+    catMap[slug].articles.push(a);
+  }
+
+  for (const cat of Object.values(catMap)) {
+    if (!cat.articles.length) continue;
+    const html = renderCategoryPage(cat.articles, cat, siteConfig);
+    const dir = join(WWW_ROOT, domain, 'category', cat.slug);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+  }
+  console.log(`  📂 Generated ${Object.keys(catMap).length} category pages`);
+}
+
+function buildCategoryUrls(articles) {
+  const slugs = [...new Set(articles.map(a => a.categorySlug).filter(Boolean))];
+  return slugs.map(slug => ({ slug: `category/${slug}`, published_at: new Date().toISOString() }));
 }
 
 async function buildSiteConfig(site, nicheSlug) {

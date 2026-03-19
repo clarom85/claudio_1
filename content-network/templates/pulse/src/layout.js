@@ -231,7 +231,7 @@ ${header(site)}
 <main class="site-main">
   <div class="wrap">
     <header class="art-hdr">
-      <div class="breadcrumb"><a href="/">Home</a> › <span>${esc(title)}</span></div>
+      <div class="breadcrumb"><a href="/">Home</a> › ${article.categorySlug ? `<a href="/category/${article.categorySlug}/">${esc(article.category)}</a> › ` : ''}<span>${esc(title)}</span></div>
       <h1 class="art-title">${esc(title)}</h1>
       <div class="art-meta">
         <div class="author">
@@ -354,6 +354,46 @@ ${header(site)}
 </main>
 ${footer(site)}`;
   return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body });
+}
+
+export function renderCategoryPage(articles, category, site) {
+  const gridHtml = articles.map(a => `
+    <article class="card">
+      <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
+      <div class="card-body">
+        <div class="card-cat">${esc(category.name)}</div>
+        <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>
+        <p class="card-excerpt">${esc(a.excerpt || '')}</p>
+        <div class="card-meta"><span>${esc(a.author || site.authorName)}</span></div>
+      </div>
+    </article>`).join('');
+
+  const breadcrumbSchema = { '@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[
+    {'@type':'ListItem',position:1,name:'Home',item:`${site.url}/`},
+    {'@type':'ListItem',position:2,name:category.name,item:`${site.url}/category/${category.slug}/`}
+  ]};
+
+  const body = `
+${header(site)}
+<main class="site-main">
+  <div class="wrap">
+    <div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    <div class="breadcrumb" style="margin:16px 0 4px"><a href="/">Home</a> › <span>${esc(category.name)}</span></div>
+    <h1 class="section-title">${esc(category.name)}</h1>
+    <p style="color:var(--muted);margin-bottom:28px">${articles.length} expert article${articles.length !== 1 ? 's' : ''}</p>
+    <div class="art-grid">${gridHtml}</div>
+    <div class="ad ad-leader" style="margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+  </div>
+</main>
+${footer(site)}`;
+
+  return renderBase({
+    title: `${category.name} — ${site.name}`,
+    description: `Browse ${articles.length} expert articles about ${category.name} on ${site.name}. Practical guides, cost estimates, and how-to advice.`,
+    slug: `category/${category.slug}`,
+    siteName: site.name, siteUrl: site.url,
+    schemas: [breadcrumbSchema], body, adsenseId: site.adsenseId
+  });
 }
 
 // ── Shared partials ──────────────────────────────────────────
