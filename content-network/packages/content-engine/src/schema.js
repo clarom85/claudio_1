@@ -3,7 +3,7 @@
  * Aumenta significativamente la probabilità di rich snippets in SERP
  */
 
-export function buildArticleSchema({ title, description, slug, author, siteName, siteUrl, datePublished, imageSlug }) {
+export function buildArticleSchema({ title, description, slug, author, siteName, siteUrl, datePublished, dateModified, imageSlug }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -11,7 +11,7 @@ export function buildArticleSchema({ title, description, slug, author, siteName,
     description,
     url: `${siteUrl}/${slug}`,
     datePublished,
-    dateModified: datePublished,
+    dateModified: dateModified || datePublished,
     image: imageSlug
       ? { '@type': 'ImageObject', url: `${siteUrl}/images/${imageSlug}.jpg`, width: 940, height: 627 }
       : undefined,

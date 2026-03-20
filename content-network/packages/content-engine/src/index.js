@@ -93,6 +93,7 @@ async function run() {
         content: article.content,
         wordCount: article.wordCount,
         schemaMarkup: article.schemaMarkup,
+        tags: article.tags || [],
         image: article.image,
         category: article.category,
         author: article.author,

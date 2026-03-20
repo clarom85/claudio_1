@@ -172,7 +172,7 @@ async function rebuildAffectedSites(stats) {
           categorySlug: cat.slug,
           author: siteConfig.authorName,
           date: a.published_at || a.created_at,
-          tags: []
+          tags: a.tags || []
         };
       });
 
@@ -185,6 +185,9 @@ async function rebuildAffectedSites(stats) {
 
       // Category pages
       await generateCategoryPages(site.domain, articlesData, siteConfig, site.template);
+
+      // Tag pages — eliminates 404s from tag links in articles
+      await generateTagPages(site.domain, articlesData, siteConfig);
 
       // Sitemap (include category pages)
       const categoryUrls = buildCategoryUrls(articlesData);
@@ -274,16 +277,22 @@ async function refreshStaleArticles(stats) {
       // 1. Aggiorna DB
       await sql`UPDATE articles SET updated_at = NOW() WHERE id = ${article.id}`;
 
-      // 2. Aggiorna "Last reviewed" nell'HTML su disco
+      // 2. Aggiorna "Last reviewed" + dateModified schema nell'HTML su disco
       const htmlPath = join(WWW_ROOT, site.domain, article.slug, 'index.html');
       if (existsSync(htmlPath)) {
         try {
           let html = readFileSync(htmlPath, 'utf-8');
-          const updated = html.replace(
+          // Update visible "Last reviewed" date
+          html = html.replace(
             /(<strong[^>]*>Last reviewed:<\/strong>\s*)([^<]+)/,
             `$1 ${newDate}`
           );
-          if (updated !== html) writeFileSync(htmlPath, updated, 'utf-8');
+          // Update dateModified in JSON-LD schema
+          html = html.replace(
+            /"dateModified":"[^"]*"/g,
+            `"dateModified":"${new Date().toISOString()}"`
+          );
+          writeFileSync(htmlPath, html, 'utf-8');
         } catch (e) { /* non bloccare */ }
       }
 
@@ -482,6 +491,37 @@ function categoryFromNiche(nicheSlug) {
     'small-town-tourism': 'Travel'
   };
   return map[nicheSlug] || 'Guide';
+}
+
+/**
+ * Genera pagine statiche per ogni tag con 2+ articoli.
+ * Risolve i 404 dai link /tag/{slug}/ presenti negli articoli.
+ */
+async function generateTagPages(domain, articlesData, siteConfig) {
+  // Build tag → articles map
+  const tagMap = {};
+  for (const a of articlesData) {
+    for (const tag of (a.tags || [])) {
+      const slug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (!slug) continue;
+      if (!tagMap[slug]) tagMap[slug] = { name: tag, slug, articles: [] };
+      tagMap[slug].articles.push(a);
+    }
+  }
+
+  const tags = Object.values(tagMap).filter(t => t.articles.length >= 2);
+  if (!tags.length) return;
+
+  const { renderTagPage } = await import(`${TEMPLATES_DIR}/${siteConfig.template}/src/layout.js`);
+
+  for (const tag of tags) {
+    const html = renderTagPage(tag, tag.articles, siteConfig);
+    const dir = join(WWW_ROOT, domain, 'tag', tag.slug);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+  }
+
+  console.log(`  🏷️  Generated ${tags.length} tag pages`);
 }
 
 run().catch(err => { console.error('Scheduler error:', err); process.exit(1); });

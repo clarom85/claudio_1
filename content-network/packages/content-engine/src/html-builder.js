@@ -3,7 +3,7 @@
  * Ottimizzato per SEO e ad placement
  */
 
-import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema } from './schema.js';
+import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema, buildHowToSchema } from './schema.js';
 
 // Inserisce ads inline — usa classi CSS del template (.ad .ad-inline)
 const AD_UNIT_INLINE = `<div class="ad ad-inline">
@@ -22,10 +22,20 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
   const articleSchema = buildArticleSchema({
     title, description: metaDescription, slug, author,
-    siteName, siteUrl, datePublished, imageSlug: slug
+    siteName, siteUrl, datePublished, dateModified: datePublished, imageSlug: slug
   });
 
   const faqSchema = buildFAQSchema(faq);
+
+  // HowTo schema for step-based articles
+  const howToSchema = (articleData.schemaType === 'HowTo' && sections.length >= 2)
+    ? buildHowToSchema({
+        title,
+        description: metaDescription,
+        steps: sections.map(s => ({ name: s.h2, text: s.content.split('\n\n')[0] })),
+        totalTime: 'PT30M'
+      })
+    : null;
 
   const categorySlug = articleData.category
     ? articleData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -39,6 +49,15 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
   const breadcrumb = buildBreadcrumbSchema(breadcrumbItems, siteUrl);
 
+  // Table of Contents (only for articles with 3+ sections)
+  const tocHTML = sections.length >= 3 ? `
+  <nav style="background:#f0f4ff;border:1px solid #d0d9ff;border-left:4px solid #3b5bdb;border-radius:4px;padding:18px 22px;margin:0 0 28px;">
+    <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#3b5bdb;margin:0 0 10px;">In This Article</p>
+    <ol style="margin:0;padding-left:18px;">
+      ${sections.map(s => `<li style="margin-bottom:5px;"><a href="#${slugify(s.h2)}" style="color:#3b5bdb;text-decoration:none;font-size:14px;line-height:1.5;">${escapeHtml(s.h2)}</a></li>`).join('')}
+    </ol>
+  </nav>` : '';
+
   let sectionsHTML = '';
   sections.forEach((section, i) => {
     // Ad after every section
@@ -51,7 +70,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
     sectionsHTML += `
     <section class="article-section">
-      <h2>${escapeHtml(section.h2)}</h2>
+      <h2 id="${slugify(section.h2)}">${escapeHtml(section.h2)}</h2>
       ${section.content.split('\n\n').map(p => `<p>${p}</p>`).join('')}
       ${listHTML}
     </section>
@@ -128,6 +147,8 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       <div class="article-intro">
         <p class="intro-text">${escapeHtml(intro)}</p>
       </div>
+
+      ${tocHTML}
 
       ${AD_UNIT_INLINE}
 
@@ -206,7 +227,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
   </div>
 </article>`,
 
-    schemas: [articleSchema, faqSchema, breadcrumb],
+    schemas: [articleSchema, faqSchema, breadcrumb, ...(howToSchema ? [howToSchema] : [])],
     metaDescription,
     wordCount: countWords(intro + sections.map(s => s.content).join(' ') + conclusion)
   };

@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS articles (
 
 -- Aggiunge updated_at su DB esistenti (idempotente)
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
 
 -- Coda pubblicazione (scheduler usa questa)
 CREATE TABLE IF NOT EXISTS publish_queue (

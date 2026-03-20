@@ -14,6 +14,7 @@ const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
 const siteUrl = import.meta.env.SITE_URL || Astro.site?.href || '';
 const adsenseId = import.meta.env.ADSENSE_ID || '';
 const ga4Id = import.meta.env.GA4_MEASUREMENT_ID || '';
+const gscVerification = import.meta.env.GOOGLE_SITE_VERIFICATION || '';
 const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
 ---
 <!DOCTYPE html>
@@ -22,6 +23,7 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
+  {gscVerification && <meta name="google-site-verification" content={gscVerification} />}
 
   <title>{title} | {siteName}</title>
   <meta name="description" content={description} />

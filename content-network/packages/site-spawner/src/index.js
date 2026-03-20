@@ -212,6 +212,7 @@ async function generateStaticPages(domain, siteConfig, template) {
   const pages = {
     'about/index.html': {
       title: 'About Us',
+      noindex: false,
       description: `Learn about ${siteName} and our team of experts.`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:20px">About ${siteName}</h1>
@@ -235,6 +236,7 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'privacy/index.html': {
       title: 'Privacy Policy',
+      noindex: true,
       description: `Privacy policy for ${domain}`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:8px">Privacy Policy</h1>
@@ -250,6 +252,7 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'terms/index.html': {
       title: 'Terms of Service',
+      noindex: true,
       description: `Terms of service for ${domain}`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:8px">Terms of Service</h1>
@@ -261,6 +264,7 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'disclaimer/index.html': {
       title: 'Disclaimer',
+      noindex: true,
       description: `Disclaimer for ${domain}`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:16px">Disclaimer</h1>
@@ -270,6 +274,7 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'contact/index.html': {
       title: 'Contact Us',
+      noindex: true,
       description: `Contact ${siteName}`,
       body: `<div style="max-width:600px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:16px">Contact Us</h1>
@@ -279,6 +284,7 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'advertise/index.html': {
       title: 'Advertise With Us',
+      noindex: true,
       description: `Advertising opportunities on ${siteName}`,
       body: `<div style="max-width:700px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:16px">Advertise With Us</h1>
@@ -291,8 +297,8 @@ async function generateStaticPages(domain, siteConfig, template) {
   for (const [path, page] of Object.entries(pages)) {
     const dir = join(WWW_ROOT, domain, path.replace('/index.html', ''));
     mkdirSync(dir, { recursive: true });
-    // Wrap body in a basic layout (can't use renderBase without full template context)
-    const html = simplePageWrapper(page.title, page.description, page.body, siteConfig);
+    const canonical = `${siteConfig.url}/${path.replace('index.html', '')}`;
+    const html = simplePageWrapper(page.title, page.description, page.body, siteConfig, { noindex: page.noindex || false, canonical });
     writeFileSync(join(WWW_ROOT, domain, path), html, 'utf-8');
   }
 
@@ -323,7 +329,7 @@ async function generateStaticPages(domain, siteConfig, template) {
 </script>`;
 
   writeFileSync(join(WWW_ROOT, domain, '404.html'),
-    simplePageWrapper('Page Not Found', `The page you're looking for doesn't exist — ${siteName}`, notFoundBody, siteConfig),
+    simplePageWrapper('Page Not Found', `The page you're looking for doesn't exist — ${siteName}`, notFoundBody, siteConfig, { noindex: true }),
     'utf-8');
 }
 
@@ -406,7 +412,7 @@ async function generateAuthorPage(domain, author, siteConfig, template) {
   </div>
 </div>`;
 
-  const html = simplePageWrapper(`${author.name} — ${author.title}`, author.shortBio, body, siteConfig);
+  const html = simplePageWrapper(`${author.name} — ${author.title}`, author.shortBio, body, siteConfig, { canonical: `${siteConfig.url}/author/${author.avatar}/` });
   const dir = join(WWW_ROOT, domain, 'author', author.avatar);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'index.html'), html, 'utf-8');
@@ -465,7 +471,7 @@ function generateCategoryPage(domain, category, introData, siteConfig) {
     });
 </script>`;
 
-  const html = simplePageWrapper(headline, introText.slice(0, 160), body, siteConfig);
+  const html = simplePageWrapper(headline, introText.slice(0, 160), body, siteConfig, { canonical: `${siteConfig.url}/category/${category.slug}/` });
   const dir = join(WWW_ROOT, domain, 'category', category.slug);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'index.html'), html, 'utf-8');
@@ -502,16 +508,28 @@ function writePlaceholderImage(domain) {
   writeFileSync(join(WWW_ROOT, domain, 'images/placeholder.webp'), svg, 'utf-8');
 }
 
-function simplePageWrapper(title, description, content, site) {
+function simplePageWrapper(title, description, content, site, { noindex = false, canonical = '', ogImage = '' } = {}) {
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
+  const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
   const ga4Script = ga4Id ? `
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+  const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
 
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${title} | ${site.name}</title>
-<meta name="description" content="${description}"/>
+<meta name="robots" content="${robots}"/>
+${gscVerification ? `<meta name="google-site-verification" content="${gscVerification}"/>` : ''}
+<title>${htmlEsc(title)} | ${htmlEsc(site.name)}</title>
+<meta name="description" content="${htmlEsc(description)}"/>
+${canonical ? `<link rel="canonical" href="${canonical}"/>` : ''}
+<meta property="og:title" content="${htmlEsc(title)}"/>
+<meta property="og:description" content="${htmlEsc(description)}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="${htmlEsc(site.name)}"/>
+${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
+${ogImage ? `<meta property="og:image" content="${ogImage}"/>` : ''}
+<meta name="twitter:card" content="summary_large_image"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 ${ga4Script}
 </head><body>
@@ -520,9 +538,13 @@ ${ga4Script}
 </header>
 <main style="padding:20px 0;min-height:60vh">${content}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
-  <p>© ${new Date().getFullYear()} ${site.name} · <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> · <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a></p>
+  <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a></p>
 </footer>
 </body></html>`;
+}
+
+function htmlEsc(str = '') {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function generateSiteName(domain) {

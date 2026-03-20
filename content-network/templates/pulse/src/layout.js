@@ -157,18 +157,22 @@ img{max-width:100%;height:auto;display:block}
 }
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '' }) {
+export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
   ).join('\n');
+  const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
+  const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
+  const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
 
   return `<!DOCTYPE html>
 <html lang="en" data-adsense="${adsenseId}">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="robots" content="index,follow,max-image-preview:large"/>
+<meta name="robots" content="${robots}"/>
+${gscVerification ? `<meta name="google-site-verification" content="${gscVerification}"/>` : ''}
 <title>${esc(title)} | ${esc(siteName)}</title>
 <meta name="description" content="${esc(description)}"/>
 <link rel="canonical" href="${canonical}"/>
@@ -177,10 +181,12 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
 <meta property="og:url" content="${canonical}"/>
 <meta property="og:site_name" content="${esc(siteName)}"/>
 <meta property="og:type" content="${slug ? 'article' : 'website'}"/>
+${ogImage ? `<meta property="og:image" content="${ogImage}"/><meta name="twitter:image" content="${ogImage}"/>` : ''}
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${esc(title)}"/>
 <meta name="twitter:description" content="${esc(description)}"/>
 ${schemasHtml}
+${ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap"/>
@@ -266,7 +272,7 @@ ${header(site)}
 </main>
 ${footer(site)}`;
 
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId });
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '' });
 }
 
 export function renderHomePage(articles, site) {
@@ -383,6 +389,38 @@ ${footer(site)}`;
     slug: `category/${category.slug}`,
     siteName: site.name, siteUrl: site.url,
     schemas: [breadcrumbSchema], body, adsenseId: site.adsenseId
+  });
+}
+
+export function renderTagPage(tag, articles, site) {
+  const listHtml = articles.slice(0, 40).map(a => `
+    <article class="card">
+      <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
+      <div class="card-body">
+        <div class="card-cat">${esc(a.category || '')}</div>
+        <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>
+        <p class="card-excerpt">${esc(a.excerpt || '')}</p>
+      </div>
+    </article>`).join('');
+
+  const body = `
+${header(site)}
+<main class="site-main">
+  <div class="wrap">
+    <div class="breadcrumb" style="margin:16px 0 4px"><a href="/">Home</a> › <span>Topic: ${esc(tag.name)}</span></div>
+    <h1 class="section-title">Topic: ${esc(tag.name)}</h1>
+    <p style="color:var(--muted);margin-bottom:28px">${articles.length} article${articles.length !== 1 ? 's' : ''}</p>
+    <div class="art-grid">${listHtml}</div>
+  </div>
+</main>
+${footer(site)}`;
+
+  return renderBase({
+    title: `${tag.name} — ${site.name}`,
+    description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
+    slug: `tag/${tag.slug}`,
+    siteName: site.name, siteUrl: site.url,
+    body, adsenseId: site.adsenseId
   });
 }
 
