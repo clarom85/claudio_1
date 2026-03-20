@@ -87,10 +87,47 @@ MAX_ARTICLES_PER_DAY=35
 WWW_ROOT=/var/www
 ```
 
+#### Funzionalità implementate — SEO avanzata (sessione corrente)
+- **noindex utility pages** — privacy, terms, disclaimer, contact, advertise, 404 hanno `noindex,follow`; `renderBase` accetta `noindex=true`
+- **og:image fallback** — `effectiveOgImage = ogImage || ${siteUrl}/images/og-default.jpg`; SVG brandizzato 1200x630 scritto da site-spawner a spawn time
+- **og:site_name + twitter tags** — aggiunti in tutti i renderBase
+- **GA4 dinamico** — `process.env.GA4_MEASUREMENT_ID` iniettato in `renderBase` (layout.js)
+- **GSC verification** — `process.env.GOOGLE_SITE_VERIFICATION` iniettato in renderBase + Base.astro
+- **Preconnect** — pagead2.googlesyndication.com, www.googletagmanager.com + dns-prefetch google-analytics.com
+- **CLS ads fix** — `min-height` inline su tutti i container ad (280px inline, 250px sidebar, 90px leaderboard); classe `.ad-leader` corretta
+- **Table of Contents** — generato auto in `html-builder.js` per articoli con 3+ sezioni; anchor link verso H2 con id
+- **HowTo schema** — `buildHowToSchema()` in schema.js; attivato quando `articleData.schemaType === 'HowTo'`
+- **ItemList schema** — category e tag pages includono JSON-LD ItemList con top 10 articoli (carousel rich results)
+- **Tag pages** — `renderTagPage()` in layout.js; `buildTagUrls()` in scheduler; tag in DB come `TEXT[]`; aggiunti a sitemap
+- **DB tags column** — `ALTER TABLE articles ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';`
+- **Disqus comments** — embed condizionale in `renderArticlePage`; attivo solo se `DISQUS_SHORTNAME` env presente
+- **dateModified** — `buildArticleSchema` accetta param separato; scheduler aggiorna su refresh contenuto
+
+#### Funzionalità implementate — Anti-detection AI (sessione corrente)
+- **NICHE_PROMPT_CONFIGS** in `prompts.js` — 20 nicchie top-paying, ognuna con `wordCount`, `tone`, `persona`, `structure`, `requiredElements`, `avoidances`, `categoryHint`, `schemaHint` completamente diversi
+- **20 AUTHOR_PERSONAS** — bio dettagliate, credenziali, avatar unici per nicchia
+- Le 20 nicchie: home-improvement-costs, personal-finance, insurance-guide, legal-advice, real-estate-investing, health-symptoms, credit-cards-banking, weight-loss-fitness, automotive-guide, online-education, cybersecurity-privacy, mental-health-wellness, home-security-systems, solar-energy, senior-care-medicare, business-startup + 5 originali
+
+#### Setup `.env` richiesto
+```
+ANTHROPIC_API_KEY=
+DATABASE_URL=           # Neon PostgreSQL
+CLOUDFLARE_API_TOKEN=   # Auto DNS+CDN+SSL per ogni dominio
+SERVER_IP=178.104.17.161
+CERTBOT_EMAIL=          # Fallback SSL se no Cloudflare
+ADSENSE_ID=ca-pub-XXXXXXXXXXXXXXXX
+GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+GOOGLE_SITE_VERIFICATION=   # da Search Console > Settings > Ownership verification
+PEXELS_API_KEY=
+MAX_ARTICLES_PER_DAY=35
+WWW_ROOT=/var/www
+DISQUS_SHORTNAME=       # opzionale — commenti su articoli
+```
+
 #### Prossimi step
-- Acquistare dominio reale → site-spawner crea zona CF automaticamente (nameserver da puntare al registrar)
+- **Replicare tutte le feature SEO ai 4 template rimanenti** (tribune, nexus, echo, vortex): renderBase (ogImage, noindex, GA4, GSC, preconnect), renderTagPage, renderCategoryPage ItemList, render404Page noindex, CLS ad fix
+- Inserire le 15 nuove nicchie nel DB (`niches` table) prima che keyword/content engine le usino
+- Eseguire migration DB tags: `ALTER TABLE articles ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';`
+- Acquistare dominio reale → site-spawner crea zona CF automaticamente
 - Applicare a Google AdSense (inserire ADSENSE_ID in `.env`)
-- Applicare variazioni template (tribune, nexus, echo, vortex) — solo pulse è aggiornato con tutte le feature SEO
-- Aggiornare `rebuildAffectedSites` in scheduler per usare nuova firma `generateSitemap(domain, articles, {categories, authorSlugs, toolSlug})`
 - Paginazione category pages (rel=prev/next per 50+ articoli)
-- og:image per homepage e pagine statiche

@@ -251,7 +251,26 @@ ${header(site)}
     <div class="art-layout">
       <div class="art-body">
         ${content}
-      </div>
+        ${(() => {
+          const shortname = process.env.DISQUS_SHORTNAME || '';
+          if (!shortname) return '';
+          const pageUrl = `${site.url}/${slug}/`;
+          return `<div style="margin-top:48px;padding-top:32px;border-top:2px solid #eee;">
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function() {
+      this.page.url = '${pageUrl}';
+      this.page.identifier = '${slug}';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://${shortname}.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+</div>`;
+        })()}
       <aside class="sidebar">
         <div class="ad ad-sidebar">
           <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
