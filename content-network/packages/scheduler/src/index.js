@@ -189,9 +189,10 @@ async function rebuildAffectedSites(stats) {
       // Tag pages — eliminates 404s from tag links in articles
       await generateTagPages(site.domain, articlesData, siteConfig);
 
-      // Sitemap (include category pages)
+      // Sitemap (articles + category + tag pages)
       const categoryUrls = buildCategoryUrls(articlesData);
-      generateSitemap(site.domain, [...published, ...categoryUrls]);
+      const tagUrls = buildTagUrls(articlesData);
+      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls]);
 
       stats.rebuilt++;
       console.log(`  ✅ Rebuilt: ${site.domain} (${published.length} articles)`);
@@ -451,6 +452,17 @@ async function generateCategoryPages(domain, articles, siteConfig, template) {
 function buildCategoryUrls(articles) {
   const slugs = [...new Set(articles.map(a => a.categorySlug).filter(Boolean))];
   return slugs.map(slug => ({ slug: `category/${slug}`, published_at: new Date().toISOString() }));
+}
+
+function buildTagUrls(articles) {
+  const tagSlugs = new Set();
+  for (const a of articles) {
+    for (const tag of (a.tags || [])) {
+      const slug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (slug) tagSlugs.add(slug);
+    }
+  }
+  return [...tagSlugs].map(slug => ({ slug: `tag/${slug}`, published_at: new Date().toISOString() }));
 }
 
 async function buildSiteConfig(site, nicheSlug) {

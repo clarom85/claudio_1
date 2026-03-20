@@ -165,6 +165,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
   const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
+  const effectiveOgImage = ogImage || (siteUrl ? `${siteUrl}/images/og-default.jpg` : '');
 
   return `<!DOCTYPE html>
 <html lang="en" data-adsense="${adsenseId}">
@@ -181,7 +182,7 @@ ${gscVerification ? `<meta name="google-site-verification" content="${gscVerific
 <meta property="og:url" content="${canonical}"/>
 <meta property="og:site_name" content="${esc(siteName)}"/>
 <meta property="og:type" content="${slug ? 'article' : 'website'}"/>
-${ogImage ? `<meta property="og:image" content="${ogImage}"/><meta name="twitter:image" content="${ogImage}"/>` : ''}
+${effectiveOgImage ? `<meta property="og:image" content="${effectiveOgImage}"/><meta name="twitter:image" content="${effectiveOgImage}"/>` : ''}
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${esc(title)}"/>
 <meta name="twitter:description" content="${esc(description)}"/>
@@ -334,7 +335,8 @@ ${footer(site)}`;
   return renderBase({
     title: `${site.name} — Expert Guides & How-To Articles`,
     description: `${site.name}: trusted source for expert guides, practical advice, and in-depth how-to articles.`,
-    siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId
+    siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId,
+    ogImage: hero ? `${site.url}/images/${hero.slug}.jpg` : ''
   });
 }
 
@@ -349,7 +351,7 @@ ${header(site)}
   </div>
 </main>
 ${footer(site)}`;
-  return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body });
+  return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body, noindex: true });
 }
 
 export function renderCategoryPage(articles, category, site) {
@@ -388,7 +390,8 @@ ${footer(site)}`;
     description: `Browse ${articles.length} expert articles about ${category.name} on ${site.name}. Practical guides, cost estimates, and how-to advice.`,
     slug: `category/${category.slug}`,
     siteName: site.name, siteUrl: site.url,
-    schemas: [breadcrumbSchema], body, adsenseId: site.adsenseId
+    schemas: [breadcrumbSchema], body, adsenseId: site.adsenseId,
+    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
   });
 }
 
@@ -420,7 +423,8 @@ ${footer(site)}`;
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
     slug: `tag/${tag.slug}`,
     siteName: site.name, siteUrl: site.url,
-    body, adsenseId: site.adsenseId
+    body, adsenseId: site.adsenseId,
+    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
   });
 }
 

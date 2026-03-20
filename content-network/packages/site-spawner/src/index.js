@@ -94,8 +94,8 @@ async function run() {
     const { CSS } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
     writeSiteFile(domain, 'assets/style.css', CSS);
 
-    // 4. Immagine placeholder
-    writePlaceholderImage(domain);
+    // 4. Immagine placeholder + og:image default
+    writePlaceholderImage(domain, siteConfig.name);
 
     // 5. robots.txt
     generateRobotsTxt(domain);
@@ -499,16 +499,28 @@ function generateToolFile(domain, toolConfig, siteConfig) {
   writeFileSync(join(toolDir, 'index.html'), html, 'utf-8');
 }
 
-function writePlaceholderImage(domain) {
+function writePlaceholderImage(domain, siteName = '') {
   // SVG placeholder — no external dependency
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  const placeholder = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
     <rect width="800" height="450" fill="#e8e8e8"/>
     <text x="400" y="225" text-anchor="middle" fill="#aaa" font-size="24" font-family="sans-serif">Image</text>
   </svg>`;
-  writeFileSync(join(WWW_ROOT, domain, 'images/placeholder.webp'), svg, 'utf-8');
+  writeFileSync(join(WWW_ROOT, domain, 'images/placeholder.webp'), placeholder, 'utf-8');
+
+  // og-default.jpg — 1200x630 branded SVG, used as og:image fallback for non-article pages.
+  // Real social crawlers prefer JPG/PNG; replace with an actual image once available via Pexels.
+  const label = siteName || domain;
+  const ogDefault = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <rect width="1200" height="630" fill="#1a1a2e"/>
+    <rect x="0" y="0" width="8" height="630" fill="#c0392b"/>
+    <text x="80" y="290" font-family="Georgia,serif" font-size="52" font-weight="bold" fill="#ffffff">${label}</text>
+    <text x="80" y="360" font-family="sans-serif" font-size="24" fill="rgba(255,255,255,0.6)">Expert Guides &amp; How-To Articles</text>
+  </svg>`;
+  writeFileSync(join(WWW_ROOT, domain, 'images/og-default.jpg'), ogDefault, 'utf-8');
 }
 
 function simplePageWrapper(title, description, content, site, { noindex = false, canonical = '', ogImage = '' } = {}) {
+  const effectiveOgImage = ogImage || `${site.url}/images/og-default.jpg`;
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
   const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
   const ga4Script = ga4Id ? `
@@ -528,7 +540,7 @@ ${canonical ? `<link rel="canonical" href="${canonical}"/>` : ''}
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="${htmlEsc(site.name)}"/>
 ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
-${ogImage ? `<meta property="og:image" content="${ogImage}"/>` : ''}
+<meta property="og:image" content="${effectiveOgImage}"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 ${ga4Script}
