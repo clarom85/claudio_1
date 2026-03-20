@@ -1,0 +1,92 @@
+---
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  let articles = [];
+  try {
+    const { default: data } = await import('../../content/articles.json', { assert: { type: 'json' } });
+    articles = data;
+  } catch {
+    return [];
+  }
+
+  // Build category map: slug → { name, articles[] }
+  const categoryMap = new Map();
+  for (const a of articles) {
+    if (!a.category) continue;
+    const slug = a.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (!categoryMap.has(slug)) {
+      categoryMap.set(slug, { name: a.category, slug, articles: [] });
+    }
+    categoryMap.get(slug).articles.push(a);
+  }
+
+  // Nav categories for header
+  const navCategories = Array.from(categoryMap.values()).map(c => ({ name: c.name, slug: c.slug }));
+
+  return Array.from(categoryMap.values()).map(cat => ({
+    params: { slug: cat.slug },
+    props: { cat, navCategories }
+  }));
+}
+
+const { cat, navCategories = [] } = Astro.props;
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const lcpArticle = cat.articles[0];
+---
+<Base
+  title={`${cat.name} — ${siteName}`}
+  description={`Browse all ${cat.name} articles and guides on ${siteName}. Expert-reviewed, accurate, and updated regularly.`}
+  categories={navCategories}
+  lcpImage={lcpArticle ? (lcpArticle.image || `/images/${lcpArticle.slug}.webp`) : undefined}
+>
+  <!-- Breadcrumb -->
+  <nav style="font-size:13px;color:#999;margin-bottom:20px;">
+    <a href="/" style="color:#999;">Home</a> › <span style="color:#555;">{cat.name}</span>
+  </nav>
+
+  <!-- Category hero with intro -->
+  <div style="border-bottom:3px solid var(--color-primary,#c0392b);margin-bottom:28px;padding-bottom:20px;">
+    <h1 style="font-family:'Merriweather',Georgia,serif;font-size:clamp(22px,4vw,32px);font-weight:900;color:#1a1a2e;margin-bottom:14px;">
+      {cat.name} — Articles & Guides
+    </h1>
+    <p style="font-size:16px;line-height:1.85;color:#444;max-width:720px;">
+      Browse our expert-written guides on {cat.name.toLowerCase()}. Every article is researched by a verified specialist and reviewed for accuracy before publication on {siteName}.
+    </p>
+  </div>
+
+  <!-- Articles grid -->
+  <div class="articles-grid" style="margin-bottom:40px;">
+    {cat.articles.map(article => (
+      <article class="article-card">
+        <div class="card-image">
+          <img
+            src={article.image || `/images/${article.slug}.webp`}
+            alt={article.title}
+            loading="lazy"
+            width="400" height="260"
+            onerror="this.src='/images/placeholder.webp'"
+          />
+        </div>
+        <div class="card-body">
+          <div class="card-category">{article.category}</div>
+          <h2 class="card-title" style="font-size:17px;">
+            <a href={`/${article.slug}`}>{article.title}</a>
+          </h2>
+          <p class="card-excerpt">{article.excerpt}</p>
+          <div class="card-meta">
+            <span>{article.author}</span>
+            {article.date && <span>{new Date(article.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <!-- Tool CTA -->
+  <div style="background:#fef5f4;border:1px solid #f5c6c0;border-left:4px solid #c0392b;border-radius:6px;padding:20px 24px;margin-top:8px;">
+    <p style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px;">Free Planning Tool</p>
+    <p style="font-size:14px;color:#555;margin-bottom:12px;">Use our interactive calculator to get an instant personalized estimate before you start any project.</p>
+    <a href="/tools/" style="display:inline-block;background:#c0392b;color:white;padding:9px 20px;border-radius:5px;text-decoration:none;font-size:14px;font-weight:700;">Try the Free Calculator →</a>
+  </div>
+</Base>

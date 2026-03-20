@@ -1,0 +1,76 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const siteUrl = import.meta.env.SITE_URL || '';
+const year = new Date().getFullYear();
+---
+<Base title={`Terms of Service | ${siteName}`} description={`Terms of Service for ${siteName}. Read the terms governing your use of our website and content.`}>
+  <article class="article-content" style="max-width:800px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:12px;">Terms of Service</h1>
+    <p style="color:#666; font-size:13px; margin-bottom:28px;">Last updated: January 1, {year}</p>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:28px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      By accessing or using {siteName}, you agree to be bound by these Terms of Service. Please read them carefully before using our website.
+    </p>
+
+    <section class="article-section">
+      <h2>Acceptance of Terms</h2>
+      <p>By accessing {siteUrl || `the ${siteName} website`}, you confirm that you are at least 13 years of age, that you have read and understood these Terms, and that you agree to be bound by them. If you do not agree, please do not use our website.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Use of Our Website</h2>
+      <p>You may use {siteName} for lawful, personal, non-commercial purposes only. You agree not to:</p>
+      <ul class="article-list">
+        <li>Copy, reproduce, distribute, or republish our content without written permission</li>
+        <li>Scrape, crawl, or otherwise extract our content in bulk using automated means</li>
+        <li>Use our content to train artificial intelligence or machine learning models without prior written consent</li>
+        <li>Attempt to gain unauthorized access to any part of our website or infrastructure</li>
+        <li>Use our website in any way that could damage, disable, or impair it</li>
+        <li>Frame or mirror our website without our written consent</li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>Intellectual Property</h2>
+      <p>All content on {siteName} — including articles, images, graphics, logos, and code — is owned by or licensed to us and is protected by applicable copyright, trademark, and other intellectual property laws.</p>
+      <p>You may link to our content, quote brief excerpts for commentary or criticism (fair use), and share links to our articles on social media. You may not reproduce full articles, sell our content, or pass it off as your own.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Informational Content Only</h2>
+      <p>The content on {siteName} is provided for general informational purposes only. It is not a substitute for professional advice. Before making decisions based on information from our website — including but not limited to financial, legal, medical, home improvement, or veterinary decisions — consult a qualified professional.</p>
+      <p>See our <a href="/disclaimer" style="color:#c0392b;">Disclaimer</a> for more detail on the limitations of our content.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Third-Party Links</h2>
+      <p>Our website may contain links to third-party websites. These links are provided for convenience only. We do not endorse, control, or accept responsibility for the content, privacy practices, or terms of any third-party website. You access third-party websites at your own risk.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Disclaimer of Warranties</h2>
+      <p>Our website and its content are provided "as is" and "as available" without warranties of any kind, express or implied. We do not warrant that our website will be uninterrupted, error-free, or free of viruses. We make no warranty as to the accuracy, completeness, or timeliness of any content.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Limitation of Liability</h2>
+      <p>To the fullest extent permitted by law, {siteName} and its operators, employees, and contributors shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of, or inability to use, our website or content — even if we have been advised of the possibility of such damages.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Changes to These Terms</h2>
+      <p>We reserve the right to modify these Terms at any time. Updated terms will be posted on this page with a revised "Last updated" date. Your continued use of our website after any changes constitutes acceptance of the revised Terms.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Governing Law</h2>
+      <p>These Terms are governed by and construed in accordance with applicable law. Any disputes arising under these Terms will be subject to the exclusive jurisdiction of the relevant courts.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Contact</h2>
+      <p>Questions about these Terms? Please <a href="/contact" style="color:#c0392b;">contact us</a>.</p>
+    </section>
+  </article>
+</Base>

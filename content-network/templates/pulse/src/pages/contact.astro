@@ -1,0 +1,103 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const siteUrl = import.meta.env.SITE_URL || '';
+---
+<Base title={`Contact Us | ${siteName}`} description={`Get in touch with the ${siteName} editorial team. Send corrections, tips, partnership inquiries, or general feedback.`}>
+  <article class="article-content" style="max-width:800px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:24px;">Contact {siteName}</h1>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:28px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      We read every message we receive. Whether you've found an error, have a story tip, or want to discuss an advertising partnership, we want to hear from you.
+    </p>
+
+    <section class="article-section">
+      <h2>Editorial Inquiries</h2>
+      <p>If you've spotted a factual error in one of our articles, please let us know. Include the article URL, the specific claim in question, and a source supporting the correction. We take accuracy seriously and will review corrections promptly.</p>
+      <p>If you have a story tip or want to suggest a topic we should cover, we welcome that too. We can't respond to every pitch, but we read them all.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Advertising & Partnerships</h2>
+      <p>For advertising inquiries, sponsored content discussions, or partnership opportunities, please see our <a href="/advertise" style="color:#c0392b;">Advertise page</a> for details on our audience and available formats.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Press & Media</h2>
+      <p>If you're a journalist or researcher seeking comment, data, or expert sources from our editorial team, please reach out with your deadline and specific request. We're happy to cooperate with credible media inquiries.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Technical Issues</h2>
+      <p>If you're experiencing a technical problem with our website — broken links, missing content, display issues — please let us know. Include your browser and device type if possible.</p>
+    </section>
+
+    <div style="background:#f8f9ff; border-radius:4px; padding:28px; margin-top:32px;">
+      <h2 style="font-family:'Merriweather',serif; font-size:20px; color:#1a1a2e; margin-bottom:16px;">Send Us a Message</h2>
+      <form id="contact-form" style="display:flex; flex-direction:column; gap:16px;">
+        <div>
+          <label style="display:block; font-weight:600; font-size:14px; margin-bottom:6px; color:#1a1a2e;">Your Name</label>
+          <input type="text" name="name" required placeholder="Jane Smith"
+            style="width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:4px; font-size:15px; font-family:inherit;" />
+        </div>
+        <div>
+          <label style="display:block; font-weight:600; font-size:14px; margin-bottom:6px; color:#1a1a2e;">Email Address</label>
+          <input type="email" name="email" required placeholder="jane@example.com"
+            style="width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:4px; font-size:15px; font-family:inherit;" />
+        </div>
+        <div>
+          <label style="display:block; font-weight:600; font-size:14px; margin-bottom:6px; color:#1a1a2e;">Subject</label>
+          <select name="subject" style="width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:4px; font-size:15px; font-family:inherit; background:white;">
+            <option value="">— Select a subject —</option>
+            <option value="correction">Article Correction</option>
+            <option value="tip">Story Tip / Topic Suggestion</option>
+            <option value="advertising">Advertising Inquiry</option>
+            <option value="press">Press / Media</option>
+            <option value="technical">Technical Issue</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block; font-weight:600; font-size:14px; margin-bottom:6px; color:#1a1a2e;">Message</label>
+          <textarea name="message" required rows="6" placeholder="Please describe your inquiry..."
+            style="width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:4px; font-size:15px; font-family:inherit; resize:vertical;"></textarea>
+        </div>
+        <button type="submit"
+          style="background:#c0392b; color:white; border:none; padding:12px 28px; border-radius:4px; font-size:15px; font-weight:600; cursor:pointer; align-self:flex-start; transition:background 0.2s;">
+          Send Message
+        </button>
+        <p id="form-status" style="display:none; font-size:14px; color:#27ae60; font-weight:600;"></p>
+      </form>
+    </div>
+
+    <script>
+      document.getElementById('contact-form')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type=submit]');
+        const status = document.getElementById('form-status');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        try {
+          const data = Object.fromEntries(new FormData(this));
+          const res = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          status.textContent = res.ok
+            ? 'Message sent! We\'ll get back to you as soon as possible.'
+            : 'Something went wrong. Please try again.';
+          status.style.color = res.ok ? '#27ae60' : '#c0392b';
+          status.style.display = 'block';
+          if (res.ok) this.reset();
+        } catch {
+          status.textContent = 'Something went wrong. Please try again.';
+          status.style.color = '#c0392b';
+          status.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+      });
+    </script>
+  </article>
+</Base>

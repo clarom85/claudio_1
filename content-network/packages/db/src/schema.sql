@@ -58,8 +58,12 @@ CREATE TABLE IF NOT EXISTS articles (
   published_at    TIMESTAMPTZ,
   indexed_at      TIMESTAMPTZ,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(site_id, slug)
 );
+
+-- Aggiunge updated_at su DB esistenti (idempotente)
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- Coda pubblicazione (scheduler usa questa)
 CREATE TABLE IF NOT EXISTS publish_queue (
@@ -82,6 +86,10 @@ CREATE TABLE IF NOT EXISTS site_metrics (
   est_monthly_traffic INTEGER DEFAULT 0,
   ad_revenue_usd  NUMERIC(10,2) DEFAULT 0
 );
+
+-- Aggiunge colonne cluster su DB esistenti (idempotente)
+ALTER TABLE keywords ADD COLUMN IF NOT EXISTS cluster_slug TEXT;
+ALTER TABLE keywords ADD COLUMN IF NOT EXISTS is_pillar BOOLEAN DEFAULT FALSE;
 
 -- Indici per performance
 CREATE INDEX IF NOT EXISTS idx_keywords_niche_unused ON keywords(niche_id, used) WHERE used = FALSE;

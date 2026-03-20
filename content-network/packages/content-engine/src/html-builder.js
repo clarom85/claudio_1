@@ -15,21 +15,29 @@ const AD_UNIT_SIDEBAR = `<div class="ad ad-sidebar">
 </div>`;
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword }) {
-  const { title, metaDescription, intro, sections, faq, conclusion, authorNote, tags } = articleData;
+  const { title, metaDescription, intro, sections, faq, conclusion, authorNote, tags, citations } = articleData;
 
   const datePublished = new Date().toISOString();
+  const dateFormatted = new Date(datePublished).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const articleSchema = buildArticleSchema({
     title, description: metaDescription, slug, author,
-    siteName, siteUrl, datePublished
+    siteName, siteUrl, datePublished, imageSlug: slug
   });
 
   const faqSchema = buildFAQSchema(faq);
 
-  const breadcrumb = buildBreadcrumbSchema([
-    { name: 'Home', path: '/' },
-    { name: title, path: `/${slug}` }
-  ], siteUrl);
+  const categorySlug = articleData.category
+    ? articleData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    : null;
+
+  const breadcrumbItems = [{ name: 'Home', path: '/' }];
+  if (categorySlug && articleData.category) {
+    breadcrumbItems.push({ name: articleData.category, path: `/category/${categorySlug}` });
+  }
+  breadcrumbItems.push({ name: title, path: `/${slug}` });
+
+  const breadcrumb = buildBreadcrumbSchema(breadcrumbItems, siteUrl);
 
   let sectionsHTML = '';
   sections.forEach((section, i) => {
@@ -67,14 +75,19 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 <article class="article" itemscope itemtype="https://schema.org/Article">
   <header class="article-header">
     <div class="article-breadcrumb">
-      <a href="/">Home</a> › <span>${escapeHtml(title)}</span>
+      <a href="/">Home</a>${categorySlug ? ` › <a href="/category/${categorySlug}">${escapeHtml(articleData.category)}</a>` : ''} › <span>${escapeHtml(title)}</span>
     </div>
     <h1 class="article-title" itemprop="headline">${escapeHtml(title)}</h1>
     <div class="article-meta">
       <div class="article-author" itemprop="author" itemscope itemtype="https://schema.org/Person">
-        <img src="/authors/${author.avatar}.webp" alt="${author.name}" class="author-avatar" loading="lazy" />
+        <a href="/author/${author.avatar}" style="flex-shrink:0; display:block;">
+          <img src="/authors/${author.avatar}.jpg" alt="${author.name}" class="author-avatar" loading="lazy"
+            width="48" height="48" onerror="this.src='/authors/${author.avatar}.webp'" />
+        </a>
         <div class="author-info">
-          <span class="author-name" itemprop="name">${author.name}</span>
+          <a href="/author/${author.avatar}" style="text-decoration:none; color:inherit;" itemprop="url">
+            <span class="author-name" itemprop="name">${author.name}</span>
+          </a>
           <span class="author-title">${author.title}</span>
         </div>
       </div>
@@ -87,8 +100,31 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     </div>
   </header>
 
+  ${articleData.image ? `
+  <div class="article-hero-image" style="margin:-4px 0 28px;border-radius:6px;overflow:hidden;line-height:0;">
+    <img src="${escapeHtml(articleData.image)}"
+      alt="${escapeHtml(title)}"
+      width="800" height="450"
+      loading="eager"
+      fetchpriority="high"
+      style="width:100%;height:auto;max-height:450px;object-fit:cover;display:block;"
+      onerror="this.parentElement.style.display='none'" />
+  </div>` : ''}
+
   <div class="article-layout">
     <div class="article-content" itemprop="articleBody">
+
+      <!-- Key Takeaways — featured snippet bait -->
+      ${articleData.keyTakeaways?.length ? `
+      <div class="key-takeaways" style="background:#f0faf0;border:1px solid #c3e6c3;border-left:4px solid #27ae60;border-radius:4px;padding:20px 24px;margin-bottom:24px;">
+        <h2 style="font-family:'Merriweather',Georgia,serif;font-size:16px;font-weight:700;color:#1a5c2a;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+          ✓ Key Takeaways
+        </h2>
+        <ul style="list-style:none;padding:0;margin:0;">
+          ${articleData.keyTakeaways.map(t => `<li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;color:#1a1a1a;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>${escapeHtml(t)}</li>`).join('')}
+        </ul>
+      </div>` : ''}
+
       <div class="article-intro">
         <p class="intro-text">${escapeHtml(intro)}</p>
       </div>
@@ -118,14 +154,36 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         ${conclusion.split('\n\n').map(p => `<p>${p}</p>`).join('')}
       </section>
 
-      <div class="native-ads" id="native-ads-block">
-        <span class="native-ads-label">Sponsored Content</span>
-        <div class="native-ads-grid" id="native-ads-grid"></div>
-      </div>
+      <!-- Content discovery widget (Taboola/MGID — injected by their script) -->
+      <div id="taboola-below-article-thumbnails"></div>
+
+      ${citations?.length ? `
+      <section class="article-citations" style="margin-top:28px;padding:18px 20px;background:#f9f9f9;border-left:3px solid #ddd;border-radius:4px;">
+        <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#777;margin-bottom:12px;">Sources & References</h3>
+        <ol style="margin:0;padding-left:20px;">
+          ${citations.map(c => `
+          <li style="font-size:13px;color:#555;line-height:1.6;margin-bottom:8px;">
+            ${escapeHtml(c.claim)} —
+            <a href="${escapeHtml(c.url)}" target="_blank" rel="nofollow noopener noreferrer"
+               style="color:#c0392b;text-decoration:none;font-weight:600;">${escapeHtml(c.source)}</a>
+          </li>`).join('')}
+        </ol>
+      </section>` : ''}
 
       <div class="article-tags">
         <span class="tags-label">Topics:</span>
         ${tagsHTML}
+      </div>
+
+      <!-- Last updated + editorial note -->
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:#999;">
+          <strong style="color:#666;">Last reviewed:</strong> ${dateFormatted}
+        </span>
+        <span style="font-size:12px;color:#999;">·</span>
+        <a href="/editorial-process" style="font-size:12px;color:#c0392b;text-decoration:none;font-weight:600;">
+          How we ensure accuracy →
+        </a>
       </div>
     </div>
 

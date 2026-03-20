@@ -5,12 +5,15 @@ export interface Props {
   slug?: string;
   schemas?: object[];
   ogImage?: string;
+  lcpImage?: string;
+  categories?: Array<{ name: string; slug: string }>;
 }
 
-const { title, description, slug, schemas = [], ogImage } = Astro.props;
+const { title, description, slug, schemas = [], ogImage, lcpImage, categories = [] } = Astro.props;
 const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
 const siteUrl = import.meta.env.SITE_URL || Astro.site?.href || '';
 const adsenseId = import.meta.env.ADSENSE_ID || '';
+const ga4Id = import.meta.env.GA4_MEASUREMENT_ID || '';
 const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
 ---
 <!DOCTYPE html>
@@ -37,15 +40,48 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
 
+  <!-- WebSite Schema (sempre presente) -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": siteName,
+    "url": siteUrl,
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": `${siteUrl}/search?q={search_term_string}` },
+      "query-input": "required name=search_term_string"
+    }
+  })} />
+
   <!-- JSON-LD Schemas -->
   {schemas.map(schema => (
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
   ))}
 
+  <!-- Google Analytics 4 -->
+  {ga4Id && (
+    <>
+      <script async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>
+      <script define:vars={{ ga4Id }}>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', ga4Id, {
+          page_path: window.location.pathname,
+          anonymize_ip: true,
+          cookie_flags: 'SameSite=None;Secure'
+        });
+      </script>
+    </>
+  )}
+
   <!-- Google AdSense -->
   {adsenseId && (
     <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`} crossorigin="anonymous"></script>
   )}
+
+  <!-- LCP image preload — critical for Core Web Vitals -->
+  {lcpImage && <link rel="preload" as="image" href={lcpImage} fetchpriority="high" />}
 
   <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -92,6 +128,9 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
       <div class="container">
         <ul class="nav-list" id="main-nav">
           <li><a href="/">Home</a></li>
+          {categories.slice(0, 6).map(cat => (
+            <li><a href={`/category/${cat.slug}`}>{cat.name}</a></li>
+          ))}
         </ul>
       </div>
     </nav>
@@ -119,6 +158,7 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
           <h4>Company</h4>
           <ul>
             <li><a href="/about">About Us</a></li>
+            <li><a href="/editorial-process">Editorial Process</a></li>
             <li><a href="/contact">Contact</a></li>
             <li><a href="/advertise">Advertise</a></li>
           </ul>
@@ -149,23 +189,19 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
       }
     })();
 
-    // Dynamic nav from categories
-    fetch('/api/categories.json').then(r => r.json()).then(cats => {
-      const nav = document.getElementById('main-nav');
-      cats.slice(0, 6).forEach(cat => {
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="/category/${cat.slug}">${cat.name}</a>`;
-        nav.appendChild(li);
-      });
-    }).catch(() => {});
-
-    // Trending ticker
+    // Seamless ticker: load articles then duplicate content for loop
     fetch('/api/trending.json').then(r => r.json()).then(articles => {
       const items = document.getElementById('ticker-items');
-      items.innerHTML = articles.slice(0, 8).map(a =>
+      const content = articles.slice(0, 8).map(a =>
         `<a href="/${a.slug}" class="ticker-item">${a.title}</a>`
       ).join('<span class="ticker-sep">•</span>');
-    }).catch(() => {});
+      // Duplicate content so animation can loop seamlessly (translateX -50%)
+      items.innerHTML = content + '<span class="ticker-sep" style="margin:0 32px;">&#9679;</span>' + content;
+    }).catch(() => {
+      // If no articles, hide ticker
+      const ticker = document.getElementById('breaking-ticker');
+      if (ticker) ticker.style.display = 'none';
+    });
   </script>
 </body>
 </html>

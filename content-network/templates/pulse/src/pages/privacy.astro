@@ -1,0 +1,91 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const siteUrl = import.meta.env.SITE_URL || '';
+const year = new Date().getFullYear();
+---
+<Base title={`Privacy Policy | ${siteName}`} description={`Privacy Policy for ${siteName}. Learn how we collect, use, and protect your personal information.`}>
+  <article class="article-content" style="max-width:800px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:12px;">Privacy Policy</h1>
+    <p style="color:#666; font-size:13px; margin-bottom:28px;">Last updated: January 1, {year}</p>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:28px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      Your privacy matters to us. This policy explains what information we collect, why we collect it, and how we use it.
+    </p>
+
+    <section class="article-section">
+      <h2>Information We Collect</h2>
+      <p><strong>Information you provide directly:</strong> If you subscribe to our newsletter or contact us, we collect your email address and any information you include in your message.</p>
+      <p><strong>Information collected automatically:</strong> When you visit our website, we automatically collect certain information about your device and usage, including your IP address, browser type, operating system, referring URLs, pages visited, and time spent on pages. This is standard practice for all websites and is collected through server logs and analytics tools.</p>
+      <p><strong>Cookies and similar technologies:</strong> We use cookies to operate our website and to support advertising. See the "Cookies" section below for details.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>How We Use Your Information</h2>
+      <p>We use the information we collect to:</p>
+      <ul class="article-list">
+        <li>Operate and improve our website</li>
+        <li>Send newsletter emails to subscribers who have opted in</li>
+        <li>Respond to messages and support requests</li>
+        <li>Analyze traffic and usage patterns to improve content</li>
+        <li>Detect and prevent fraud and security issues</li>
+        <li>Comply with legal obligations</li>
+      </ul>
+      <p>We do not sell your personal information to third parties.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Cookies</h2>
+      <p>We use the following types of cookies:</p>
+      <ul class="article-list">
+        <li><strong>Essential cookies:</strong> Required for the website to function. These cannot be disabled.</li>
+        <li><strong>Analytics cookies:</strong> Help us understand how visitors interact with our site. We use Google Analytics for this purpose. You can opt out via the Google Analytics opt-out browser add-on.</li>
+        <li><strong>Advertising cookies:</strong> We participate in the Google AdSense program. Google may use cookies to show relevant ads based on your browsing history. You can manage Google ad personalization at <a href="https://adssettings.google.com" style="color:#c0392b;" target="_blank" rel="noopener">adssettings.google.com</a>.</li>
+      </ul>
+      <p>When you first visit our site, we display a cookie consent notice. Advertising cookies are only activated after you provide consent.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Third-Party Services</h2>
+      <p>We use third-party services that may collect information under their own privacy policies:</p>
+      <ul class="article-list">
+        <li><strong>Google Analytics:</strong> Web analytics. <a href="https://policies.google.com/privacy" style="color:#c0392b;" target="_blank" rel="noopener">Google Privacy Policy</a></li>
+        <li><strong>Google AdSense:</strong> Display advertising. <a href="https://policies.google.com/privacy" style="color:#c0392b;" target="_blank" rel="noopener">Google Privacy Policy</a></li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>Data Retention</h2>
+      <p>We retain email addresses of newsletter subscribers until you unsubscribe. Contact form submissions are retained for 90 days. Server logs are retained for 30 days. Analytics data is retained for 26 months in aggregate form.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Your Rights (GDPR / CCPA)</h2>
+      <p>Depending on your location, you may have the following rights regarding your personal data:</p>
+      <ul class="article-list">
+        <li>The right to access the personal data we hold about you</li>
+        <li>The right to correct inaccurate personal data</li>
+        <li>The right to request deletion of your personal data</li>
+        <li>The right to withdraw consent (e.g., unsubscribe from email)</li>
+        <li>The right to data portability</li>
+        <li>The right to opt out of the sale of personal information (we do not sell data)</li>
+      </ul>
+      <p>To exercise any of these rights, please <a href="/contact" style="color:#c0392b;">contact us</a>.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Children's Privacy</h2>
+      <p>Our website is not directed at children under 13 years of age. We do not knowingly collect personal information from children under 13. If you believe we have inadvertently collected such information, please contact us immediately.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date at the top of this page. We encourage you to review this policy periodically.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Contact</h2>
+      <p>If you have questions about this Privacy Policy or how we handle your data, please <a href="/contact" style="color:#c0392b;">contact us</a>.</p>
+    </section>
+  </article>
+</Base>

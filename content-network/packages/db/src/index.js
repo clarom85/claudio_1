@@ -49,19 +49,20 @@ export async function insertNiche({ slug, name, seedKeywords, template, language
 // ── Keywords ─────────────────────────────────────────────────
 export async function bulkInsertKeywords(keywords) {
   if (!keywords.length) return;
-  // Chunked insert to avoid param limits
   const chunkSize = 100;
   let inserted = 0;
   for (let i = 0; i < keywords.length; i += chunkSize) {
     const chunk = keywords.slice(i, i + chunkSize);
-    const result = await sql`
-      INSERT INTO keywords (niche_id, keyword, source, intent)
+    await sql`
+      INSERT INTO keywords (niche_id, keyword, source, intent, cluster_slug, is_pillar)
       SELECT * FROM UNNEST(
         ${chunk.map(k => k.nicheId)}::int[],
         ${chunk.map(k => k.keyword)}::text[],
         ${chunk.map(k => k.source)}::text[],
-        ${chunk.map(k => k.intent || 'informational')}::text[]
-      ) AS t(niche_id, keyword, source, intent)
+        ${chunk.map(k => k.intent || 'informational')}::text[],
+        ${chunk.map(k => k.clusterSlug || null)}::text[],
+        ${chunk.map(k => k.isPillar || false)}::bool[]
+      ) AS t(niche_id, keyword, source, intent, cluster_slug, is_pillar)
       ON CONFLICT (niche_id, keyword) DO NOTHING
     `;
     inserted += chunk.length;
@@ -70,10 +71,12 @@ export async function bulkInsertKeywords(keywords) {
 }
 
 export async function getUnusedKeywords(nicheId, limit = 60) {
+  // Pillars prima — garantisce che ogni cluster abbia la pagina principale
+  // prima di generare i satelliti. Dentro ogni gruppo, ordine casuale.
   return sql`
     SELECT * FROM keywords
     WHERE niche_id = ${nicheId} AND used = FALSE
-    ORDER BY RANDOM()
+    ORDER BY is_pillar DESC NULLS LAST, RANDOM()
     LIMIT ${limit}
   `;
 }

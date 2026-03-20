@@ -122,25 +122,63 @@ export function enableSSL(domain, email) {
 }
 
 // ── Sitemap ──────────────────────────────────────────────────
-export function generateSitemap(domain, articles) {
+/**
+ * @param {string} domain
+ * @param {object[]} articles
+ * @param {object} extras  - { categories, authorSlugs, toolSlug }
+ */
+export function generateSitemap(domain, articles, extras = {}) {
+  const { categories = [], authorSlugs = [], toolSlug = null } = extras;
+  const today = new Date().toISOString().split('T')[0];
+
   const urls = [
-    { loc: `https://${domain}/`, priority: '1.0', changefreq: 'daily' },
-    { loc: `https://${domain}/about/`, priority: '0.3', changefreq: 'monthly' },
+    // Homepage
+    { loc: `https://${domain}/`, priority: '1.0', changefreq: 'daily', lastmod: today },
+
+    // Static pages
+    { loc: `https://${domain}/about/`,             priority: '0.4', changefreq: 'monthly' },
+    { loc: `https://${domain}/contact/`,           priority: '0.3', changefreq: 'yearly' },
+    { loc: `https://${domain}/editorial-process/`, priority: '0.4', changefreq: 'monthly' },
+    { loc: `https://${domain}/advertise/`,         priority: '0.3', changefreq: 'yearly' },
+    { loc: `https://${domain}/privacy/`,           priority: '0.2', changefreq: 'yearly' },
+    { loc: `https://${domain}/terms/`,             priority: '0.2', changefreq: 'yearly' },
+    { loc: `https://${domain}/disclaimer/`,        priority: '0.2', changefreq: 'yearly' },
+
+    // Tool page (1 per sito)
+    ...(toolSlug ? [{ loc: `https://${domain}/tools/${toolSlug}/`, priority: '0.7', changefreq: 'monthly', lastmod: today }] : []),
+
+    // Category pages
+    ...categories.map(cat => ({
+      loc: `https://${domain}/category/${cat.slug}/`,
+      priority: '0.6',
+      changefreq: 'weekly',
+      lastmod: today
+    })),
+
+    // Author pages
+    ...authorSlugs.map(slug => ({
+      loc: `https://${domain}/author/${slug}/`,
+      priority: '0.5',
+      changefreq: 'monthly'
+    })),
+
+    // Articles
     ...articles.map(a => ({
       loc: `https://${domain}/${a.slug}/`,
       priority: '0.8',
       changefreq: 'weekly',
-      lastmod: a.published_at ? new Date(a.published_at).toISOString().split('T')[0] : undefined
+      lastmod: a.published_at ? new Date(a.published_at).toISOString().split('T')[0] : today
     }))
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urls.map(u => `  <url>
     <loc>${u.loc}</loc>
     <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>
-    ${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}
+    <priority>${u.priority}</priority>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ''}
   </url>`).join('\n')}
 </urlset>`;
 

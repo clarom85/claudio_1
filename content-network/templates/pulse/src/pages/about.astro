@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+---
+<Base title={`About Us | ${siteName}`} description={`Learn about ${siteName}, our editorial mission, and the team behind our expert guides and how-to articles.`}>
+  <article class="article-content" style="max-width:800px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:24px;">About {siteName}</h1>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:28px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      {siteName} is an independent editorial publication dedicated to providing clear, accurate, and actionable information on topics that matter in everyday life.
+    </p>
+
+    <section class="article-section">
+      <h2>Our Mission</h2>
+      <p>We believe that reliable, well-researched information should be freely accessible to everyone. Whether you're tackling a home improvement project, making decisions about pet care, solving a software problem, or planning a trip to a small town, we aim to give you the clearest possible picture before you spend a dollar or make a decision.</p>
+      <p>Every article on {siteName} is written with a single goal: to genuinely help the reader. We don't publish content to fill space. We publish content because someone, somewhere, needs that answer.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Our Editorial Standards</h2>
+      <p>Our editorial team follows a strict process for every piece of content we publish:</p>
+      <ul class="article-list">
+        <li><strong>Research first:</strong> Every article begins with primary research — industry reports, official data sources, and expert consultation.</li>
+        <li><strong>Expert review:</strong> Where relevant, articles are reviewed by practitioners with direct field experience.</li>
+        <li><strong>Regular updates:</strong> We revisit and update articles when industry conditions, regulations, or best practices change.</li>
+        <li><strong>No sponsored influence:</strong> Editorial content is completely independent of our advertising relationships. Advertisers have no input into what we publish.</li>
+        <li><strong>Transparency:</strong> When we use estimates, averages, or modeled data, we say so clearly.</li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>Who Writes for Us</h2>
+      <p>Our contributors are experienced practitioners, not generalist writers. Our home improvement coverage, for example, is written and reviewed by licensed contractors, cost estimators, and project managers with years of field experience. We hold every contributor to the same standard: you must know what you're talking about from direct experience, not just research.</p>
+      <p>We also work with a small in-house editorial team that handles fact-checking, formatting, and ensuring every article meets our quality bar before publication.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>How We Make Money</h2>
+      <p>{siteName} is supported by display advertising. We participate in the Google AdSense program, which means that advertisers may show relevant ads alongside our content. We may also participate in affiliate programs where we earn a small commission if you purchase a product or service through a link on our site.</p>
+      <p>These commercial relationships never influence our editorial coverage. We do not accept payment to write or alter articles. Our reviews and recommendations are based solely on research and editorial judgment.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Contact Us</h2>
+      <p>We welcome feedback, corrections, and story suggestions. If you've spotted an error, have expertise to contribute, or have a question about something we've published, please <a href="/contact" style="color:#c0392b;">get in touch</a>.</p>
+      <p>For a detailed breakdown of how we research, write, fact-check, and maintain our articles, see our <a href="/editorial-process" style="color:#c0392b;">Editorial Process</a> page.</p>
+    </section>
+  </article>
+</Base>

@@ -1,0 +1,247 @@
+---
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  // Carica autori generati
+  let authors = [];
+  try {
+    const { default: data } = await import('../../content/authors.json', { assert: { type: 'json' } });
+    authors = Array.isArray(data) ? data : [data];
+  } catch {
+    return [];
+  }
+
+  // Carica articoli per mostrare "Articoli recenti dell'autore"
+  let articles = [];
+  try {
+    const { default: arts } = await import('../../content/articles.json', { assert: { type: 'json' } });
+    articles = arts;
+  } catch {
+    articles = [];
+  }
+
+  // Estrai categorie per nav
+  const categorySlugs = new Map();
+  for (const a of articles) {
+    if (a.category && !categorySlugs.has(a.category)) {
+      categorySlugs.set(a.category, a.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+    }
+  }
+  const navCategories = Array.from(categorySlugs.entries()).map(([name, slug]) => ({ name, slug }));
+
+  return authors.map(author => ({
+    params: { slug: author.slug },
+    props: { author, articles, navCategories }
+  }));
+}
+
+const { author, articles, navCategories } = Astro.props;
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const siteUrl = import.meta.env.SITE_URL || '';
+
+// Articoli scritti da questo autore (match per nome)
+const authorArticles = articles
+  .filter(a => a.author === author.name)
+  .slice(0, 12);
+
+// Schema Person per EEAT
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: author.name,
+  jobTitle: author.title,
+  description: author.shortBio,
+  url: `${siteUrl}/author/${author.slug}`,
+  image: `${siteUrl}${author.avatarUrl}`,
+  sameAs: Object.values(author.socialLinks || {}).filter(Boolean),
+  worksFor: {
+    '@type': 'Organization',
+    name: siteName,
+    url: siteUrl
+  }
+};
+---
+
+<Base
+  title={`${author.name} — ${author.title} | ${siteName}`}
+  description={author.shortBio}
+  schemas={[personSchema]}
+  categories={navCategories}
+>
+  <!-- Author Hero -->
+  <div style="background:white; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden; margin-bottom:40px;">
+    <!-- Top accent bar -->
+    <div style="height:4px; background:#c0392b;"></div>
+
+    <div style="padding:40px 40px 32px; display:flex; gap:36px; align-items:flex-start; flex-wrap:wrap;">
+      <!-- Avatar -->
+      <div style="flex-shrink:0;">
+        <img
+          src={author.avatarUrl}
+          alt={`${author.name} — ${author.title}`}
+          width="180" height="180"
+          loading="eager"
+          style="width:180px; height:180px; object-fit:cover; border-radius:50%; border:4px solid #f4f4f0; box-shadow:0 4px 16px rgba(0,0,0,0.15);"
+          onerror="this.src='/images/placeholder.webp'"
+        />
+      </div>
+
+      <!-- Info -->
+      <div style="flex:1; min-width:240px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#c0392b; margin-bottom:8px;">
+          Expert Contributor
+        </div>
+        <h1 style="font-family:'Merriweather',serif; font-size:clamp(26px,4vw,36px); font-weight:900; color:#1a1a2e; margin-bottom:8px; line-height:1.2;">
+          {author.name}
+        </h1>
+        <p style="font-size:16px; font-weight:600; color:#666; margin-bottom:20px;">{author.title}</p>
+
+        <!-- Short bio highlight -->
+        <p style="font-size:15px; line-height:1.75; color:#333; border-left:3px solid #c0392b; padding-left:14px; margin-bottom:24px;">
+          {author.shortBio}
+        </p>
+
+        <!-- Stats row -->
+        <div style="display:flex; gap:32px; flex-wrap:wrap; margin-bottom:24px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Merriweather',serif; font-size:24px; font-weight:900; color:#c0392b;">{authorArticles.length}</div>
+            <div style="font-size:12px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Articles</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Merriweather',serif; font-size:24px; font-weight:900; color:#c0392b;">
+              {author.longBio ? Math.round(author.longBio.split(' ').length / 12) + '+' : '10+'}
+            </div>
+            <div style="font-size:12px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Years Exp.</div>
+          </div>
+        </div>
+
+        <!-- Social links -->
+        {author.socialLinks && (
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            {author.socialLinks.linkedin && (
+              <a href={author.socialLinks.linkedin} target="_blank" rel="noopener noreferrer"
+                style="display:inline-flex; align-items:center; gap:6px; background:#0077b5; color:white; padding:8px 16px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:600;">
+                LinkedIn
+              </a>
+            )}
+            {author.socialLinks.twitter && (
+              <a href={author.socialLinks.twitter} target="_blank" rel="noopener noreferrer"
+                style="display:inline-flex; align-items:center; gap:6px; background:#1da1f2; color:white; padding:8px 16px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:600;">
+                Twitter / X
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-column layout: bio + sidebar -->
+  <div style="display:grid; grid-template-columns:1fr 300px; gap:32px; align-items:start;">
+
+    <!-- Long bio -->
+    <div>
+      <div style="background:white; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:36px; margin-bottom:32px;">
+        <h2 style="font-family:'Merriweather',serif; font-size:22px; font-weight:700; color:#1a1a2e; margin-bottom:24px; padding-bottom:12px; border-bottom:2px solid #c0392b;">
+          About {author.name}
+        </h2>
+        <div style="font-size:16px; line-height:1.9; color:#1a1a1a;">
+          {author.longBio
+            ? author.longBio.split('\n\n').map(para => (
+                <p style="margin-bottom:22px;">{para}</p>
+              ))
+            : <p style="margin-bottom:22px;">{author.shortBio}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Articles by this author -->
+      {authorArticles.length > 0 && (
+        <div style="background:white; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:36px;">
+          <h2 style="font-family:'Merriweather',serif; font-size:22px; font-weight:700; color:#1a1a2e; margin-bottom:24px; padding-bottom:12px; border-bottom:2px solid #c0392b;">
+            Articles by {author.name}
+          </h2>
+          <div style="display:grid; gap:16px;">
+            {authorArticles.map(article => (
+              <article style="display:flex; gap:16px; padding:16px; border:1px solid #eee; border-radius:4px; transition:box-shadow 0.2s;"
+                onmouseenter="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'"
+                onmouseleave="this.style.boxShadow='none'">
+                <img
+                  src={article.image || `/images/${article.slug}.webp`}
+                  alt={article.title}
+                  loading="lazy"
+                  width="100" height="72"
+                  style="width:100px; height:72px; object-fit:cover; border-radius:4px; flex-shrink:0;"
+                  onerror="this.src='/images/placeholder.webp'"
+                />
+                <div style="flex:1; min-width:0;">
+                  {article.category && (
+                    <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#c0392b; margin-bottom:4px;">
+                      {article.category}
+                    </div>
+                  )}
+                  <a href={`/${article.slug}`}
+                    style="font-family:'Merriweather',serif; font-size:15px; font-weight:700; color:#1a1a2e; text-decoration:none; line-height:1.4; display:block; margin-bottom:6px;">
+                    {article.title}
+                  </a>
+                  {article.excerpt && (
+                    <p style="font-size:13px; color:#666; line-height:1.5; margin:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+                      {article.excerpt}
+                    </p>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- Sidebar -->
+    <aside style="display:flex; flex-direction:column; gap:24px;">
+      <!-- Expertise card -->
+      <div style="background:white; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:24px; border-top:3px solid #c0392b;">
+        <h3 style="font-family:'Merriweather',serif; font-size:16px; font-weight:700; color:#1a1a2e; margin-bottom:16px; text-transform:uppercase; letter-spacing:0.5px;">
+          Areas of Expertise
+        </h3>
+        <ul style="list-style:none; padding:0; margin:0;">
+          {[
+            ...new Set(
+              authorArticles.slice(0, 6).map(a => a.category).filter(Boolean)
+            )
+          ].map(cat => (
+            <li style="padding:8px 0; border-bottom:1px solid #eee; font-size:14px; color:#333; display:flex; align-items:center; gap:8px;">
+              <span style="color:#c0392b; font-weight:700;">›</span>
+              <a href={`/category/${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                style="color:#333; text-decoration:none; transition:color 0.2s;"
+                onmouseenter="this.style.color='#c0392b'"
+                onmouseleave="this.style.color='#333'">
+                {cat}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Editorial standards card -->
+      <div style="background:#1a1a2e; color:white; border-radius:4px; padding:24px;">
+        <h3 style="font-size:15px; font-weight:700; margin-bottom:12px; color:white;">Editorial Standards</h3>
+        <p style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.75); margin-bottom:16px;">
+          All content by {author.name} is fact-checked and reviewed before publication. We follow strict editorial guidelines to ensure accuracy and helpfulness.
+        </p>
+        <a href="/about" style="color:#c0392b; font-size:13px; font-weight:600; text-decoration:none;">
+          Read our editorial process →
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Mobile responsive -->
+  <style>
+    @media (max-width: 768px) {
+      div[style*="grid-template-columns:1fr 300px"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+</Base>

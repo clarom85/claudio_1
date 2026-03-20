@@ -1,0 +1,63 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const year = new Date().getFullYear();
+---
+<Base title={`Disclaimer | ${siteName}`} description={`Disclaimer for ${siteName}. Important information about the nature and limitations of our content.`}>
+  <article class="article-content" style="max-width:800px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:12px;">Disclaimer</h1>
+    <p style="color:#666; font-size:13px; margin-bottom:28px;">Last updated: January 1, {year}</p>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:28px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      Please read this disclaimer carefully before relying on any information published on {siteName}.
+    </p>
+
+    <section class="article-section">
+      <h2>General Information Only</h2>
+      <p>All content published on {siteName} is intended for general informational and educational purposes only. Nothing on this website constitutes professional advice of any kind — including but not limited to legal, financial, medical, veterinary, engineering, or contracting advice.</p>
+      <p>The information we publish reflects general industry knowledge, publicly available data, and the experience of our contributors. It is not tailored to your specific situation, location, or circumstances.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>No Professional Relationship</h2>
+      <p>Reading content on {siteName} does not create a professional relationship of any kind between you and our editorial team, contributors, or the publication. We are not your contractor, financial advisor, attorney, doctor, or veterinarian.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Accuracy of Information</h2>
+      <p>We work hard to ensure the information we publish is accurate and up to date. However, we make no guarantee — express or implied — regarding the accuracy, completeness, or currency of any content on this website.</p>
+      <p>Industry costs, regulations, product availability, and best practices change over time. Always verify critical information with current, authoritative sources before making decisions.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Cost Estimates and Pricing</h2>
+      <p>Where we publish cost estimates, price ranges, or financial figures, these are provided as general guidance only. Actual costs vary significantly based on your geographic location, the specific scope of work, contractor availability, material costs at the time of purchase, and many other factors. Always obtain multiple quotes from licensed professionals before committing to any project.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Affiliate Disclosure</h2>
+      <p>{siteName} may participate in affiliate marketing programs. This means we may earn a commission if you click on certain links and make a purchase. Affiliate relationships do not influence our editorial content or recommendations. We only link to products or services we believe are relevant and useful to our readers.</p>
+      <p>In accordance with FTC guidelines, we disclose affiliate relationships where applicable.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Advertising Disclosure</h2>
+      <p>Our website displays advertisements served by Google AdSense and potentially other advertising networks. The presence of an advertisement does not constitute an endorsement of the advertised product or service by {siteName}.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Consult a Professional</h2>
+      <p>Before undertaking any home improvement project, making financial decisions, changing your pet's diet or healthcare routine, modifying your own diet, or taking any action with significant consequences, consult a qualified professional licensed in your jurisdiction. The cost of professional advice is almost always less than the cost of a mistake made without it.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Limitation of Liability</h2>
+      <p>{siteName} and its operators shall not be held liable for any loss, damage, injury, or adverse outcome resulting from reliance on information published on this website. You use this information entirely at your own risk.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Contact</h2>
+      <p>If you have questions about this Disclaimer or want to report a factual error, please <a href="/contact" style="color:#c0392b;">contact us</a>.</p>
+    </section>
+  </article>
+</Base>

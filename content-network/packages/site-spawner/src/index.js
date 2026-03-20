@@ -15,10 +15,15 @@ import {
 } from '@content-network/db';
 import {
   createSiteDirectory, createNginxConfig, reloadNginx,
-  generateRobotsTxt, generateSitemap, writeSiteFile
+  generateRobotsTxt, generateSitemap, writeSiteFile, enableSSL
 } from '@content-network/vps';
+import { setupDomain as cfSetupDomain, purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { generateAuthors } from '@content-network/content-engine/src/author-generator.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
+import { TOOL_CONFIGS } from '@content-network/content-engine/src/tools/tool-configs.js';
+import { generateToolPage } from '@content-network/content-engine/src/tools/tool-generator.js';
+import { getAllCategoryIntros } from '@content-network/content-engine/src/category-intros.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -102,26 +107,94 @@ async function run() {
     console.log('📄 Generating static pages...');
     await generateStaticPages(domain, siteConfig, template);
 
+    // 7b. Pagina autore — genera bio lunga + scarica foto
+    console.log('👤 Generating author profile...');
+    try {
+      const sitePublicDir = join(WWW_ROOT, domain);
+      const authors = await generateAuthors(nicheSlug, { destDir: sitePublicDir, isVps: true });
+      if (authors?.length) {
+        await generateAuthorPage(domain, authors[0], siteConfig, template);
+        siteConfig.authorData = authors[0]; // salva per usare nella about page
+      }
+    } catch (err) {
+      console.warn(`  ⚠️  Author generation failed (non-blocking): ${err.message}`);
+    }
+
+    // 7c. Interactive tool page per la nicchia
+    const toolConfig = TOOL_CONFIGS[nicheSlug];
+    if (toolConfig) {
+      console.log(`🔧 Generating interactive tool: ${toolConfig.title}...`);
+      try {
+        generateToolFile(domain, toolConfig, siteConfig);
+        console.log(`  ✅ Tool: /tools/${toolConfig.slug}/`);
+      } catch (err) {
+        console.warn(`  ⚠️  Tool generation failed (non-blocking): ${err.message}`);
+      }
+    }
+
+    // 7d. Category pages con intro text
+    console.log('📂 Generating category pages...');
+    const categories = getCategoriesForNiche(nicheSlug);
+    const categoryIntros = getAllCategoryIntros(nicheSlug);
+    for (const cat of categories) {
+      generateCategoryPage(domain, cat, categoryIntros[cat.slug], siteConfig);
+    }
+    console.log(`  ✅ ${categories.length} category pages generated`);
+
     // 8. Homepage con articoli (vuota inizialmente)
     await generateHomePage(domain, [], siteConfig, template);
 
-    // 9. Sitemap vuota
-    generateSitemap(domain, []);
-
-    // 10. nginx virtual host
+    // 9. nginx virtual host
     console.log('⚙️  Configuring nginx...');
     createNginxConfig(domain);
     const reloaded = reloadNginx();
     if (!reloaded) console.warn('  ⚠️  nginx reload failed — check manually');
 
-    await updateSiteStatus(site.id, 'live', `http://${domain}`);
+    // 10. Cloudflare setup (DNS + CDN + SSL + settings)
+    const serverIp = process.env.SERVER_IP || '178.104.17.161';
+    let nameservers = [];
+    if (process.env.CLOUDFLARE_API_TOKEN) {
+      try {
+        const cf = await cfSetupDomain(domain, serverIp);
+        nameservers = cf.nameservers;
+        // Con Cloudflare proxy attivo, SSL è gestito da CF — Certbot opzionale
+        await updateSiteStatus(site.id, 'live', `https://${domain}`);
+      } catch (err) {
+        console.warn(`  ⚠️  Cloudflare setup failed (non-blocking): ${err.message}`);
+        await updateSiteStatus(site.id, 'live', `http://${domain}`);
+      }
+    } else {
+      // Fallback: SSL manuale con Certbot
+      const certbotEmail = process.env.CERTBOT_EMAIL;
+      if (certbotEmail) {
+        console.log('🔒 Enabling SSL with Certbot...');
+        enableSSL(domain, certbotEmail);
+      }
+      await updateSiteStatus(site.id, 'live', certbotEmail ? `https://${domain}` : `http://${domain}`);
+      console.log(`  ℹ️  Set CLOUDFLARE_API_TOKEN in .env for automatic CDN + SSL`);
+    }
 
-    console.log(`\n✅ Site live: http://${domain}`);
+    // 11. Sitemap completa
+    const toolConfig = TOOL_CONFIGS[nicheSlug];
+    const authorSlugs = siteConfig.authorData ? [siteConfig.authorData.avatar] : [];
+    generateSitemap(domain, [], {
+      categories,
+      authorSlugs,
+      toolSlug: toolConfig?.slug || null
+    });
+
+    console.log(`\n✅ Site ready: https://${domain}`);
     console.log(`\n📋 Next steps:`);
-    console.log(`  1. Point DNS A record: ${domain} → this server IP`);
-    console.log(`  2. Enable SSL: certbot --nginx -d ${domain} -d www.${domain} -m you@email.com --agree-tos --redirect`);
-    console.log(`  3. Generate keywords: npm run keyword -- --niche ${nicheSlug}`);
-    console.log(`  4. Generate content:  npm run content -- --site-id ${site.id} --count 50`);
+    if (nameservers.length) {
+      console.log(`  1. Set nameservers at your registrar:`);
+      nameservers.forEach(ns => console.log(`     → ${ns}`));
+      console.log(`  2. Generate keywords: npm run keyword -- --niche ${nicheSlug}`);
+      console.log(`  3. Generate content:  npm run content -- --site-id ${site.id} --count 50`);
+    } else {
+      console.log(`  1. Point DNS A record: ${domain} → ${serverIp}`);
+      console.log(`  2. Generate keywords: npm run keyword -- --niche ${nicheSlug}`);
+      console.log(`  3. Generate content:  npm run content -- --site-id ${site.id} --count 50`);
+    }
 
   } catch (err) {
     await updateSiteStatus(site.id, 'failed');
@@ -222,6 +295,36 @@ async function generateStaticPages(domain, siteConfig, template) {
     const html = simplePageWrapper(page.title, page.description, page.body, siteConfig);
     writeFileSync(join(WWW_ROOT, domain, path), html, 'utf-8');
   }
+
+  // 404 page — must live at root level (nginx: error_page 404 /404.html)
+  const notFoundBody = `
+<div style="max-width:600px;margin:80px auto;padding:0 20px;text-align:center;">
+  <div style="font-size:80px;font-weight:900;color:#e8e8e8;line-height:1;margin-bottom:16px;">404</div>
+  <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">Page Not Found</h1>
+  <p style="font-size:16px;line-height:1.7;color:#666;margin-bottom:32px;">
+    The page you're looking for doesn't exist or may have been moved.
+    Here are some helpful links instead:
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:40px;">
+    <a href="/" style="display:inline-block;background:#c0392b;color:white;padding:11px 22px;border-radius:5px;text-decoration:none;font-size:15px;font-weight:700;">← Back to Home</a>
+    <a href="/tools/" style="display:inline-block;background:#1a1a2e;color:white;padding:11px 22px;border-radius:5px;text-decoration:none;font-size:15px;font-weight:700;">Free Calculator</a>
+  </div>
+  <div style="border-top:1px solid #eee;padding-top:28px;">
+    <p style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">Browse by Category</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;" id="notfound-cats"></div>
+  </div>
+</div>
+<script>
+  fetch('/api/categories.json').then(r=>r.json()).then(cats=>{
+    const el=document.getElementById('notfound-cats');
+    if(!el||!cats?.length)return;
+    el.innerHTML=cats.slice(0,6).map(c=>\`<a href="/category/\${c.slug}/" style="display:inline-block;background:#f4f4f0;color:#333;padding:6px 14px;border-radius:20px;text-decoration:none;font-size:13px;font-weight:600;">\${c.name}</a>\`).join('');
+  }).catch(()=>{});
+</script>`;
+
+  writeFileSync(join(WWW_ROOT, domain, '404.html'),
+    simplePageWrapper('Page Not Found', `The page you're looking for doesn't exist — ${siteName}`, notFoundBody, siteConfig),
+    'utf-8');
 }
 
 async function generateHomePage(domain, articles, siteConfig, template) {
@@ -244,6 +347,152 @@ function writeApiFiles(domain, articles, niche) {
   writeFileSync(join(apiDir, 'categories.json'), JSON.stringify(cats), 'utf-8');
 }
 
+async function generateAuthorPage(domain, author, siteConfig, template) {
+  const { renderBase } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
+  const siteName = siteConfig.name;
+
+  // Paragrafi della bio lunga
+  const bioParagraphs = (author.longBio || author.shortBio)
+    .split('\n\n')
+    .filter(p => p.trim())
+    .map(p => `<p style="font-size:16px;line-height:1.9;margin-bottom:22px">${p.trim()}</p>`)
+    .join('');
+
+  const socialLinks = author.socialLinks
+    ? Object.entries(author.socialLinks)
+        .filter(([, url]) => url)
+        .map(([net, url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer"
+          style="display:inline-block;background:#1a1a2e;color:white;padding:8px 16px;border-radius:4px;text-decoration:none;font-size:13px;font-weight:600;margin-right:8px;margin-bottom:8px;">${net.charAt(0).toUpperCase() + net.slice(1)}</a>`)
+        .join('')
+    : '';
+
+  const body = `
+<div style="max-width:900px;margin:32px auto;padding:0 20px">
+  <!-- Hero -->
+  <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:36px;">
+    <div style="height:4px;background:#c0392b;"></div>
+    <div style="padding:40px;display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
+      <img src="/authors/${author.avatar}.jpg"
+        alt="${author.name}"
+        onerror="this.src='/images/placeholder.webp'"
+        style="width:180px;height:180px;object-fit:cover;border-radius:50%;border:4px solid #f4f4f0;box-shadow:0 4px 16px rgba(0,0,0,0.15);flex-shrink:0;" />
+      <div style="flex:1;min-width:240px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#c0392b;margin-bottom:8px;">Expert Contributor</div>
+        <h1 style="font-family:Georgia,serif;font-size:clamp(24px,4vw,36px);font-weight:900;color:#1a1a2e;margin-bottom:8px;line-height:1.2;">${author.name}</h1>
+        <p style="font-size:16px;font-weight:600;color:#666;margin-bottom:20px;">${author.title}</p>
+        <p style="font-size:15px;line-height:1.75;color:#333;border-left:3px solid #c0392b;padding-left:14px;margin-bottom:24px;">${author.shortBio}</p>
+        ${socialLinks}
+      </div>
+    </div>
+  </div>
+
+  <!-- Bio lunga -->
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:32px;align-items:start;">
+    <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:36px;">
+      <h2 style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #c0392b;">About ${author.name}</h2>
+      ${bioParagraphs}
+    </div>
+    <aside>
+      <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:24px;border-top:3px solid #c0392b;margin-bottom:20px;">
+        <h3 style="font-family:Georgia,serif;font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">Role at ${siteName}</h3>
+        <p style="font-size:14px;line-height:1.7;color:#555;">${author.title} — writes and reviews all content in this area to ensure accuracy and real-world relevance.</p>
+      </div>
+      <div style="background:#1a1a2e;color:white;border-radius:4px;padding:24px;">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">Editorial Standards</h3>
+        <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.75);margin-bottom:16px;">All content is fact-checked and reviewed before publication. We follow strict guidelines for accuracy.</p>
+        <a href="/about/" style="color:#c0392b;font-size:13px;font-weight:600;text-decoration:none;">Read our editorial process →</a>
+      </div>
+    </aside>
+  </div>
+</div>`;
+
+  const html = simplePageWrapper(`${author.name} — ${author.title}`, author.shortBio, body, siteConfig);
+  const dir = join(WWW_ROOT, domain, 'author', author.avatar);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+  console.log(`  ✅ Author page: /author/${author.avatar}/`);
+}
+
+function generateCategoryPage(domain, category, introData, siteConfig) {
+  const siteName = siteConfig.name;
+  const headline = introData?.headline || `${category.name} — Articles & Guides`;
+  const introText = (introData?.intro || `Explore our in-depth guides and articles about ${category.name.toLowerCase()}. All content is written by verified experts and reviewed for accuracy.`).replace(/\{\{siteName\}\}/g, siteName);
+
+  const body = `
+<div style="max-width:900px;margin:32px auto;padding:0 20px;">
+  <!-- Breadcrumb -->
+  <nav style="font-size:13px;color:#999;margin-bottom:20px;">
+    <a href="/" style="color:#999;">Home</a> › <span style="color:#555;">${category.name}</span>
+  </nav>
+
+  <!-- Category hero -->
+  <div style="border-bottom:3px solid #c0392b;margin-bottom:28px;padding-bottom:20px;">
+    <h1 style="font-family:Georgia,serif;font-size:clamp(22px,4vw,32px);font-weight:900;color:#1a1a2e;margin-bottom:14px;">${headline}</h1>
+    <p style="font-size:16px;line-height:1.85;color:#444;max-width:720px;">${introText}</p>
+  </div>
+
+  <!-- Articles grid (populated dynamically) -->
+  <div id="cat-articles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:40px;">
+    <p style="color:#aaa;font-size:14px;grid-column:1/-1;">Loading articles...</p>
+  </div>
+
+  <!-- Internal tool CTA -->
+  <div style="background:#fef5f4;border:1px solid #f5c6c0;border-left:4px solid #c0392b;border-radius:6px;padding:20px 24px;margin-top:32px;">
+    <p style="font-size:15px;font-weight:600;color:#1a1a2e;margin-bottom:6px;">Free Planning Tool</p>
+    <p style="font-size:14px;color:#555;margin-bottom:12px;">Use our interactive calculator to get an instant, personalized estimate for your project.</p>
+    <a href="/tools/" style="display:inline-block;background:#c0392b;color:white;padding:9px 20px;border-radius:5px;text-decoration:none;font-size:14px;font-weight:700;">Try the Calculator →</a>
+  </div>
+</div>
+
+<script>
+  fetch('/api/articles.json')
+    .then(r => r.json())
+    .then(articles => {
+      const cat = '${category.name}'.toLowerCase();
+      const filtered = articles.filter(a => a.category && a.category.toLowerCase() === cat);
+      const el = document.getElementById('cat-articles');
+      if (!filtered.length) { el.innerHTML = '<p style="color:#aaa;font-size:14px;">Articles coming soon.</p>'; return; }
+      el.innerHTML = filtered.map(a => \`
+        <a href="/\${a.slug}" style="display:block;text-decoration:none;background:white;border:1px solid #eee;border-radius:6px;overflow:hidden;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
+          <img src="/images/\${a.slug}.jpg" alt="\${a.title}" loading="lazy" style="width:100%;height:160px;object-fit:cover;display:block;" onerror="this.style.display='none'" />
+          <div style="padding:14px 16px;">
+            <p style="font-size:14px;font-weight:700;color:#1a1a2e;margin:0 0 6px;line-height:1.4;">\${a.title}</p>
+            <p style="font-size:13px;color:#666;margin:0;line-height:1.5;">\${(a.excerpt || '').slice(0, 100)}\${a.excerpt?.length > 100 ? '...' : ''}</p>
+          </div>
+        </a>\`).join('');
+    }).catch(() => {
+      document.getElementById('cat-articles').innerHTML = '<p style="color:#aaa;font-size:14px;">Articles coming soon.</p>';
+    });
+</script>`;
+
+  const html = simplePageWrapper(headline, introText.slice(0, 160), body, siteConfig);
+  const dir = join(WWW_ROOT, domain, 'category', category.slug);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+}
+
+function generateToolFile(domain, toolConfig, siteConfig) {
+  const TEMPLATE_COLORS = {
+    pulse:   '#c0392b',
+    tribune: '#1a3a6b',
+    nexus:   '#0d7377',
+    echo:    '#4a235a',
+    vortex:  '#b7410e',
+  };
+  const color = TEMPLATE_COLORS[siteConfig.template] || '#c0392b';
+
+  const html = generateToolPage(toolConfig, {
+    name:  siteConfig.name,
+    url:   siteConfig.url,
+    color,
+    niche: siteConfig.nicheSlug,
+  });
+
+  const toolDir = join(WWW_ROOT, domain, 'tools', toolConfig.slug);
+  mkdirSync(toolDir, { recursive: true });
+  writeFileSync(join(toolDir, 'index.html'), html, 'utf-8');
+}
+
 function writePlaceholderImage(domain) {
   // SVG placeholder — no external dependency
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
@@ -254,11 +503,17 @@ function writePlaceholderImage(domain) {
 }
 
 function simplePageWrapper(title, description, content, site) {
+  const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
+  const ga4Script = ga4Id ? `
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${title} | ${site.name}</title>
 <meta name="description" content="${description}"/>
 <link rel="stylesheet" href="/assets/style.css"/>
+${ga4Script}
 </head><body>
 <header style="background:#1a1a2e;padding:14px 20px">
   <a href="/" style="color:#fff;text-decoration:none;font-size:22px;font-weight:800">${site.name}</a>

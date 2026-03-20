@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Daily Pulse — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap" />
+<style>
+/* ============================================================
+   PULSE TEMPLATE — All changes applied
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --color-primary:    #c0392b;
+  --color-secondary:  #1a1a2e;
+  --color-accent:     #e67e22;
+  --color-bg:         #f4f4f0;
+  --color-surface:    #ffffff;
+  --color-border:     #ddd;
+  --color-text:       #1a1a1a;
+  --color-text-muted: #666;
+  --font-headline:    'Merriweather', Georgia, serif;
+  --font-body:        'Open Sans', system-ui, sans-serif;
+  --max-width:        1200px;
+  --radius:           4px;
+  --shadow:           0 2px 8px rgba(0,0,0,0.1);
+}
+
+html { font-size: 16px; }
+body { font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); line-height: 1.75; }
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 16px; }
+
+/* ── View switcher (prototype nav) ─────────────────────────── */
+.proto-nav {
+  position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%);
+  background: #1a1a2e; border-radius: 40px; padding: 8px 12px;
+  display: flex; gap: 6px; z-index: 9999; box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.proto-nav button {
+  background: transparent; border: none; color: rgba(255,255,255,0.6);
+  padding: 8px 16px; border-radius: 30px; cursor: pointer;
+  font-size: 13px; font-weight: 600; font-family: var(--font-body);
+  transition: all 0.2s;
+}
+.proto-nav button.active { background: #c0392b; color: white; }
+.proto-nav button:hover:not(.active) { color: white; background: rgba(255,255,255,0.08); }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Breaking Ticker ─────────────────────────────────────────── */
+.breaking-ticker {
+  background: var(--color-primary); color: white;
+  display: flex; align-items: center; height: 36px; overflow: hidden;
+  position: sticky; top: 0; z-index: 100; font-size: 13px;
+  contain: layout;
+}
+.ticker-label {
+  background: var(--color-secondary); padding: 0 14px; height: 100%;
+  display: flex; align-items: center; font-weight: 700; letter-spacing: 1.5px;
+  font-size: 11px; flex-shrink: 0; white-space: nowrap;
+}
+.ticker-content { flex: 1; overflow: hidden; padding: 0 12px; }
+.ticker-items {
+  white-space: nowrap; animation: ticker 40s linear infinite;
+  display: inline-block; will-change: transform; transform: translateZ(0);
+}
+.ticker-items:hover { animation-play-state: paused; }
+.ticker-item { color: white; text-decoration: none; margin: 0 20px; }
+.ticker-item:hover { text-decoration: underline; }
+.ticker-sep { opacity: 0.5; margin: 0 8px; }
+@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* ── Header ──────────────────────────────────────────────────── */
+.header-top { background: var(--color-secondary); color: rgba(255,255,255,0.7); font-size: 12px; padding: 6px 0; }
+.header-top .container { display: flex; justify-content: space-between; align-items: center; }
+.header-nav-top { display: flex; gap: 16px; }
+.header-nav-top a { color: rgba(255,255,255,0.7); text-decoration: none; }
+.header-nav-top a:hover { color: white; }
+
+.header-main { background: white; border-bottom: 3px solid var(--color-primary); padding: 12px 0; }
+.header-main .container { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.site-logo { text-decoration: none; line-height: 1; }
+.logo-the { display: block; font-family: var(--font-headline); font-size: 13px; color: var(--color-text-muted); letter-spacing: 2px; text-transform: uppercase; }
+.logo-name { display: block; font-family: var(--font-headline); font-size: 42px; font-weight: 900; color: var(--color-primary); line-height: 0.9; }
+
+.header-ad {
+  flex: 1; max-width: 728px; min-height: 90px; display: flex;
+  align-items: center; justify-content: center;
+  background: #f9f9f9; border: 1px dashed #ddd; color: #bbb; font-size: 12px;
+}
+
+.header-nav-main { background: var(--color-secondary); position: sticky; top: 36px; z-index: 90; }
+.nav-list { list-style: none; display: flex; gap: 0; }
+.nav-list a {
+  display: block; color: rgba(255,255,255,0.85); text-decoration: none;
+  padding: 10px 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; transition: background 0.2s, color 0.2s;
+}
+.nav-list a:hover { background: var(--color-primary); color: white; }
+.nav-list a.current { background: var(--color-primary); color: white; }
+
+/* ── Main ────────────────────────────────────────────────────── */
+.site-main { padding: 24px 0 48px; min-height: 60vh; }
+
+/* ── Homepage grid ───────────────────────────────────────────── */
+.homepage-hero { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px; }
+@media (max-width: 700px) { .homepage-hero { grid-template-columns: 1fr; } }
+
+.article-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+.article-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.article-card--hero .card-image { aspect-ratio: 16/9; }
+.card-image { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: var(--color-bg); }
+.card-image img { width: 100%; height: 100%; object-fit: cover; }
+.card-body { padding: 16px; }
+.card-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primary); margin-bottom: 6px; }
+.card-title { font-family: var(--font-headline); font-size: 18px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
+.card-title a { color: var(--color-secondary); text-decoration: none; }
+.card-title a:hover { color: var(--color-primary); }
+.card-excerpt { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 10px; }
+.card-meta { font-size: 12px; color: var(--color-text-muted); display: flex; gap: 12px; }
+
+.articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin: 24px 0; }
+
+.sidebar-stack {}
+.sidebar-card {
+  display: flex; gap: 12px; padding: 12px; background: white; border-radius: 4px;
+  margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  cursor: pointer; transition: box-shadow 0.2s;
+}
+.sidebar-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.14); }
+
+/* ── Article Layout ──────────────────────────────────────────── */
+.article-layout { display: grid; grid-template-columns: 1fr 300px; gap: 32px; margin-top: 24px; }
+@media (max-width: 900px) { .article-layout { grid-template-columns: 1fr; } }
+
+.article-header { border-bottom: 2px solid var(--color-border); padding-bottom: 20px; margin-bottom: 4px; }
+.article-breadcrumb { font-size: 13px; color: var(--color-text-muted); margin-bottom: 12px; }
+.article-breadcrumb a { color: var(--color-primary); text-decoration: none; }
+.article-breadcrumb a:hover { text-decoration: underline; }
+
+.article-title { font-family: var(--font-headline); font-size: clamp(26px, 4vw, 42px); font-weight: 900; line-height: 1.2; color: var(--color-secondary); margin-bottom: 16px; }
+
+.article-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding: 12px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+.article-author { display: flex; align-items: center; gap: 10px; }
+.author-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--color-bg); }
+.author-name { display: block; font-weight: 600; font-size: 14px; color: var(--color-secondary); }
+.author-title { display: block; font-size: 12px; color: var(--color-text-muted); }
+.article-date { font-size: 13px; color: var(--color-text-muted); }
+
+/* ── Article Content ─────────────────────────────────────────── */
+.article-content { background: white; padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow); }
+
+.intro-text { font-size: 18px; line-height: 1.85; color: var(--color-secondary); font-weight: 500; border-left: 4px solid var(--color-primary); padding-left: 16px; margin: 16px 0 28px; }
+
+/* D: Sezioni con più respiro */
+.article-section { margin: 36px 0; }
+.article-section h2 { font-family: var(--font-headline); font-size: 22px; font-weight: 700; color: var(--color-secondary); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--color-primary); }
+.article-section p { margin-bottom: 22px; font-size: 16px; line-height: 1.9; }
+/* D: Bullet points verso interno */
+.article-list { padding-left: 24px; margin: 16px 0 24px; list-style-position: inside; }
+.article-list li { margin-bottom: 14px; line-height: 1.85; padding-left: 4px; }
+
+.ad-unit--leaderboard { width: 100%; min-height: 90px; background: #f9f9f9; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; margin: 16px 0; font-size: 12px; color: #bbb; }
+.ad-unit--inline { width: 100%; min-height: 250px; background: #f9f9f9; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; margin: 24px 0; border-radius: var(--radius); font-size: 12px; color: #bbb; }
+
+.author-experience { border-left: 4px solid var(--color-accent); padding: 16px 20px; background: #fff8f0; border-radius: 0 var(--radius) var(--radius) 0; margin: 28px 0; font-style: italic; }
+.author-experience p { font-size: 16px; line-height: 1.8; margin-bottom: 8px; }
+.author-experience cite { font-size: 13px; color: var(--color-text-muted); font-style: normal; }
+
+.article-faq { background: #f8f9ff; padding: 24px; border-radius: var(--radius); margin: 28px 0; }
+.article-faq > h2 { font-family: var(--font-headline); font-size: 20px; margin-bottom: 16px; color: var(--color-secondary); }
+.faq-item { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--color-border); }
+.faq-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.faq-question { font-size: 16px; font-weight: 600; color: var(--color-secondary); margin-bottom: 6px; }
+.faq-answer p { font-size: 15px; line-height: 1.7; color: var(--color-text-muted); }
+
+.article-conclusion { margin: 36px 0; }
+.article-conclusion h2 { font-family: var(--font-headline); font-size: 22px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--color-secondary); }
+.article-conclusion p { margin-bottom: 22px; font-size: 16px; line-height: 1.9; }
+
+.article-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.tags-label { font-size: 13px; color: var(--color-text-muted); font-weight: 600; align-self: center; }
+.tag { background: var(--color-bg); border: 1px solid var(--color-border); padding: 4px 10px; border-radius: 20px; font-size: 12px; text-decoration: none; color: var(--color-secondary); transition: background 0.2s; }
+.tag:hover { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+
+/* ── Sidebar ──────────────────────────────────────────────────── */
+.article-sidebar { display: flex; flex-direction: column; gap: 24px; }
+.ad-unit--sidebar { width: 300px; min-height: 250px; background: #f9f9f9; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); font-size: 12px; color: #bbb; }
+.sidebar-related { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border-top: 3px solid var(--color-primary); }
+.sidebar-related h3 { font-family: var(--font-headline); font-size: 16px; margin-bottom: 12px; color: var(--color-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.sidebar-newsletter { background: var(--color-secondary); color: white; border-radius: var(--radius); padding: 20px; }
+.sidebar-newsletter h3 { font-size: 16px; margin-bottom: 12px; }
+.newsletter-form { display: flex; flex-direction: column; gap: 8px; }
+.newsletter-form input { padding: 10px 12px; border: none; border-radius: var(--radius); font-size: 14px; width: 100%; }
+.newsletter-form button { background: var(--color-primary); color: white; border: none; padding: 10px; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 14px; }
+.newsletter-form button:hover { background: #a93226; }
+
+/* ── Author Page ──────────────────────────────────────────────── */
+.author-hero { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 40px; }
+.author-hero-accent { height: 4px; background: var(--color-primary); }
+.author-hero-body { padding: 40px; display: flex; gap: 36px; align-items: flex-start; flex-wrap: wrap; }
+.author-photo { width: 180px; height: 180px; object-fit: cover; border-radius: 50%; border: 4px solid var(--color-bg); box-shadow: 0 4px 16px rgba(0,0,0,0.15); flex-shrink: 0; background: #ddd; }
+.author-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--color-primary); margin-bottom: 8px; }
+.author-name-big { font-family: var(--font-headline); font-size: clamp(24px,4vw,36px); font-weight: 900; color: var(--color-secondary); margin-bottom: 8px; line-height: 1.2; }
+.author-role { font-size: 16px; font-weight: 600; color: #666; margin-bottom: 20px; }
+.author-shortbio { font-size: 15px; line-height: 1.75; color: #333; border-left: 3px solid var(--color-primary); padding-left: 14px; margin-bottom: 24px; }
+.author-stats { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 24px; }
+.author-stat-num { font-family: var(--font-headline); font-size: 28px; font-weight: 900; color: var(--color-primary); }
+.author-stat-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+.author-social a { display: inline-block; padding: 8px 16px; border-radius: var(--radius); text-decoration: none; font-size: 13px; font-weight: 600; margin-right: 8px; margin-bottom: 8px; }
+.btn-linkedin { background: #0077b5; color: white; }
+.btn-twitter { background: #1da1f2; color: white; }
+
+.author-body-grid { display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start; }
+@media (max-width: 768px) { .author-body-grid { grid-template-columns: 1fr; } }
+.author-longbio { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 36px; margin-bottom: 32px; }
+.author-longbio h2 { font-family: var(--font-headline); font-size: 22px; font-weight: 700; color: var(--color-secondary); margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--color-primary); }
+.author-longbio p { font-size: 16px; line-height: 1.9; margin-bottom: 22px; }
+.author-articles { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 36px; }
+.author-articles h2 { font-family: var(--font-headline); font-size: 22px; font-weight: 700; color: var(--color-secondary); margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--color-primary); }
+.author-article-card { display: flex; gap: 16px; padding: 16px; border: 1px solid #eee; border-radius: var(--radius); margin-bottom: 12px; transition: box-shadow 0.2s; cursor: pointer; }
+.author-article-card:hover { box-shadow: var(--shadow); }
+.author-article-thumb { width: 100px; height: 72px; object-fit: cover; border-radius: var(--radius); flex-shrink: 0; background: #eee; }
+.author-article-cat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primary); margin-bottom: 4px; }
+.author-article-title { font-family: var(--font-headline); font-size: 15px; font-weight: 700; color: var(--color-secondary); line-height: 1.4; margin-bottom: 6px; }
+.author-article-exc { font-size: 13px; color: #666; line-height: 1.5; }
+.author-sidebar-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; border-top: 3px solid var(--color-primary); margin-bottom: 20px; }
+.author-sidebar-card h3 { font-family: var(--font-headline); font-size: 15px; font-weight: 700; color: var(--color-secondary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+.author-expertise-item { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; color: #333; display: flex; align-items: center; gap: 8px; }
+.author-expertise-item:last-child { border-bottom: none; }
+.author-dark-card { background: var(--color-secondary); color: white; border-radius: var(--radius); padding: 24px; }
+.author-dark-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.author-dark-card p { font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.75); margin-bottom: 16px; }
+.author-dark-card a { color: var(--color-primary); font-size: 13px; font-weight: 600; text-decoration: none; }
+
+/* ── Sticky bottom banner ─────────────────────────────────────── */
+.sticky-bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 8000;
+  background: white; border-top: 1px solid #ddd;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 16px; gap: 12px;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.12);
+  min-height: 66px;
+}
+.sticky-bottom-bar .ad-label {
+  font-size: 10px; color: #bbb; text-transform: uppercase;
+  letter-spacing: 1px; position: absolute; top: 4px; left: 8px;
+}
+.sticky-bottom-bar .ad-mock {
+  width: 728px; max-width: calc(100% - 48px); height: 50px;
+  background: #f9f9f9; border: 1px dashed #ddd;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #bbb; border-radius: 2px;
+}
+.sticky-bottom-bar .close-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: #eee; border: none; border-radius: 50%;
+  width: 24px; height: 24px; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: #666; line-height: 1; flex-shrink: 0;
+}
+.sticky-bottom-bar .close-btn:hover { background: #ddd; }
+@media (max-width: 768px) {
+  .sticky-bottom-bar .ad-mock { height: 50px; }
+}
+/* push footer above sticky bar */
+body { padding-bottom: 66px; }
+
+/* ── Sticky sidebar ───────────────────────────────────────────── */
+.sidebar-sticky-wrap {
+  position: sticky;
+  top: 130px; /* below ticker(36) + nav(~94) */
+}
+
+/* ── Content discovery (Taboola/MGID placeholder) ────────────── */
+.content-discovery {
+  margin: 32px 0 0; padding-top: 24px;
+  border-top: 2px solid var(--color-border);
+}
+.content-discovery-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.content-discovery-header h3 {
+  font-family: var(--font-headline); font-size: 14px; font-weight: 700;
+  color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.content-discovery-header .cd-badge {
+  font-size: 10px; color: #bbb; background: #f4f4f0;
+  padding: 2px 8px; border-radius: 3px; letter-spacing: 0.5px;
+}
+.cd-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+@media (max-width: 700px) { .cd-grid { grid-template-columns: repeat(2, 1fr); } }
+.cd-card { cursor: pointer; }
+.cd-card img {
+  width: 100%; aspect-ratio: 16/9; object-fit: cover;
+  border-radius: 3px; display: block; margin-bottom: 6px;
+}
+.cd-card-title {
+  font-size: 13px; font-weight: 600; color: var(--color-text);
+  line-height: 1.4; margin-bottom: 4px;
+}
+.cd-card-source { font-size: 11px; color: #999; }
+.cd-card:hover .cd-card-title { color: var(--color-primary); }
+
+/* ── Footer ───────────────────────────────────────────────────── */
+.site-footer { background: var(--color-secondary); color: rgba(255,255,255,0.8); padding: 40px 0 20px; margin-top: 48px; }
+.footer-ad { text-align: center; padding: 16px; background: rgba(0,0,0,0.2); margin-bottom: 32px; font-size: 12px; color: rgba(255,255,255,0.3); }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+@media (max-width: 600px) { .footer-grid { grid-template-columns: 1fr; } }
+.footer-about h3 { color: white; font-family: var(--font-headline); font-size: 20px; margin-bottom: 10px; }
+.footer-about p { font-size: 14px; line-height: 1.7; }
+.footer-links h4 { color: white; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.footer-links ul { list-style: none; }
+.footer-links li { margin-bottom: 6px; }
+.footer-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; }
+.footer-links a:hover { color: white; }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.5); }
+.footer-disclaimer { margin-top: 6px; font-size: 12px; }
+
+img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     VIEW 1: HOMEPAGE
+═══════════════════════════════════════════ -->
+<div id="view-home" class="view active">
+
+  <!-- Ticker seamless -->
+  <div class="breaking-ticker">
+    <span class="ticker-label">TRENDING</span>
+    <div class="ticker-content">
+      <div class="ticker-items" id="ticker">
+        <a href="#" class="ticker-item">How Much Does a Bathroom Remodel Cost in 2025?</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Cost Guide — What Homeowners Pay</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs: Materials, Labor, Permits</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Walk-In Shower Installation: Average Cost by Size</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Roof Replacement Cost 2025: Shingles vs Metal</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Kitchen Cabinet Refacing vs Replacement Costs</a>
+        <!-- duplicated for seamless loop -->
+        <span class="ticker-sep" style="margin:0 40px;">&#9679;</span>
+        <a href="#" class="ticker-item">How Much Does a Bathroom Remodel Cost in 2025?</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Cost Guide — What Homeowners Pay</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs: Materials, Labor, Permits</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Walk-In Shower Installation: Average Cost by Size</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Roof Replacement Cost 2025: Shingles vs Metal</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Kitchen Cabinet Refacing vs Replacement Costs</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header top -->
+  <header class="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div>Friday, March 20, 2026</div>
+        <nav class="header-nav-top">
+          <a href="#">About</a>
+          <a href="#">Contact</a>
+          <a href="#">Privacy</a>
+        </nav>
+      </div>
+    </div>
+    <div class="header-main">
+      <div class="container">
+        <a href="#" class="site-logo">
+          <span class="logo-the">The</span>
+          <span class="logo-name">Daily Pulse</span>
+        </a>
+        <div class="header-ad">Ad · 728×90</div>
+      </div>
+    </div>
+    <!-- A: Nav con categorie statiche -->
+    <nav class="header-nav-main">
+      <div class="container">
+        <ul class="nav-list">
+          <li><a href="#" class="current">Home</a></li>
+          <li><a href="#">HVAC</a></li>
+          <li><a href="#">Bathroom</a></li>
+          <li><a href="#">Flooring</a></li>
+          <li><a href="#">Deck &amp; Patio</a></li>
+          <li><a href="#">Roofing</a></li>
+          <li><a href="#">Kitchen</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <div class="container">
+
+      <!-- Leaderboard ad -->
+      <div class="ad-unit--leaderboard">Ad · Leaderboard 728×90</div>
+
+      <!-- Hero + sidebar -->
+      <section class="homepage-hero">
+        <article class="article-card article-card--hero" onclick="showView('article')" style="cursor:pointer;">
+          <div class="card-image">
+            <img src="https://images.pexels.com/photos/1080721/pexels-photo-1080721.jpeg?auto=compress&cs=tinysrgb&w=800&h=450&fit=crop" alt="Bathroom remodel" loading="eager" />
+          </div>
+          <div class="card-body">
+            <div class="card-category">Bathroom</div>
+            <h2 class="card-title" style="font-size:28px;">
+              <a href="#">How Much Does a Walk-In Shower Cost? (2025 Complete Guide)</a>
+            </h2>
+            <p class="card-excerpt">The average walk-in shower installation costs $3,500 to $15,000 depending on size, materials, and labor. Here's everything you need to budget accurately before calling a contractor.</p>
+            <div class="card-meta">
+              <span>James Crawford</span>
+              <span>Mar 18, 2026</span>
+            </div>
+          </div>
+        </article>
+
+        <div class="sidebar-stack">
+          <div class="sidebar-card" onclick="showView('article')">
+            <img src="https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=80&h=60&fit=crop" alt="HVAC" loading="lazy" style="width:80px;height:60px;object-fit:cover;border-radius:4px;flex-shrink:0;" />
+            <div>
+              <div class="card-category" style="font-size:10px;">HVAC</div>
+              <span style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;line-height:1.3;display:block;">HVAC Replacement Cost: What You'll Actually Pay in 2025</span>
+            </div>
+          </div>
+          <div class="sidebar-card" onclick="showView('article')">
+            <img src="https://images.pexels.com/photos/534151/pexels-photo-534151.jpeg?auto=compress&cs=tinysrgb&w=80&h=60&fit=crop" alt="Flooring" loading="lazy" style="width:80px;height:60px;object-fit:cover;border-radius:4px;flex-shrink:0;" />
+            <div>
+              <div class="card-category" style="font-size:10px;">Flooring</div>
+              <span style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;line-height:1.3;display:block;">Hardwood vs Laminate Flooring: Full Cost Comparison</span>
+            </div>
+          </div>
+          <div class="sidebar-card" onclick="showView('article')">
+            <img src="https://images.pexels.com/photos/209296/pexels-photo-209296.jpeg?auto=compress&cs=tinysrgb&w=80&h=60&fit=crop" alt="Deck" loading="lazy" style="width:80px;height:60px;object-fit:cover;border-radius:4px;flex-shrink:0;" />
+            <div>
+              <div class="card-category" style="font-size:10px;">Deck &amp; Patio</div>
+              <span style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;line-height:1.3;display:block;">How Much Does a Wood Deck Cost to Build? (Per Sq Ft)</span>
+            </div>
+          </div>
+          <div class="sidebar-card" onclick="showView('article')">
+            <img src="https://images.pexels.com/photos/279719/pexels-photo-279719.jpeg?auto=compress&cs=tinysrgb&w=80&h=60&fit=crop" alt="Kitchen" loading="lazy" style="width:80px;height:60px;object-fit:cover;border-radius:4px;flex-shrink:0;" />
+            <div>
+              <div class="card-category" style="font-size:10px;">Kitchen</div>
+              <span style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;line-height:1.3;display:block;">Kitchen Cabinet Refacing Cost vs Full Replacement</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mid ad -->
+      <div class="ad-unit--leaderboard">Ad · Leaderboard 728×90</div>
+
+      <!-- Latest articles grid -->
+      <section>
+        <h2 style="font-family:'Merriweather',serif;font-size:22px;color:#1a1a2e;margin-bottom:20px;padding-bottom:8px;border-bottom:3px solid #c0392b;">Latest Articles</h2>
+        <div class="articles-grid">
+          <article class="article-card" onclick="showView('article')" style="cursor:pointer;">
+            <div class="card-image"><img src="https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop" alt="Roofing" loading="lazy" /></div>
+            <div class="card-body">
+              <div class="card-category">Roofing</div>
+              <h3 class="card-title"><a href="#">Roof Replacement Cost 2025: Everything You Need to Know</a></h3>
+              <p class="card-excerpt">Average roof replacement costs $8,000–$24,000 depending on material, pitch, and square footage.</p>
+              <div class="card-meta"><span>James Crawford</span></div>
+            </div>
+          </article>
+          <article class="article-card" onclick="showView('article')" style="cursor:pointer;">
+            <div class="card-image"><img src="https://images.pexels.com/photos/775219/pexels-photo-775219.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop" alt="Window" loading="lazy" /></div>
+            <div class="card-body">
+              <div class="card-category">Windows</div>
+              <h3 class="card-title"><a href="#">Window Replacement Cost Per Window (2025 Prices)</a></h3>
+              <p class="card-excerpt">Most homeowners pay $300–$900 per window installed. Material choice and frame condition drive the final number.</p>
+              <div class="card-meta"><span>James Crawford</span></div>
+            </div>
+          </article>
+          <article class="article-card" onclick="showView('article')" style="cursor:pointer;">
+            <div class="card-image"><img src="https://images.pexels.com/photos/667838/pexels-photo-667838.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop" alt="Insulation" loading="lazy" /></div>
+            <div class="card-body">
+              <div class="card-category">Insulation</div>
+              <h3 class="card-title"><a href="#">Attic Insulation Cost: Blown-In vs Batt vs Spray Foam</a></h3>
+              <p class="card-excerpt">Adding attic insulation costs $1,500–$6,500 for a typical home. Here's how to compare your options.</p>
+              <div class="card-meta"><span>James Crawford</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-ad">Ad · Footer Leaderboard</div>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-about">
+          <h3>The Daily Pulse</h3>
+          <p>Your trusted source for expert guides, real cost data, and actionable home improvement information. Every article reviewed by verified industry professionals.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Advertise</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Daily Pulse. All rights reserved.</p>
+        <p class="footer-disclaimer">Content is for informational purposes only. Always consult a professional for specific advice.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     VIEW 2: ARTICLE PAGE
+═══════════════════════════════════════════ -->
+<div id="view-article" class="view">
+
+  <div class="breaking-ticker">
+    <span class="ticker-label">TRENDING</span>
+    <div class="ticker-content">
+      <div class="ticker-items">
+        <a href="#" class="ticker-item">Bathroom Remodel Cost 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Guide</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Roof Replacement 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Bathroom Remodel Cost 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Guide</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Roof Replacement 2025</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div>Friday, March 20, 2026</div>
+        <nav class="header-nav-top">
+          <a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a>
+        </nav>
+      </div>
+    </div>
+    <div class="header-main">
+      <div class="container">
+        <a href="#" class="site-logo" onclick="showView('home');return false;">
+          <span class="logo-the">The</span>
+          <span class="logo-name">Daily Pulse</span>
+        </a>
+        <div class="header-ad">Ad · 728×90</div>
+      </div>
+    </div>
+    <nav class="header-nav-main">
+      <div class="container">
+        <ul class="nav-list">
+          <li><a href="#" onclick="showView('home');return false;">Home</a></li>
+          <li><a href="#">HVAC</a></li>
+          <li><a href="#" class="current">Bathroom</a></li>
+          <li><a href="#">Flooring</a></li>
+          <li><a href="#">Deck &amp; Patio</a></li>
+          <li><a href="#">Roofing</a></li>
+          <li><a href="#">Kitchen</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <div class="container">
+      <header class="article-header">
+        <!-- C: Breadcrumb con categoria -->
+        <div class="article-breadcrumb">
+          <a href="#" onclick="showView('home');return false;">Home</a>
+          › <a href="#">Bathroom</a>
+          › <span>How Much Does a Walk-In Shower Cost?</span>
+        </div>
+        <h1 class="article-title">How Much Does a Walk-In Shower Cost? (2025 Complete Guide)</h1>
+        <div class="article-meta">
+          <!-- B: Autore linkato alla pagina autore -->
+          <div class="article-author">
+            <a href="#" onclick="showView('author');return false;" style="flex-shrink:0;">
+              <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=44&h=44&fit=crop&facepad=3&faces=1" alt="James Crawford" class="author-avatar" />
+            </a>
+            <div>
+              <a href="#" onclick="showView('author');return false;" style="text-decoration:none;color:inherit;">
+                <span class="author-name">James Crawford</span>
+              </a>
+              <span class="author-title">Home Renovation Specialist</span>
+            </div>
+          </div>
+          <time class="article-date">March 18, 2026</time>
+        </div>
+        <div class="ad-unit--leaderboard">Ad · Leaderboard</div>
+      </header>
+
+      <div class="article-layout">
+        <div class="article-content">
+          <!-- Key Takeaways — featured snippet bait -->
+          <div style="background:#f0faf0;border:1px solid #c3e6c3;border-left:4px solid #27ae60;border-radius:4px;padding:20px 24px;margin-bottom:24px;">
+            <div style="font-family:'Merriweather',serif;font-size:15px;font-weight:700;color:#1a5c2a;margin-bottom:12px;">✓ Key Takeaways</div>
+            <ul style="list-style:none;padding:0;margin:0;">
+              <li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>Average walk-in shower costs $3,500–$15,000 installed</li>
+              <li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>Size is the #1 cost driver — each extra foot adds $800–$1,500</li>
+              <li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>Waterproofing is where contractors cut corners — always ask</li>
+              <li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>Get 3+ quotes; a suspiciously low bid usually means hidden costs</li>
+            </ul>
+          </div>
+
+          <p class="intro-text">The average walk-in shower installation costs <strong>$3,500 to $15,000</strong>, with most homeowners spending around $6,800 for a standard 36×36-inch tiled shower with a frameless glass door. What you pay depends heavily on size, materials, and whether you're converting an existing tub or starting fresh.</p>
+
+          <!-- D: sezione con più respiro, paragrafi ariosi -->
+          <section class="article-section">
+            <h2>Walk-In Shower Cost by Size</h2>
+            <p>Size is the single biggest cost driver. Larger showers require more tile, more waterproofing membrane, more glass, and more labor hours. Here's what you can expect at each common footprint:</p>
+            <p>A <strong>32×32-inch shower</strong> — the smallest practical size — typically costs $2,800 to $5,500 installed. You'll find these in powder rooms being converted or tight en-suite bathrooms where every inch counts. The savings come from less tile and a smaller glass panel, but the labor cost doesn't scale down proportionally.</p>
+            <p>At <strong>36×48 inches</strong>, the sweet spot for most remodels, costs run $4,500 to $8,500. This size feels genuinely comfortable for daily use without pushing into luxury territory. Most prefab shower kits are designed around this footprint, which can cut costs if you're open to non-custom options.</p>
+            <ul class="article-list">
+              <li><strong>32×32 inches</strong> — $2,800 to $5,500 installed</li>
+              <li><strong>36×36 inches</strong> — $3,500 to $7,000 installed (most common)</li>
+              <li><strong>36×48 inches</strong> — $4,500 to $8,500 installed</li>
+              <li><strong>48×48 inches</strong> — $6,000 to $12,000 installed</li>
+              <li><strong>60×36 walk-in wet room</strong> — $8,000 to $18,000 installed</li>
+            </ul>
+          </section>
+
+          <div class="ad-unit--inline">Ad · In-Article 300×250</div>
+
+          <section class="article-section">
+            <h2>Cost by Material: Tile vs Prefab vs Stone</h2>
+            <p>Material choice affects both the upfront cost and the long-term maintenance burden. Ceramic tile is the industry default — it's affordable, waterproof, available in thousands of styles, and repairable if a single tile cracks. Porcelain tile costs more but handles moisture better and lasts longer without staining.</p>
+            <p>Natural stone — marble, slate, travertine — adds a significant premium. Expect to pay $25 to $65 per square foot for the stone alone, plus additional labor because stone requires more precise cutting and sealing. It's stunning, but it needs annual resealing to stay waterproof and can crack if the subfloor shifts.</p>
+            <!-- C: internal link example -->
+            <p>Prefab shower kits, by contrast, can bring the total project cost under $2,500 if you're doing a straight swap. For more on what drives bathroom costs overall, see our guide on <a href="#" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">bathroom remodel costs by project type</a>.</p>
+          </section>
+
+          <!-- Author note -->
+          <blockquote class="author-experience">
+            <p>In 15 years of renovation work, I've seen more walk-in shower projects go over budget than almost any other job. The hidden cost is almost always waterproofing — contractors who cut corners on the membrane create problems that show up 3 years later as water damage behind the walls.</p>
+            <cite>— James Crawford, Home Renovation Specialist</cite>
+          </blockquote>
+
+          <div class="ad-unit--inline">Ad · In-Article 300×250</div>
+
+          <section class="article-faq">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+              <p class="faq-question">Can I convert a bathtub to a walk-in shower myself?</p>
+              <div class="faq-answer"><p>The demolition is DIY-able, but the waterproofing, tile work, and plumbing connections require licensed contractors in most jurisdictions. Cutting corners on waterproofing leads to water damage that can cost more than the original shower to fix.</p></div>
+            </div>
+            <div class="faq-item">
+              <p class="faq-question">Does a walk-in shower add value to a home?</p>
+              <div class="faq-answer"><p>Yes — in most markets, a well-done walk-in shower recoups 60–70% of its cost at resale. The ROI is highest when you're adding a shower to a bathroom that currently only has a tub, especially in master suites.</p></div>
+            </div>
+            <div class="faq-item">
+              <p class="faq-question">How long does installation take?</p>
+              <div class="faq-answer"><p>A standard conversion takes 3–5 days for a professional crew. Custom tile work with intricate patterns or large-format tiles can extend the timeline to 7–10 days. The tile mortar and grout need curing time before the shower is usable.</p></div>
+            </div>
+          </section>
+
+          <div class="ad-unit--inline">Ad · In-Article 300×250</div>
+
+          <section class="article-conclusion">
+            <h2>The Bottom Line</h2>
+            <p>A walk-in shower conversion costs $3,500 to $15,000 for most homeowners, with the biggest variables being size, tile choice, and glass door style. Get at least three quotes from licensed contractors, ask specifically about what's included in their waterproofing process, and budget a 15% contingency for surprises behind the walls.</p>
+            <p>The difference between a shower that looks great for 5 years and one that looks great for 25 is almost entirely in the waterproofing and the quality of the tile installation. Don't optimize that part of the budget.</p>
+          </section>
+
+          <!-- Tags -->
+          <div class="article-tags">
+            <span class="tags-label">Topics:</span>
+            <a class="tag" href="#">walk-in shower</a>
+            <a class="tag" href="#">bathroom remodel</a>
+            <a class="tag" href="#">shower installation cost</a>
+            <a class="tag" href="#">home improvement</a>
+            <a class="tag" href="#">tile cost</a>
+          </div>
+
+          <!-- Last reviewed -->
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:#999;"><strong style="color:#666;">Last reviewed:</strong> March 18, 2026</span>
+            <span style="font-size:12px;color:#ccc;">·</span>
+            <a href="#" onclick="showView('editorial');return false;" style="font-size:12px;color:#c0392b;text-decoration:none;font-weight:600;">How we ensure accuracy →</a>
+          </div>
+
+          <!-- Content Discovery (Taboola / MGID placeholder) -->
+          <div class="content-discovery">
+            <div class="content-discovery-header">
+              <h3>You May Also Like</h3>
+              <span class="cd-badge">Sponsored</span>
+            </div>
+            <div class="cd-grid">
+              <div class="cd-card">
+                <img src="https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=300&h=169&fit=crop" alt="Kitchen" loading="lazy" />
+                <div class="cd-card-title">Why Homeowners Are Switching to This New Kitchen System</div>
+                <div class="cd-card-source">HomeAdvisor · Sponsored</div>
+              </div>
+              <div class="cd-card">
+                <img src="https://images.pexels.com/photos/276583/pexels-photo-276583.jpeg?auto=compress&cs=tinysrgb&w=300&h=169&fit=crop" alt="Living room" loading="lazy" />
+                <div class="cd-card-title">The Real Cost of Home Warranties in 2025 (Worth It?)</div>
+                <div class="cd-card-source">Choice Home Warranty · Sponsored</div>
+              </div>
+              <div class="cd-card">
+                <img src="https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=300&h=169&fit=crop" alt="HVAC" loading="lazy" />
+                <div class="cd-card-title">HVAC Prices in Your Area May Surprise You</div>
+                <div class="cd-card-source">Angi · Sponsored</div>
+              </div>
+              <div class="cd-card">
+                <img src="https://images.pexels.com/photos/534151/pexels-photo-534151.jpeg?auto=compress&cs=tinysrgb&w=300&h=169&fit=crop" alt="Flooring" loading="lazy" />
+                <div class="cd-card-title">5 Flooring Mistakes That Cost Homeowners Thousands</div>
+                <div class="cd-card-source">The Daily Pulse</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="article-sidebar">
+          <!-- Sticky ad wrap -->
+          <div class="sidebar-sticky-wrap">
+            <div class="ad-unit--sidebar" style="width:100%;">Ad · Sidebar 300×250 (sticky)</div>
+          </div>
+          <div class="sidebar-related">
+            <h3>You May Also Like</h3>
+            <article style="display:flex;gap:10px;margin-bottom:12px;">
+              <img src="https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=70&h=52&fit=crop" style="width:70px;height:52px;object-fit:cover;border-radius:3px;flex-shrink:0;" loading="lazy" alt="HVAC" />
+              <a href="#" style="font-size:13px;font-weight:600;color:#1a1a2e;text-decoration:none;line-height:1.4;">HVAC Replacement Cost: What You'll Actually Pay</a>
+            </article>
+            <article style="display:flex;gap:10px;margin-bottom:12px;">
+              <img src="https://images.pexels.com/photos/534151/pexels-photo-534151.jpeg?auto=compress&cs=tinysrgb&w=70&h=52&fit=crop" style="width:70px;height:52px;object-fit:cover;border-radius:3px;flex-shrink:0;" loading="lazy" alt="Floor" />
+              <a href="#" style="font-size:13px;font-weight:600;color:#1a1a2e;text-decoration:none;line-height:1.4;">Hardwood vs Laminate: Full Cost Comparison</a>
+            </article>
+            <article style="display:flex;gap:10px;margin-bottom:12px;">
+              <img src="https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=70&h=52&fit=crop" style="width:70px;height:52px;object-fit:cover;border-radius:3px;flex-shrink:0;" loading="lazy" alt="Roof" />
+              <a href="#" style="font-size:13px;font-weight:600;color:#1a1a2e;text-decoration:none;line-height:1.4;">Roof Replacement Cost 2025 Complete Guide</a>
+            </article>
+          </div>
+          <div class="ad-unit--sidebar">Ad · Sidebar 300×250</div>
+          <div class="sidebar-newsletter">
+            <h3>Get Expert Tips Weekly</h3>
+            <form class="newsletter-form" onsubmit="return false;">
+              <input type="email" placeholder="your@email.com" />
+              <button type="submit">Subscribe Free</button>
+            </form>
+          </div>
+          <div class="ad-unit--sidebar">Ad · Sidebar 300×250</div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-ad">Ad · Footer Leaderboard</div>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-about">
+          <h3>The Daily Pulse</h3>
+          <p>Your trusted source for expert guides, real cost data, and actionable home improvement information.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Advertise</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Daily Pulse. All rights reserved.</p>
+        <p class="footer-disclaimer">Content is for informational purposes only. Always consult a professional for specific advice.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     VIEW 3: AUTHOR PAGE
+═══════════════════════════════════════════ -->
+<div id="view-author" class="view">
+
+  <div class="breaking-ticker">
+    <span class="ticker-label">TRENDING</span>
+    <div class="ticker-content">
+      <div class="ticker-items">
+        <a href="#" class="ticker-item">Bathroom Remodel Cost 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Guide</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Bathroom Remodel Cost 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Guide</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div>Friday, March 20, 2026</div>
+        <nav class="header-nav-top">
+          <a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a>
+        </nav>
+      </div>
+    </div>
+    <div class="header-main">
+      <div class="container">
+        <a href="#" class="site-logo" onclick="showView('home');return false;">
+          <span class="logo-the">The</span>
+          <span class="logo-name">Daily Pulse</span>
+        </a>
+        <div class="header-ad">Ad · 728×90</div>
+      </div>
+    </div>
+    <nav class="header-nav-main">
+      <div class="container">
+        <ul class="nav-list">
+          <li><a href="#" onclick="showView('home');return false;">Home</a></li>
+          <li><a href="#">HVAC</a></li>
+          <li><a href="#">Bathroom</a></li>
+          <li><a href="#">Flooring</a></li>
+          <li><a href="#">Deck &amp; Patio</a></li>
+          <li><a href="#">Roofing</a></li>
+          <li><a href="#">Kitchen</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <div class="container">
+
+      <!-- Author Hero -->
+      <div class="author-hero">
+        <div class="author-hero-accent"></div>
+        <div class="author-hero-body">
+          <img
+            src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=360&h=360&fit=crop&facepad=3&faces=1"
+            alt="James Crawford"
+            class="author-photo"
+          />
+          <div style="flex:1;min-width:240px;">
+            <div class="author-label">Expert Contributor</div>
+            <h1 class="author-name-big">James Crawford</h1>
+            <p class="author-role">Home Renovation Specialist</p>
+            <p class="author-shortbio">James has spent 15 years in the home improvement industry, working as a contractor before becoming a consumer advocate helping homeowners understand real project costs.</p>
+            <div class="author-stats">
+              <div>
+                <div class="author-stat-num">47</div>
+                <div class="author-stat-label">Articles</div>
+              </div>
+              <div>
+                <div class="author-stat-num">15+</div>
+                <div class="author-stat-label">Years Exp.</div>
+              </div>
+              <div>
+                <div class="author-stat-num">GC</div>
+                <div class="author-stat-label">Licensed</div>
+              </div>
+            </div>
+            <!-- No social links — persona is editorial, not a public figure -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#f0faf0;border:1px solid #c3e6c3;color:#2d7a2d;padding:7px 14px;border-radius:4px;font-size:13px;font-weight:600;">
+                ✓ Verified Expert
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#f8f9ff;border:1px solid #c5cef5;color:#3949ab;padding:7px 14px;border-radius:4px;font-size:13px;font-weight:600;">
+                ✓ Editorial Review Board
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio + Sidebar -->
+      <div class="author-body-grid">
+        <div>
+          <!-- Long bio generated by Claude -->
+          <div class="author-longbio">
+            <h2>About James Crawford</h2>
+            <p>James Crawford grew up watching his father renovate the family's Victorian-era farmhouse outside Columbus, Ohio — a project that spanned most of his childhood and left him with a deep respect for both the craft and the cost of doing things right. By the time he was fourteen, he could frame a doorway, hang drywall, and quote a materials list from memory. That early education shaped everything that followed.</p>
+            <p>After earning a construction management degree from Ohio State University in 2004, James joined a mid-size regional contractor that specialized in residential renovations. For the next decade he worked on projects ranging from single-bathroom updates to full gut-renovations of historic properties, eventually leading crews of up to twelve people. He earned his general contractor's license in 2009 and his certified remodeler designation through the National Association of the Remodeling Industry in 2011.</p>
+            <p>The pivot toward consumer advocacy came from frustration. James watched too many homeowners get burned by vague estimates, hidden scope changes, and contractors who priced jobs below cost and then made up the margin in change orders. In 2015, he began writing a column for a regional home improvement magazine explaining how to read a contractor's bid, what questions to ask before signing, and how to spot the warning signs of a problematic job.</p>
+            <p>The response was immediate. Readers flooded the magazine's inbox with questions, and James realized the real gap wasn't in how-to content — the internet had plenty of that — but in honest, specific cost information. What does a bathroom remodel actually cost in a mid-size Midwest city? What's the markup on materials? When is a quote genuinely competitive and when is it suspiciously low?</p>
+            <p>He joined The Daily Pulse in 2022 to focus on exactly that: transparent, contractor-vetted cost guides that help homeowners negotiate from a position of knowledge rather than hope. Every figure he publishes is cross-referenced against current supplier pricing, regional labor data, and conversations with active contractors across multiple markets.</p>
+            <p>Outside of writing, James still takes on select renovation projects through his consultancy, which keeps him current on what materials actually cost and what good work genuinely requires. He lives in Columbus with his wife and two kids, and is currently, inevitably, renovating his own kitchen.</p>
+          </div>
+
+          <!-- Articles -->
+          <div class="author-articles">
+            <h2>Articles by James Crawford</h2>
+            <div class="author-article-card" onclick="showView('article')">
+              <img src="https://images.pexels.com/photos/1080721/pexels-photo-1080721.jpeg?auto=compress&cs=tinysrgb&w=100&h=72&fit=crop" alt="Shower" class="author-article-thumb" loading="lazy" />
+              <div>
+                <div class="author-article-cat">Bathroom</div>
+                <div class="author-article-title">How Much Does a Walk-In Shower Cost? (2025 Complete Guide)</div>
+                <div class="author-article-exc">The average walk-in shower installation costs $3,500 to $15,000. Here's how to budget accurately.</div>
+              </div>
+            </div>
+            <div class="author-article-card" onclick="showView('article')">
+              <img src="https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=100&h=72&fit=crop" alt="HVAC" class="author-article-thumb" loading="lazy" />
+              <div>
+                <div class="author-article-cat">HVAC</div>
+                <div class="author-article-title">HVAC Replacement Cost: What You'll Actually Pay in 2025</div>
+                <div class="author-article-exc">Full system replacement averages $5,000–$12,500 depending on home size and efficiency rating.</div>
+              </div>
+            </div>
+            <div class="author-article-card" onclick="showView('article')">
+              <img src="https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=100&h=72&fit=crop" alt="Roof" class="author-article-thumb" loading="lazy" />
+              <div>
+                <div class="author-article-cat">Roofing</div>
+                <div class="author-article-title">Roof Replacement Cost 2025: Shingles vs Metal vs Tile</div>
+                <div class="author-article-exc">Most homeowners pay $8,000–$24,000 for roof replacement. Material choice is the biggest variable.</div>
+              </div>
+            </div>
+            <div class="author-article-card" onclick="showView('article')">
+              <img src="https://images.pexels.com/photos/534151/pexels-photo-534151.jpeg?auto=compress&cs=tinysrgb&w=100&h=72&fit=crop" alt="Floor" class="author-article-thumb" loading="lazy" />
+              <div>
+                <div class="author-article-cat">Flooring</div>
+                <div class="author-article-title">Hardwood vs Laminate Flooring: Full Cost Comparison</div>
+                <div class="author-article-exc">Hardwood runs $6–$12/sq ft installed vs $2–$5 for laminate. Here's when each one is worth it.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside>
+          <div class="author-sidebar-card">
+            <h3>Areas of Expertise</h3>
+            <div class="author-expertise-item"><span style="color:#c0392b;font-weight:700;">›</span> Bathroom Renovation</div>
+            <div class="author-expertise-item"><span style="color:#c0392b;font-weight:700;">›</span> HVAC Systems</div>
+            <div class="author-expertise-item"><span style="color:#c0392b;font-weight:700;">›</span> Roofing &amp; Exteriors</div>
+            <div class="author-expertise-item"><span style="color:#c0392b;font-weight:700;">›</span> Flooring</div>
+            <div class="author-expertise-item"><span style="color:#c0392b;font-weight:700;">›</span> Deck &amp; Patio</div>
+          </div>
+          <div class="author-dark-card">
+            <h3>Editorial Standards</h3>
+            <p>All content by James Crawford is fact-checked and reviewed before publication. We follow strict editorial guidelines for accuracy and real-world relevance.</p>
+            <a href="#" onclick="showView('editorial');return false;">Read our editorial process →</a>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-ad">Ad · Footer Leaderboard</div>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-about">
+          <h3>The Daily Pulse</h3>
+          <p>Your trusted source for expert guides, real cost data, and actionable home improvement information.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Advertise</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Daily Pulse. All rights reserved.</p>
+        <p class="footer-disclaimer">Content is for informational purposes only. Always consult a professional for specific advice.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     VIEW 4: EDITORIAL PROCESS
+═══════════════════════════════════════════ -->
+<div id="view-editorial" class="view">
+
+  <div class="breaking-ticker">
+    <span class="ticker-label">TRENDING</span>
+    <div class="ticker-content">
+      <div class="ticker-items">
+        <a href="#" class="ticker-item">Bathroom Remodel Cost 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Guide</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Bathroom Remodel Cost 2025</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement Guide</a><span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Deck Building Costs</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div>Friday, March 20, 2026</div>
+        <nav class="header-nav-top">
+          <a href="#">About</a><a href="#" onclick="showView('editorial');return false;">Editorial Process</a><a href="#">Privacy</a>
+        </nav>
+      </div>
+    </div>
+    <div class="header-main">
+      <div class="container">
+        <a href="#" class="site-logo" onclick="showView('home');return false;">
+          <span class="logo-the">The</span>
+          <span class="logo-name">Daily Pulse</span>
+        </a>
+        <div class="header-ad">Ad · 728×90</div>
+      </div>
+    </div>
+    <nav class="header-nav-main">
+      <div class="container">
+        <ul class="nav-list">
+          <li><a href="#" onclick="showView('home');return false;">Home</a></li>
+          <li><a href="#">HVAC</a></li>
+          <li><a href="#">Bathroom</a></li>
+          <li><a href="#">Flooring</a></li>
+          <li><a href="#">Deck &amp; Patio</a></li>
+          <li><a href="#">Roofing</a></li>
+          <li><a href="#">Kitchen</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <div class="container">
+      <article class="article-content" style="max-width:860px; margin:0 auto;">
+        <h1 class="article-title" style="margin-bottom:12px;">Our Editorial Process</h1>
+        <p style="color:#999; font-size:13px; margin-bottom:32px;">Last updated: January 1, 2026</p>
+
+        <p class="intro-text">Every article on The Daily Pulse goes through a structured research, writing, review, and maintenance process. This page explains exactly how we work — who writes our content, how we verify it, and how we keep it accurate over time.</p>
+
+        <!-- Process steps -->
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:32px 0;">
+          <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+            <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">01</div>
+            <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">Topic Selection</div>
+            <div style="font-size:13px; color:#666; line-height:1.5;">Keyword research + reader intent analysis</div>
+          </div>
+          <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+            <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">02</div>
+            <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">Expert Research</div>
+            <div style="font-size:13px; color:#666; line-height:1.5;">Primary sources, industry data, practitioner input</div>
+          </div>
+          <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+            <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">03</div>
+            <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">Draft & Write</div>
+            <div style="font-size:13px; color:#666; line-height:1.5;">Written by verified domain experts</div>
+          </div>
+          <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+            <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">04</div>
+            <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">Fact-Check</div>
+            <div style="font-size:13px; color:#666; line-height:1.5;">Claims verified against authoritative sources</div>
+          </div>
+          <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+            <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">05</div>
+            <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">Editorial Review</div>
+            <div style="font-size:13px; color:#666; line-height:1.5;">Style, accuracy, and helpfulness check</div>
+          </div>
+          <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+            <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">06</div>
+            <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">Publish & Monitor</div>
+            <div style="font-size:13px; color:#666; line-height:1.5;">Live + quarterly review cycle for updates</div>
+          </div>
+        </div>
+
+        <section class="article-section">
+          <h2>Who Writes Our Content</h2>
+          <p>We do not use generalist freelance writers. Every contributor to The Daily Pulse is a verified practitioner with direct, hands-on experience in the subject area they write about. A home improvement cost guide is written and reviewed by someone who has spent years quoting, managing, or executing renovation projects — not someone who researched the topic for an afternoon.</p>
+          <p>Contributors are identified by name and title on every article they write. You can read their full biography on their <a href="#" onclick="showView('author');return false;" style="color:#c0392b;">author profile page</a>, which includes their background, expertise, and the specific qualifications that make them a credible source on their topic.</p>
+        </section>
+
+        <section class="article-section">
+          <h2>How We Research Each Article</h2>
+          <ul class="article-list">
+            <li><strong>Primary industry data:</strong> We reference reports from trade associations, government agencies, and established research firms including the U.S. Census Bureau, Bureau of Labor Statistics, and Remodeling Magazine's Cost vs. Value Report.</li>
+            <li><strong>Practitioner consultation:</strong> For cost and process articles, we consult with licensed professionals to validate that our figures reflect real-world conditions.</li>
+            <li><strong>Regional variation:</strong> We acknowledge that costs vary by geography and note this clearly in articles where it's significant.</li>
+            <li><strong>Competitive accuracy:</strong> We review comparable articles from authoritative sources to identify gaps, errors, and outdated information.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <h2>AI Assistance Disclosure</h2>
+          <p>The Daily Pulse uses AI tools as part of our content production workflow. AI assists with research synthesis, draft structure, and initial content generation. Every article is reviewed, edited, and fact-checked by a human expert before publication. AI-generated content that has not been reviewed by a qualified human contributor is never published.</p>
+        </section>
+
+        <section class="article-section">
+          <h2>How We Keep Content Up to Date</h2>
+          <p>High-traffic articles are reviewed quarterly. All articles are reviewed at least annually. Every article displays a "Last reviewed" date that updates when substantive changes are made. Reader-submitted corrections are investigated within 48 hours.</p>
+        </section>
+
+        <section class="article-section">
+          <h2>Corrections Policy</h2>
+          <p>We correct errors promptly and transparently. If you find a factual error, please <a href="#" style="color:#c0392b;">contact us</a> with the article URL, the specific claim, and a supporting source. Significant corrections are noted in the article. Minor updates are reflected in the "Last reviewed" date.</p>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-ad">Ad · Footer Leaderboard</div>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-about">
+          <h3>The Daily Pulse</h3>
+          <p>Your trusted source for expert guides, real cost data, and actionable home improvement information.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#" onclick="showView('editorial');return false;">Editorial Process</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Advertise</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Daily Pulse. All rights reserved.</p>
+        <p class="footer-disclaimer">Content is for informational purposes only. Always consult a professional for specific advice.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     VIEW 5 — INTERACTIVE TOOL (Home Improvement Cost Calculator)
+     ══════════════════════════════════════════════════════════ -->
+<div id="view-tool" class="view">
+
+  <!-- Ticker -->
+  <div class="breaking-ticker">
+    <span class="ticker-label">TRENDING</span>
+    <div class="ticker-content">
+      <div class="ticker-items">
+        <a href="#" class="ticker-item">How Much Does a Bathroom Remodel Cost?</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Kitchen Renovation Cost Guide 2026</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement: What to Expect</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">How Much Does a Bathroom Remodel Cost?</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">Kitchen Renovation Cost Guide 2026</a>
+        <span class="ticker-sep">•</span>
+        <a href="#" class="ticker-item">HVAC Replacement: What to Expect</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-top"><div class="container">
+      <div class="header-date">Friday, March 20, 2026</div>
+      <nav class="header-nav-top"><a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a></nav>
+    </div></div>
+    <div class="header-main"><div class="container">
+      <a href="#" class="site-logo" onclick="showView('home');return false;">
+        <span class="logo-the">The</span><span class="logo-name">Daily Pulse</span>
+      </a>
+    </div></div>
+    <nav class="header-nav-main"><div class="container">
+      <ul class="nav-list">
+        <li><a href="#" onclick="showView('home');return false;">Home</a></li>
+        <li><a href="#">HVAC</a></li><li><a href="#">Bathroom</a></li>
+        <li><a href="#">Kitchen</a></li><li><a href="#">Flooring</a></li>
+        <li><a href="#">Roofing</a></li>
+      </ul>
+    </div></nav>
+  </header>
+
+  <!-- Tool content -->
+  <main class="site-main">
+    <div class="container">
+      <div style="max-width:760px;margin:40px auto;padding:0 0 60px;">
+
+        <!-- Breadcrumb -->
+        <nav style="font-size:13px;color:#999;margin-bottom:20px;">
+          <a href="#" onclick="showView('home');return false;" style="color:#999;">Home</a> ›
+          <span style="color:#999;">Tools</span> ›
+          <span style="color:#555;">Home Renovation Cost Calculator</span>
+        </nav>
+
+        <!-- Hero -->
+        <div style="text-align:center;margin-bottom:36px;">
+          <h1 style="font-family:'Merriweather',Georgia,serif;font-size:clamp(22px,4vw,30px);color:#1a1a1a;margin-bottom:12px;">How Much Will Your Project Cost?</h1>
+          <p style="font-size:16px;color:#555;max-width:560px;margin:0 auto;line-height:1.7;">Get an instant, contractor-verified cost estimate for your home improvement project. Enter your project details and see a realistic budget range — broken down by labor, materials, and permits.</p>
+        </div>
+
+        <!-- Tool card -->
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+
+          <!-- Card header -->
+          <div style="background:#c0392b;color:#fff;padding:18px 28px;display:flex;align-items:center;gap:12px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <h2 style="font-family:'Merriweather',Georgia,serif;font-size:16px;font-weight:700;margin:0;">Home Renovation Cost Calculator</h2>
+          </div>
+
+          <!-- Form body -->
+          <div style="padding:28px;" id="tool-form-body">
+
+            <!-- Project type -->
+            <div style="margin-bottom:22px;">
+              <label style="display:block;font-size:14px;font-weight:600;color:#333;margin-bottom:8px;">Project Type</label>
+              <select id="t-project" style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;font-family:'Open Sans',sans-serif;color:#1a1a1a;background:#fafafa;box-sizing:border-box;">
+                <option value="bathroom">Bathroom Remodel</option>
+                <option value="kitchen">Kitchen Remodel</option>
+                <option value="roof">Roof Replacement</option>
+                <option value="flooring">Flooring Installation</option>
+                <option value="hvac">HVAC Replacement</option>
+                <option value="deck">Deck / Patio Build</option>
+                <option value="windows">Window Replacement</option>
+                <option value="painting">Interior Painting</option>
+              </select>
+            </div>
+
+            <!-- Size -->
+            <div style="margin-bottom:22px;">
+              <label style="display:block;font-size:14px;font-weight:600;color:#333;margin-bottom:8px;">Project Size (sq ft)</label>
+              <input id="t-size" type="number" value="120" min="10" max="5000"
+                style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;font-family:'Open Sans',sans-serif;background:#fafafa;box-sizing:border-box;" />
+              <p style="font-size:12px;color:#777;margin-top:5px;">For HVAC, enter your home's total sq ft. For windows, enter number of windows × 15.</p>
+            </div>
+
+            <!-- Quality -->
+            <div style="margin-bottom:22px;">
+              <label style="display:block;font-size:14px;font-weight:600;color:#333;margin-bottom:8px;">Material Quality</label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <div style="position:relative;">
+                  <input type="radio" name="t-quality" id="t-q-basic" value="basic" style="position:absolute;opacity:0;width:0;height:0;" />
+                  <label for="t-q-basic" id="t-q-basic-lbl" style="display:flex;flex-direction:column;align-items:center;padding:9px 16px;border:1.5px solid #ddd;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;color:#444;background:#fafafa;transition:all .15s;">
+                    Basic <span style="font-size:11px;color:#888;font-weight:400;margin-top:2px;">Builder-grade, functional</span>
+                  </label>
+                </div>
+                <div style="position:relative;">
+                  <input type="radio" name="t-quality" id="t-q-mid" value="mid" checked style="position:absolute;opacity:0;width:0;height:0;" />
+                  <label for="t-q-mid" id="t-q-mid-lbl" style="display:flex;flex-direction:column;align-items:center;padding:9px 16px;border:1.5px solid #c0392b;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;color:#8b1a10;background:#fef5f4;transition:all .15s;">
+                    Mid-Range <span style="font-size:11px;color:#888;font-weight:400;margin-top:2px;">Most popular choice</span>
+                  </label>
+                </div>
+                <div style="position:relative;">
+                  <input type="radio" name="t-quality" id="t-q-premium" value="premium" style="position:absolute;opacity:0;width:0;height:0;" />
+                  <label for="t-q-premium" id="t-q-premium-lbl" style="display:flex;flex-direction:column;align-items:center;padding:9px 16px;border:1.5px solid #ddd;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;color:#444;background:#fafafa;transition:all .15s;">
+                    Premium <span style="font-size:11px;color:#888;font-weight:400;margin-top:2px;">High-end finishes</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Region -->
+            <div style="margin-bottom:22px;">
+              <label style="display:block;font-size:14px;font-weight:600;color:#333;margin-bottom:8px;">Your Region</label>
+              <select id="t-region" style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;font-family:'Open Sans',sans-serif;color:#1a1a1a;background:#fafafa;box-sizing:border-box;">
+                <option value="northeast">Northeast (NY, MA, CT...)</option>
+                <option value="south">South (TX, FL, GA...)</option>
+                <option value="midwest">Midwest (IL, OH, MI...)</option>
+                <option value="west">West (CA, WA, CO...)</option>
+              </select>
+            </div>
+
+            <!-- CTA -->
+            <button onclick="runToolProto()" style="width:100%;padding:14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Open Sans',sans-serif;cursor:pointer;margin-top:4px;">
+              Get My Estimate →
+            </button>
+
+            <!-- Results -->
+            <div id="tool-results-proto" style="display:none;margin-top:28px;padding-top:28px;border-top:2px solid #f0f0f0;">
+
+              <!-- Hero range -->
+              <div id="res-hero" style="text-align:center;background:#fef5f4;border:2px solid #f5c6c0;border-radius:10px;padding:28px 20px;margin-bottom:24px;">
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#777;margin-bottom:8px;">Estimated Cost Range</div>
+                <div id="res-mid" style="font-family:'Merriweather',Georgia,serif;font-size:clamp(32px,8vw,52px);font-weight:900;color:#c0392b;line-height:1;"></div>
+                <div style="font-size:14px;color:#888;margin-top:6px;">estimated mid-range cost</div>
+                <div style="display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;">
+                  <span style="font-size:14px;color:#666;white-space:nowrap;">Low: <strong id="res-low"></strong></span>
+                  <span style="font-size:14px;color:#666;white-space:nowrap;">High: <strong id="res-high"></strong></span>
+                </div>
+              </div>
+
+              <!-- Breakdown bars -->
+              <div style="margin-bottom:20px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  <span style="width:140px;flex-shrink:0;font-size:14px;color:#444;font-weight:500;">Labor</span>
+                  <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;"><div id="bar-labor" style="height:100%;background:#c0392b;border-radius:4px;transition:width .6s ease;width:0%;"></div></div>
+                  <span id="val-labor" style="width:80px;text-align:right;font-weight:600;color:#1a1a1a;font-size:14px;white-space:nowrap;"></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  <span style="width:140px;flex-shrink:0;font-size:14px;color:#444;font-weight:500;">Materials</span>
+                  <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;"><div id="bar-materials" style="height:100%;background:#c0392b;border-radius:4px;transition:width .6s ease;width:0%;"></div></div>
+                  <span id="val-materials" style="width:80px;text-align:right;font-weight:600;color:#1a1a1a;font-size:14px;white-space:nowrap;"></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  <span style="width:140px;flex-shrink:0;font-size:14px;color:#444;font-weight:500;">Permits & Fees</span>
+                  <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden;"><div id="bar-permits" style="height:100%;background:#c0392b;border-radius:4px;transition:width .6s ease;width:0%;"></div></div>
+                  <span id="val-permits" style="width:80px;text-align:right;font-weight:600;color:#1a1a1a;font-size:14px;white-space:nowrap;"></span>
+                </div>
+              </div>
+
+              <!-- Disclaimer -->
+              <p style="padding:14px 16px;background:#f9f9f9;border-left:3px solid #ddd;border-radius:4px;font-size:12px;color:#888;line-height:1.6;">
+                Estimates are based on national averages and regional labor data. Actual costs vary based on site conditions, contractor availability, and material prices. Always get 3+ quotes from licensed contractors.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related articles -->
+        <div style="margin-top:40px;">
+          <h3 style="font-family:'Merriweather',Georgia,serif;font-size:18px;margin-bottom:16px;color:#1a1a1a;">Related Articles</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+            <a href="#" onclick="showView('article');return false;" style="display:block;text-decoration:none;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+              <div style="background:#e8e8e8;height:120px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;">📷 Photo</div>
+              <div style="padding:12px 14px;"><p style="font-size:13px;font-weight:600;color:#1a1a1a;margin:0;line-height:1.4;">How Much Does a Bathroom Remodel Cost in 2026?</p></div>
+            </a>
+            <a href="#" onclick="showView('article');return false;" style="display:block;text-decoration:none;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+              <div style="background:#e8e8e8;height:120px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;">📷 Photo</div>
+              <div style="padding:12px 14px;"><p style="font-size:13px;font-weight:600;color:#1a1a1a;margin:0;line-height:1.4;">Average Kitchen Remodel Cost by Size</p></div>
+            </a>
+            <a href="#" onclick="showView('article');return false;" style="display:block;text-decoration:none;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+              <div style="background:#e8e8e8;height:120px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;">📷 Photo</div>
+              <div style="padding:12px 14px;"><p style="font-size:13px;font-weight:600;color:#1a1a1a;margin:0;line-height:1.4;">Roof Replacement Cost: What Contractors Charge</p></div>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; 2026 The Daily Pulse. All rights reserved.</p>
+        <p class="footer-disclaimer">Content is for informational purposes only. Always consult a professional for specific advice.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ── Sticky bottom banner (global) ──────────────────────── -->
+<div class="sticky-bottom-bar" id="sticky-bottom-bar">
+  <span class="ad-label">Advertisement</span>
+  <div class="ad-mock">Ad · 728×90 Sticky Bottom Banner</div>
+  <button class="close-btn" onclick="document.getElementById('sticky-bottom-bar').style.display='none'; document.body.style.paddingBottom='0';" title="Close">✕</button>
+</div>
+
+<!-- ── Prototype nav ──────────────────────────────────────── -->
+<nav class="proto-nav">
+  <button class="active" onclick="showView('home')">Homepage</button>
+  <button onclick="showView('article')">Articolo</button>
+  <button onclick="showView('author')">Autore</button>
+  <button onclick="showView('editorial')">Editorial</button>
+  <button onclick="showView('tool')">Calcolatore</button>
+</nav>
+
+<script>
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.proto-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    const idx = { home: 0, article: 1, author: 2, editorial: 3, tool: 4 }[name];
+    if (idx !== undefined) document.querySelectorAll('.proto-nav button')[idx].classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  /* ── Renovation Cost Calculator Logic ────────────────────── */
+  function runToolProto() {
+    const BASE = {
+      bathroom: { labor: 45, materials: 35, permits: 5 },
+      kitchen:  { labor: 55, materials: 65, permits: 8 },
+      roof:     { labor: 4,  materials: 5,  permits: 0.5 },
+      flooring: { labor: 4,  materials: 6,  permits: 0 },
+      hvac:     { labor: 1.2,materials: 2.8,permits: 0.2 },
+      deck:     { labor: 18, materials: 20, permits: 3 },
+      windows:  { labor: 12, materials: 18, permits: 1 },
+      painting: { labor: 2,  materials: 1,  permits: 0 },
+    };
+    const QUALITY = { basic: 0.75, mid: 1.0, premium: 1.6 };
+    const REGION  = { northeast: 1.20, south: 0.88, midwest: 0.95, west: 1.25 };
+    const VARIATION = 0.22;
+
+    const project = document.getElementById('t-project').value;
+    const size    = parseFloat(document.getElementById('t-size').value) || 150;
+    const quality = document.querySelector('input[name="t-quality"]:checked')?.value || 'mid';
+    const region  = document.getElementById('t-region').value;
+
+    const b = BASE[project];
+    const qm = QUALITY[quality];
+    const rm = REGION[region];
+
+    const laborAvg     = b.labor     * qm * rm * size;
+    const materialsAvg = b.materials * qm * rm * size;
+    const permitsAvg   = b.permits   * rm * size;
+    const totalAvg     = laborAvg + materialsAvg + permitsAvg;
+    const totalLow     = Math.round(totalAvg * (1 - VARIATION) / 100) * 100;
+    const totalHigh    = Math.round(totalAvg * (1 + VARIATION) / 100) * 100;
+    const totalMid     = Math.round(totalAvg / 100) * 100;
+
+    const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
+
+    document.getElementById('res-mid').textContent    = fmt(totalMid);
+    document.getElementById('res-low').textContent    = fmt(totalLow);
+    document.getElementById('res-high').textContent   = fmt(totalHigh);
+    document.getElementById('val-labor').textContent  = fmt(laborAvg);
+    document.getElementById('val-materials').textContent = fmt(materialsAvg);
+    document.getElementById('val-permits').textContent   = fmt(permitsAvg);
+
+    // Animate bars
+    setTimeout(() => {
+      document.getElementById('bar-labor').style.width     = Math.round(laborAvg / totalAvg * 100) + '%';
+      document.getElementById('bar-materials').style.width = Math.round(materialsAvg / totalAvg * 100) + '%';
+      document.getElementById('bar-permits').style.width   = Math.round(permitsAvg / totalAvg * 100) + '%';
+    }, 50);
+
+    const panel = document.getElementById('tool-results-proto');
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Radio button style sync
+    document.querySelectorAll('input[name="t-quality"]').forEach(radio => {
+      const lbl = document.querySelector('label[for="' + radio.id + '"]');
+      if (radio.checked) {
+        lbl.style.borderColor = '#c0392b';
+        lbl.style.background  = '#fef5f4';
+        lbl.style.color       = '#8b1a10';
+      } else {
+        lbl.style.borderColor = '#ddd';
+        lbl.style.background  = '#fafafa';
+        lbl.style.color       = '#444';
+      }
+    });
+  }
+
+  // Radio visual feedback on change
+  document.querySelectorAll('input[name="t-quality"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('input[name="t-quality"]').forEach(r => {
+        const lbl = document.querySelector('label[for="' + r.id + '"]');
+        if (r.checked) {
+          lbl.style.borderColor = '#c0392b';
+          lbl.style.background  = '#fef5f4';
+          lbl.style.color       = '#8b1a10';
+        } else {
+          lbl.style.borderColor = '#ddd';
+          lbl.style.background  = '#fafafa';
+          lbl.style.color       = '#444';
+        }
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

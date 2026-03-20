@@ -15,14 +15,18 @@ import {
   getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql
 } from '@content-network/db';
 import { generateSitemap, writeSiteFile } from '@content-network/vps';
+import { purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
+import { getDailyArticleLimit, logScheduleInfo } from '@content-network/content-engine/src/publishing-schedule.js';
+import { injectInternalLinks } from '@content-network/content-engine/src/link-injector.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
 const TEMPLATES_DIR = join(ROOT, 'templates');
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
-const ARTICLES_PER_DAY = parseInt(process.env.ARTICLES_PER_DAY || '50');
-const BATCH_PER_HOUR = Math.ceil(ARTICLES_PER_DAY / 24);
+// ARTICLES_PER_DAY è ora calcolato dinamicamente per sito (publishing-schedule.js)
+// Questo valore è usato solo come cap assoluto di sicurezza
+const MAX_ARTICLES_PER_DAY = parseInt(process.env.MAX_ARTICLES_PER_DAY || '35');
 
 async function run() {
   const now = new Date();
@@ -38,7 +42,12 @@ async function run() {
     await triggerDailyGeneration();
   }
 
-  // 3. Aggiorna homepage + sitemap dei siti con nuovi articoli
+  // 3. Content freshness refresh (ogni domenica alle 03:xx — max 3 articoli per sito)
+  if (now.getHours() === 3 && now.getDay() === 0) {
+    await refreshStaleArticles(stats);
+  }
+
+  // 4. Aggiorna homepage + sitemap dei siti con nuovi articoli
   await rebuildAffectedSites(stats);
 
   console.log(`\n📊 Done — published: ${stats.published}, failed: ${stats.failed}, rebuilt: ${stats.rebuilt}`);
@@ -46,6 +55,8 @@ async function run() {
 }
 
 async function publishDueArticles(stats) {
+  // Pubblica max articoli per questa ora (finestra 15 ore / ~2 per ora in warm-up)
+  const BATCH_PER_HOUR = Math.ceil(MAX_ARTICLES_PER_DAY / 15);
   const due = await getDueItems(BATCH_PER_HOUR);
   if (!due.length) { console.log('  No articles due'); return; }
 
@@ -109,7 +120,8 @@ async function writeArticlePage(article, siteConfig, template) {
     schemas: article.schema_markup || [],
     category: cat.name,
     categorySlug: cat.slug,
-    date: article.published_at || article.created_at
+    date: article.published_at || article.created_at,
+    image: article.image || null,
   };
 
   const html = renderArticlePage(articleData, siteConfig, related.map(r => ({
@@ -191,10 +203,17 @@ async function triggerDailyGeneration() {
   const liveSites = await getSitesByStatus('live');
 
   for (const site of liveSites) {
+    // Calcola limite giornaliero basato sull'età del sito
+    const { count: dailyLimit, ageDays, label } = getDailyArticleLimit(site.created_at);
+    const cappedLimit = Math.min(dailyLimit, MAX_ARTICLES_PER_DAY);
+
+    console.log(`\n  📍 ${site.domain} — ${ageDays}d old — ${label}`);
+    console.log(`  📰 Today's target: ${cappedLimit} articles`);
+
     const unused = await getUnusedKeywords(site.niche_id, 1);
 
-    // Se keywords basse, triggera keyword engine
-    if (unused.length < ARTICLES_PER_DAY) {
+    // Replenish keywords se sotto il doppio del limite giornaliero
+    if (unused.length < cappedLimit * 2) {
       const [niche] = await sql`SELECT slug FROM niches WHERE id = ${site.niche_id}`;
       console.log(`  📡 Replenishing keywords for ${site.domain}...`);
       try {
@@ -206,15 +225,175 @@ async function triggerDailyGeneration() {
       }
     }
 
-    // Genera articoli
-    console.log(`  ✍️  Generating ${ARTICLES_PER_DAY} articles for ${site.domain}...`);
+    // Genera articoli con il limite calcolato dall'età
     try {
       execSync(
-        `node packages/content-engine/src/index.js --site-id ${site.id} --count ${ARTICLES_PER_DAY}`,
-        { cwd: ROOT, stdio: 'pipe', timeout: 600000 }
+        `node packages/content-engine/src/index.js --site-id ${site.id} --count ${cappedLimit}`,
+        { cwd: ROOT, stdio: 'inherit', timeout: 600000 }
       );
     } catch (e) {
       console.log(`  ⚠️  Content engine: ${e.message?.slice(0, 80)}`);
+    }
+
+    // Re-linking pass cross-batch — aggiorna link interni su tutto il sito
+    await relinkSite(site);
+  }
+}
+
+/**
+ * Content freshness — aggiorna articoli > 90 giorni.
+ * Ogni domenica, prende max 3 articoli stale per sito,
+ * aggiorna "last reviewed" date nel DB e nell'HTML.
+ * Costo zero (niente Claude API) — solo aggiornamento data.
+ * Segnale di freshness per Google.
+ */
+async function refreshStaleArticles(stats) {
+  console.log('\n♻️  Content freshness refresh...');
+
+  const liveSites = await getSitesByStatus('live');
+
+  for (const site of liveSites) {
+    const stale = await sql`
+      SELECT id, slug, title
+      FROM articles
+      WHERE site_id = ${site.id}
+        AND status = 'published'
+        AND published_at < NOW() - INTERVAL '90 days'
+        AND (updated_at IS NULL OR updated_at < NOW() - INTERVAL '90 days')
+      ORDER BY updated_at ASC NULLS FIRST
+      LIMIT 3
+    `;
+
+    if (!stale.length) continue;
+
+    const newDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    for (const article of stale) {
+      // 1. Aggiorna DB
+      await sql`UPDATE articles SET updated_at = NOW() WHERE id = ${article.id}`;
+
+      // 2. Aggiorna "Last reviewed" nell'HTML su disco
+      const htmlPath = join(WWW_ROOT, site.domain, article.slug, 'index.html');
+      if (existsSync(htmlPath)) {
+        try {
+          let html = readFileSync(htmlPath, 'utf-8');
+          const updated = html.replace(
+            /(<strong[^>]*>Last reviewed:<\/strong>\s*)([^<]+)/,
+            `$1 ${newDate}`
+          );
+          if (updated !== html) writeFileSync(htmlPath, updated, 'utf-8');
+        } catch (e) { /* non bloccare */ }
+      }
+
+      stats.refreshed = (stats.refreshed || 0) + 1;
+      console.log(`  ♻️  Refreshed: ${article.slug} (${site.domain})`);
+    }
+
+    // Purge cache CF per gli articoli aggiornati
+    if (stale.length && process.env.CLOUDFLARE_API_TOKEN) {
+      try {
+        const urls = stale.map(a => `https://${site.domain}/${a.slug}/`);
+        const { purgeUrls } = await import('@content-network/vps/src/cloudflare.js');
+        await purgeUrls(site.domain, urls);
+      } catch (e) { /* non bloccare */ }
+    }
+  }
+
+  if (stats.refreshed) {
+    console.log(`  ✅ Total refreshed: ${stats.refreshed} articles`);
+  } else {
+    console.log(`  ℹ️  No stale articles found`);
+  }
+}
+
+/**
+ * Re-linking pass cross-batch.
+ * Carica tutti gli articoli pubblicati del sito, ri-inietta link interni
+ * su tutto il corpus, aggiorna DB e riscrive solo i file modificati.
+ */
+async function relinkSite(site) {
+  console.log(`\n  🔗 Re-linking pass: ${site.domain}...`);
+
+  // Carica tutti gli articoli pubblicati (slug, title, content, tags)
+  const articles = await sql`
+    SELECT id, slug, title, content, meta_description,
+           schema_markup, published_at, created_at,
+           COALESCE(tags, '{}') as tags
+    FROM articles
+    WHERE site_id = ${site.id}
+      AND status = 'published'
+    ORDER BY published_at ASC
+  `;
+
+  if (articles.length < 2) {
+    console.log(`  ℹ️  Not enough articles for cross-linking (${articles.length})`);
+    return;
+  }
+
+  // Prepara array per link injector
+  const input = articles.map(a => ({
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    content: a.content || '',
+    tags: a.tags || [],
+    // Campi pass-through
+    metaDescription: a.meta_description,
+    schemas: a.schema_markup,
+  }));
+
+  // Inietta link — idempotente (non duplica link già esistenti)
+  const relinked = injectInternalLinks(input);
+
+  let updated = 0;
+
+  for (let i = 0; i < relinked.length; i++) {
+    const original = input[i];
+    const result   = relinked[i];
+
+    // Aggiorna solo se il contenuto è effettivamente cambiato
+    if (result.content === original.content) continue;
+
+    // 1. Aggiorna DB
+    await sql`
+      UPDATE articles
+      SET content = ${result.content}, updated_at = NOW()
+      WHERE id = ${original.id}
+    `;
+
+    // 2. Riscrivi HTML su disco
+    const dir = join(WWW_ROOT, site.domain, result.slug);
+    const indexFile = join(dir, 'index.html');
+    if (existsSync(indexFile)) {
+      try {
+        let html = readFileSync(indexFile, 'utf-8');
+        // Sostituisce solo il corpo dell'articolo (dentro articleBody itemprop)
+        // Usa un replace semplice: rimpiazza il contenuto tra i tag dell'article
+        const newHtml = html.replace(
+          /(<div[^>]*itemprop="articleBody"[^>]*>)([\s\S]*?)(<\/div>\s*<aside)/,
+          (_, open, _old, close) => `${open}${result.content}${close}`
+        );
+        if (newHtml !== html) {
+          writeFileSync(indexFile, newHtml, 'utf-8');
+        }
+      } catch (e) {
+        // Non bloccare il processo se un file non esiste o è corrotto
+      }
+    }
+
+    updated++;
+  }
+
+  console.log(`  ✅ Re-linked: ${updated}/${articles.length} articles updated`);
+
+  // Purge cache Cloudflare se ci sono stati aggiornamenti
+  if (updated > 0 && process.env.CLOUDFLARE_API_TOKEN) {
+    try {
+      await cfPurgeCache(site.domain);
+    } catch (e) {
+      console.warn(`  ⚠️  CF purge failed: ${e.message}`);
     }
   }
 }

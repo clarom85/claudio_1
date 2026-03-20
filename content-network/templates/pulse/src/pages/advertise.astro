@@ -1,0 +1,46 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+---
+<Base title={`Advertise With Us | ${siteName}`} description={`Reach a highly engaged audience through ${siteName}. Learn about our advertising options, audience demographics, and how to get started.`}>
+  <article class="article-content" style="max-width:800px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:24px;">Advertise With {siteName}</h1>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:28px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      Reach readers who are actively researching decisions — not just browsing. Our audience comes to us with intent: they're planning a project, solving a problem, or making a purchase.
+    </p>
+
+    <section class="article-section">
+      <h2>Our Audience</h2>
+      <p>{siteName} attracts a highly targeted readership of adults researching practical decisions in their lives. Our readers are engaged, educated, and in-market — they are not passively consuming content, they are looking for answers that will inform real spending decisions.</p>
+      <p>Our content covers topics in high-intent, high-commercial-value categories. Visitors typically arrive via organic search, meaning they are actively looking for the information we provide.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Advertising Options</h2>
+      <ul class="article-list">
+        <li><strong>Display advertising:</strong> Standard IAB display units placed throughout our content, including leaderboard (728×90), rectangle (300×250), and sidebar (300×600) formats.</li>
+        <li><strong>In-article placements:</strong> Native-style display ads embedded naturally within article content, positioned for high viewability.</li>
+        <li><strong>Newsletter sponsorship:</strong> Dedicated or shared placements in our weekly email newsletter, sent to opted-in subscribers.</li>
+        <li><strong>Content partnerships:</strong> We occasionally work with relevant brands on sponsored content that is clearly labeled as such. All sponsored content must meet our editorial quality standards.</li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>Programmatic Advertising</h2>
+      <p>Most of our display inventory is available programmatically via Google AdSense and related networks. If you are running campaigns through Google Ads, you can target our inventory via placement targeting or keyword/audience targeting through the Google Display Network.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Editorial Independence</h2>
+      <p>We maintain a strict separation between editorial and commercial decisions. Advertisers do not influence what topics we cover, how we cover them, or what conclusions we reach. Our readers trust us because of this independence, and that trust is the foundation of our audience's value to advertisers.</p>
+      <p>We do not publish advertiser-supplied content as editorial. All sponsored content is clearly labeled.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Get In Touch</h2>
+      <p>For direct advertising partnerships, sponsorships, or custom arrangements, please contact us with information about your brand, target audience, campaign goals, and budget. We'll get back to you promptly to discuss options.</p>
+      <a href="/contact" style="display:inline-block; background:#c0392b; color:white; padding:12px 28px; border-radius:4px; text-decoration:none; font-weight:600; font-size:15px; margin-top:8px;">Contact Our Ad Team</a>
+    </section>
+  </article>
+</Base>

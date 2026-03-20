@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { buildArticlePrompt } from './prompts.js';
 import { buildArticleHTML } from './html-builder.js';
 import { AUTHOR_PERSONAS } from './prompts.js';
+import { fetchArticleImage } from './image-fetcher.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -19,7 +20,7 @@ async function throttle() {
   lastCall = Date.now();
 }
 
-export async function generateArticle(keyword, niche, site, retries = 3) {
+export async function generateArticle(keyword, niche, site, retries = 3, sitePublicDir = null) {
   const prompt = buildArticlePrompt(keyword, niche);
   const author = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
@@ -67,6 +68,12 @@ export async function generateArticle(keyword, niche, site, retries = 3) {
         keyword
       });
 
+      // Fetch image from Pexels if a public directory is provided
+      let image = null;
+      if (sitePublicDir) {
+        image = await fetchArticleImage(keyword, slug, sitePublicDir);
+      }
+
       return {
         slug,
         title: articleData.title,
@@ -74,7 +81,12 @@ export async function generateArticle(keyword, niche, site, retries = 3) {
         content: html,
         wordCount,
         schemaMarkup: schemas,
-        tags: articleData.tags || []
+        tags: articleData.tags || [],
+        image,
+        category: articleData.category || niche.name,
+        author: author.name,
+        excerpt: articleData.intro?.slice(0, 160) || metaDescription,
+        date: new Date().toISOString()
       };
 
     } catch (err) {

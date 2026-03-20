@@ -35,8 +35,17 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
   ],
   "conclusion": "1-2 paragraph conclusion with actionable takeaway",
   "authorNote": "1 sentence from the author's experience perspective (use 'I' voice)",
+  "keyTakeaways": ["concise takeaway 1", "concise takeaway 2", "concise takeaway 3"],
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "schemaType": "Article" // or "HowTo", "FAQPage" based on content
+  "category": "the most fitting category name for this article (e.g. HVAC, Bathroom, Flooring)",
+  "schemaType": "Article", // or "HowTo", "FAQPage" based on content
+  "citations": [
+    {
+      "claim": "the specific fact or statistic this source supports",
+      "source": "Full organization name (e.g. U.S. Department of Energy, HomeAdvisor, CDC, USDA)",
+      "url": "https://www.example.gov/specific-page"
+    }
+  ]
 }
 
 CRITICAL RULES:
@@ -45,7 +54,8 @@ CRITICAL RULES:
 - Include specific numbers, costs, timeframes where relevant
 - FAQ section must have 4-6 questions people actually search
 - Each section must add unique value, no repetition
-- Write in American English`;
+- Write in American English
+- citations: include 1-2 REAL authoritative sources. Use only well-known organizations (government agencies, major research institutions, established industry bodies). URLs must be real and verifiable. Do NOT invent sources.`;
 }
 
 export function buildHowToPrompt(keyword, niche) {

@@ -10,6 +10,7 @@ import { getPAAKeywords } from './paa.js';
 import { getTrendingForNiche } from './trends.js';
 import { getRedditKeywords } from './reddit.js';
 import { filterKeywords, deduplicateAcrossSites } from './filter.js';
+import { clusterKeywords, logClusterStats } from './cluster.js';
 import { getNicheBySlug, bulkInsertKeywords, sql } from '@content-network/db';
 
 async function run() {
@@ -72,13 +73,30 @@ async function run() {
 
   console.log(`✅ ${deduped.length} unique quality keywords ready`);
 
-  // Save to DB
-  await bulkInsertKeywords(deduped.map(k => ({
-    nicheId: niche.id,
-    keyword: k.keyword,
-    source: 'mixed',
-    intent: k.intent
-  })));
+  // Cluster keywords per topical authority
+  console.log('\n🗂️  Clustering keywords...');
+  const clustered = clusterKeywords(
+    deduped.map(k => k.keyword),
+    niche.slug,
+    niche.seed_keywords
+  );
+  logClusterStats(clustered);
+
+  // Build lookup map keyword → cluster info
+  const clusterMap = new Map(clustered.map(c => [c.keyword, c]));
+
+  // Save to DB with cluster metadata
+  await bulkInsertKeywords(deduped.map(k => {
+    const cluster = clusterMap.get(k.keyword) || {};
+    return {
+      nicheId: niche.id,
+      keyword: k.keyword,
+      source: 'mixed',
+      intent: k.intent,
+      clusterSlug: cluster.clusterSlug || null,
+      isPillar: cluster.isPillar || false,
+    };
+  }));
 
   // Summary
   const intentCounts = deduped.reduce((acc, k) => {

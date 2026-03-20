@@ -4,10 +4,13 @@
  */
 import 'dotenv/config';
 import { generateArticle } from './generator.js';
+import { injectInternalLinks } from './link-injector.js';
+import { getPublishTime, logScheduleInfo } from './publishing-schedule.js';
 import {
   getSitesByStatus, getUnusedKeywords, markKeywordUsed,
   insertArticle, enqueueArticle, getNicheBySlug, sql
 } from '@content-network/db';
+import { purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
 
 async function run() {
   const args = process.argv.slice(2);
@@ -42,6 +45,7 @@ async function run() {
 
   console.log(`\n✍️  Content Engine`);
   console.log(`Site: ${site.domain} (${niche.name})`);
+  logScheduleInfo(site.created_at);
   console.log(`Generating: ${count} articles\n`);
 
   const keywords = await getUnusedKeywords(niche.id, count);
@@ -53,32 +57,19 @@ async function run() {
 
   let success = 0;
   let failed = 0;
+  const generatedArticles = [];
+
+  // Determina la public dir del sito per le immagini (opzionale)
+  const sitePublicDir = process.env.SITE_PUBLIC_DIR || null;
 
   for (const kw of keywords) {
     try {
       process.stdout.write(`  [${success + failed + 1}/${keywords.length}] "${kw.keyword}" ... `);
 
-      const article = await generateArticle(kw.keyword, niche, site);
-
-      const saved = await insertArticle({
-        siteId: site.id,
-        keywordId: kw.id,
-        slug: article.slug,
-        title: article.title,
-        metaDescription: article.metaDescription,
-        content: article.content,
-        wordCount: article.wordCount,
-        schemaMarkup: article.schemaMarkup
-      });
-
-      if (saved) {
-        // Schedula pubblicazione distribuita (non pubblicare tutto subito)
-        const scheduledFor = getScheduledTime(success, count);
-        await enqueueArticle(saved.id, site.id, scheduledFor);
-        await markKeywordUsed(kw.id);
-        success++;
-        console.log(`✅ ${article.wordCount} words`);
-      }
+      const article = await generateArticle(kw.keyword, niche, site, 3, sitePublicDir);
+      generatedArticles.push({ ...article, keywordId: kw.id });
+      success++;
+      console.log(`✅ ${article.wordCount} words${article.image ? ' + image' : ''}`);
 
     } catch (err) {
       failed++;
@@ -86,20 +77,59 @@ async function run() {
     }
   }
 
+  // Second pass: inietta link interni tra tutti gli articoli generati
+  console.log('\n🔗 Injecting internal links...');
+  const linkedArticles = injectInternalLinks(generatedArticles);
+
+  // Salva nel DB e schedula pubblicazione
+  for (const article of linkedArticles) {
+    try {
+      const saved = await insertArticle({
+        siteId: site.id,
+        keywordId: article.keywordId,
+        slug: article.slug,
+        title: article.title,
+        metaDescription: article.metaDescription,
+        content: article.content,
+        wordCount: article.wordCount,
+        schemaMarkup: article.schemaMarkup,
+        image: article.image,
+        category: article.category,
+        author: article.author,
+        excerpt: article.excerpt,
+        date: article.date
+      });
+
+      if (saved) {
+        const scheduledFor = getScheduledTime(linkedArticles.indexOf(article), linkedArticles.length);
+        await enqueueArticle(saved.id, site.id, scheduledFor);
+        await markKeywordUsed(article.keywordId);
+      }
+    } catch (err) {
+      console.warn(`  DB save failed for "${article.slug}": ${err.message}`);
+    }
+  }
+
   console.log(`\n📊 Results: ${success} generated, ${failed} failed`);
   console.log(`Articles queued for gradual publishing (max 50/day)`);
+
+  // Purge Cloudflare cache dopo pubblicazione nuovi articoli
+  if (process.env.CLOUDFLARE_API_TOKEN && success > 0) {
+    try {
+      await cfPurgeCache(site.domain);
+    } catch (err) {
+      console.warn(`  ⚠️  Cache purge failed: ${err.message}`);
+    }
+  }
+
   process.exit(0);
 }
 
 /**
- * Distribuisce gli articoli nel tempo per sembrare pubblicazione organica
- * Non pubblicare tutto in un colpo: Google penalizza burst anomali
+ * Wrapper — usa publishing-schedule per timestamp organici
  */
 function getScheduledTime(index, total) {
-  const now = new Date();
-  const ARTICLES_PER_HOUR = 3;
-  const delayMs = (index / ARTICLES_PER_HOUR) * 60 * 60 * 1000;
-  return new Date(now.getTime() + delayMs);
+  return getPublishTime(index, total);
 }
 
 run().catch(err => {

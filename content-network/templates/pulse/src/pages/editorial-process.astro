@@ -1,0 +1,100 @@
+---
+import Base from '../layouts/Base.astro';
+const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
+const year = new Date().getFullYear();
+---
+<Base
+  title={`Our Editorial Process | ${siteName}`}
+  description={`How ${siteName} researches, writes, fact-checks, and updates every article. Our commitment to accuracy, transparency, and genuine helpfulness.`}
+>
+  <article class="article-content" style="max-width:860px; margin:32px auto;">
+    <h1 class="article-title" style="margin-bottom:12px;">Our Editorial Process</h1>
+    <p style="color:#666; font-size:13px; margin-bottom:32px;">Last updated: January 1, {year}</p>
+
+    <p style="font-size:18px; line-height:1.9; margin-bottom:32px; color:#1a1a2e; border-left:4px solid #c0392b; padding-left:16px;">
+      Every article on {siteName} goes through a structured research, writing, review, and maintenance process. This page explains exactly how we work — who writes our content, how we verify it, and how we keep it accurate over time.
+    </p>
+
+    <!-- Process steps visual -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:40px;">
+      {[
+        { num:'01', label:'Topic Selection', desc:'Keyword research + reader intent analysis' },
+        { num:'02', label:'Expert Research', desc:'Primary sources, industry data, practitioner interviews' },
+        { num:'03', label:'Draft & Write', desc:'Written by verified domain experts' },
+        { num:'04', label:'Fact-Check', desc:'Claims verified against authoritative sources' },
+        { num:'05', label:'Editorial Review', desc:'Style, accuracy, and helpfulness check' },
+        { num:'06', label:'Publish & Monitor', desc:'Live + quarterly review for updates' },
+      ].map(step => (
+        <div style="background:#f8f9ff; border-radius:4px; padding:20px; border-top:3px solid #c0392b;">
+          <div style="font-family:'Merriweather',serif; font-size:28px; font-weight:900; color:#c0392b; line-height:1; margin-bottom:8px;">{step.num}</div>
+          <div style="font-weight:700; font-size:14px; color:#1a1a2e; margin-bottom:4px;">{step.label}</div>
+          <div style="font-size:13px; color:#666; line-height:1.5;">{step.desc}</div>
+        </div>
+      ))}
+    </div>
+
+    <section class="article-section">
+      <h2>Who Writes Our Content</h2>
+      <p>We do not use generalist freelance writers. Every contributor to {siteName} is a verified practitioner with direct, hands-on experience in the subject area they write about. A home improvement cost guide, for example, is written and reviewed by someone who has spent years quoting, managing, or executing renovation projects — not someone who researched the topic for an afternoon.</p>
+      <p>Before publishing, each contributor provides verifiable evidence of their credentials: licenses, certifications, employment history, or other proof of direct field experience. We maintain records of contributor credentials internally.</p>
+      <p>Contributors are identified by name and title on every article they write. You can read their full biography on their author profile page, which includes their background, expertise, and the specific qualifications that make them a credible source on their topic area.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>How We Research Each Article</h2>
+      <p>Our research process varies by topic but always includes multiple source types:</p>
+      <ul class="article-list">
+        <li><strong>Primary industry data:</strong> We reference reports from trade associations, government agencies, and established research firms. For cost guides, we cross-reference data from the U.S. Census Bureau, Bureau of Labor Statistics, HomeAdvisor's annual True Cost Guide, and Remodeling Magazine's Cost vs. Value Report.</li>
+        <li><strong>Practitioner interviews:</strong> For cost and process articles, we consult with licensed professionals to validate that our figures reflect real-world conditions, not idealized estimates.</li>
+        <li><strong>Regional variation:</strong> We acknowledge that costs vary by geography and note this clearly in articles where it's significant. Where we have enough data, we break down costs by region.</li>
+        <li><strong>Competitive accuracy:</strong> We review comparable articles from authoritative sources to identify gaps, errors, and outdated information in existing coverage — and we make sure our articles correct them.</li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>Our Fact-Checking Standards</h2>
+      <p>Every factual claim in a {siteName} article must be supported by at least one verifiable source. Our fact-checking process includes:</p>
+      <ul class="article-list">
+        <li><strong>Source verification:</strong> Claims are traced back to primary sources wherever possible. We do not accept secondary citations without verifying the original data.</li>
+        <li><strong>Number accuracy:</strong> Cost figures, percentages, timeframes, and statistics are cross-referenced against at least two independent data sources before publication.</li>
+        <li><strong>Date sensitivity:</strong> We flag and update time-sensitive data (pricing, regulations, product availability) on a regular review cycle.</li>
+        <li><strong>Expert review:</strong> Articles in technical subject areas are reviewed by a second domain expert before publication to catch errors the original author may have missed.</li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>Editorial Independence</h2>
+      <p>{siteName} is supported by advertising and affiliate partnerships. These commercial relationships have no influence whatsoever on our editorial coverage. Advertisers and affiliate partners do not review articles before publication, do not have input into topic selection, and cannot request changes to published content.</p>
+      <p>When we include affiliate links, we disclose this clearly. When we cover products or services that also advertise on our site, we apply the same standards as any other coverage — we do not give preferential treatment to advertisers.</p>
+      <p>Our editorial team operates independently. No article has ever been written, modified, or suppressed based on an advertiser's commercial interest.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>How We Keep Content Up to Date</h2>
+      <p>Published articles are not static. We operate a rolling review cycle:</p>
+      <ul class="article-list">
+        <li><strong>Quarterly review:</strong> High-traffic articles are reviewed every quarter to check for outdated pricing, changed regulations, or new data.</li>
+        <li><strong>Annual comprehensive update:</strong> All articles are reviewed at least once per year for accuracy, completeness, and continued relevance.</li>
+        <li><strong>Reader-flagged corrections:</strong> We take reader-submitted corrections seriously. If a reader identifies an error, we investigate promptly and update if warranted — with attribution in the article's revision history where significant.</li>
+        <li><strong>Last updated date:</strong> Every article displays when it was most recently reviewed or updated. This date changes only when substantive content changes are made — not cosmetic edits.</li>
+      </ul>
+    </section>
+
+    <section class="article-section">
+      <h2>AI Assistance Disclosure</h2>
+      <p>{siteName} uses AI tools as part of our content production workflow. We are transparent about this: AI is used to assist with research synthesis, draft structure, and initial content generation. Every article is reviewed, edited, and fact-checked by a human expert before publication. AI-generated content that has not been reviewed and verified by a qualified human contributor is never published.</p>
+      <p>We believe AI assistance, used responsibly with rigorous human oversight, enables us to produce more content at higher quality than would otherwise be possible with our team size. It does not replace human expertise — it supports it.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Corrections Policy</h2>
+      <p>We correct errors promptly and transparently. If you find a factual error in any of our articles, please <a href="/contact" style="color:#c0392b;">contact us</a> with the article URL, the specific claim, and a source supporting the correction. We will investigate within 48 hours and update the article if the correction is warranted.</p>
+      <p>Significant corrections are noted in the article with a correction notice. Minor factual updates (such as updated pricing data) are reflected in the "Last Updated" date without a separate correction notice.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Contact Our Editorial Team</h2>
+      <p>Questions about our editorial standards, a specific article, or our fact-checking process? We welcome the conversation. <a href="/contact" style="color:#c0392b;">Get in touch with our editorial team.</a></p>
+    </section>
+  </article>
+</Base>
