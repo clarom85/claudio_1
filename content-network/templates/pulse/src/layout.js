@@ -190,6 +190,9 @@ ${schemasHtml}
 ${ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
+<link rel="preconnect" href="https://www.googletagmanager.com"/>
+<link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 </head>
@@ -371,16 +374,27 @@ export function renderCategoryPage(articles, category, site) {
     {'@type':'ListItem',position:2,name:category.name,item:`${site.url}/category/${category.slug}/`}
   ]};
 
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: category.name,
+    numberOfItems: articles.length,
+    itemListElement: articles.slice(0, 10).map((a, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      url: `${site.url}/${a.slug}/`, name: a.title
+    }))
+  };
+
   const body = `
 ${header(site)}
 <main class="site-main">
   <div class="wrap">
-    <div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    <div class="ad ad-leader" style="min-height:90px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
     <div class="breadcrumb" style="margin:16px 0 4px"><a href="/">Home</a> › <span>${esc(category.name)}</span></div>
     <h1 class="section-title">${esc(category.name)}</h1>
     <p style="color:var(--muted);margin-bottom:28px">${articles.length} expert article${articles.length !== 1 ? 's' : ''}</p>
     <div class="art-grid">${gridHtml}</div>
-    <div class="ad ad-leader" style="margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    <div class="ad ad-leader" style="min-height:90px;margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
   </div>
 </main>
 ${footer(site)}`;
@@ -390,7 +404,7 @@ ${footer(site)}`;
     description: `Browse ${articles.length} expert articles about ${category.name} on ${site.name}. Practical guides, cost estimates, and how-to advice.`,
     slug: `category/${category.slug}`,
     siteName: site.name, siteUrl: site.url,
-    schemas: [breadcrumbSchema], body, adsenseId: site.adsenseId,
+    schemas: [breadcrumbSchema, itemListSchema], body, adsenseId: site.adsenseId,
     ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
   });
 }
@@ -418,12 +432,23 @@ ${header(site)}
 </main>
 ${footer(site)}`;
 
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: tag.name,
+    numberOfItems: articles.length,
+    itemListElement: articles.slice(0, 10).map((a, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      url: `${site.url}/${a.slug}/`, name: a.title
+    }))
+  };
+
   return renderBase({
     title: `${tag.name} — ${site.name}`,
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
     slug: `tag/${tag.slug}`,
     siteName: site.name, siteUrl: site.url,
-    body, adsenseId: site.adsenseId,
+    schemas: [itemListSchema], body, adsenseId: site.adsenseId,
     ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
   });
 }

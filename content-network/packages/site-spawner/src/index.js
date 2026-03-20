@@ -542,6 +542,9 @@ ${canonical ? `<link rel="canonical" href="${canonical}"/>` : ''}
 ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <meta property="og:image" content="${effectiveOgImage}"/>
 <meta name="twitter:card" content="summary_large_image"/>
+<link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
+<link rel="preconnect" href="https://www.googletagmanager.com"/>
+<link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 ${ga4Script}
 </head><body>

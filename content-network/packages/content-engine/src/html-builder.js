@@ -6,11 +6,12 @@
 import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema, buildHowToSchema } from './schema.js';
 
 // Inserisce ads inline — usa classi CSS del template (.ad .ad-inline)
-const AD_UNIT_INLINE = `<div class="ad ad-inline">
+// min-height esplicito previene CLS (Core Web Vital) quando AdSense carica
+const AD_UNIT_INLINE = `<div class="ad ad-inline" style="min-height:280px">
   <ins class="adsbygoogle" style="display:block;text-align:center" data-ad-format="fluid" data-ad-layout="in-article"></ins>
 </div>`;
 
-const AD_UNIT_SIDEBAR = `<div class="ad ad-sidebar">
+const AD_UNIT_SIDEBAR = `<div class="ad ad-sidebar" style="min-height:250px">
   <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
 </div>`;
 
@@ -114,8 +115,8 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         ${new Date(datePublished).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
       </time>
     </div>
-    <div class="ad-unit ad-unit--leaderboard" data-ad-slot="top-leaderboard">
-      <ins class="adsbygoogle" data-ad-format="leaderboard"></ins>
+    <div class="ad ad-leader" style="min-height:90px" data-ad-slot="top-leaderboard">
+      <ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins>
     </div>
   </header>
 
