@@ -103,53 +103,104 @@ WWW_ROOT=/var/www
 - **Disqus comments** — embed condizionale in `renderArticlePage`; attivo solo se `DISQUS_SHORTNAME` env presente
 - **dateModified** — `buildArticleSchema` accetta param separato; scheduler aggiorna su refresh contenuto
 
-#### Funzionalità implementate — Anti-detection AI (sessione corrente)
+#### Funzionalità implementate — Anti-detection AI
 - **NICHE_PROMPT_CONFIGS** in `prompts.js` — 20 nicchie top-paying, ognuna con `wordCount`, `tone`, `persona`, `structure`, `requiredElements`, `avoidances`, `categoryHint`, `schemaHint` completamente diversi
 - **20 AUTHOR_PERSONAS** — bio dettagliate, credenziali, avatar unici per nicchia
 - Le 20 nicchie: home-improvement-costs, personal-finance, insurance-guide, legal-advice, real-estate-investing, health-symptoms, credit-cards-banking, weight-loss-fitness, automotive-guide, online-education, cybersecurity-privacy, mental-health-wellness, home-security-systems, solar-energy, senior-care-medicare, business-startup + 5 originali
 
-#### Setup `.env` richiesto
-```
-ANTHROPIC_API_KEY=
-DATABASE_URL=           # Neon PostgreSQL
-CLOUDFLARE_API_TOKEN=   # Auto DNS+CDN+SSL per ogni dominio
-SERVER_IP=178.104.17.161
-CERTBOT_EMAIL=          # Fallback SSL se no Cloudflare
-ADSENSE_ID=ca-pub-XXXXXXXXXXXXXXXX
-GA4_MEASUREMENT_ID=G-XXXXXXXXXX
-GOOGLE_SITE_VERIFICATION=   # da Search Console > Settings > Ownership verification
-PEXELS_API_KEY=
-MAX_ARTICLES_PER_DAY=35
-WWW_ROOT=/var/www
-DISQUS_SHORTNAME=       # opzionale — commenti su articoli
-```
+#### Funzionalità implementate — HCU Mitigation (Google Helpful Content)
+- **AI phrase blacklist** — `prompts.js` `AI_PHRASE_BLACKLIST` (40+ frasi); iniettato in ABSOLUTE RULES del prompt
+- **Word count variation** — `getVariedWordCount()`: 30% short (base-300), 50% medium (base), 20% long (base+400)
+- **E-E-A-T language requirements** — blocco dedicato nel prompt con istruzioni per Experience (first-person markers), Expertise (domain terminology), Authority (citations), Trust (hedging + referral to professionals)
+- **expertTip field** — JSON field generato da Claude; renderizzato come callout box giallo-ambra in `html-builder.js`; autore attribuito
+- **authorNote espanso** — 2-3 frasi con aneddoto specifico da esperienza diretta (non generico)
+- **"Was this helpful?" widget** — thumbs up/down in ogni articolo; POST `/api/feedback` con slug+vote+site; tabella `article_feedback` su Neon
+- **Pagine editoriali** — site-spawner genera `/about/` (E-E-A-T completo), `/editorial-guidelines/`, `/editorial-process/` per ogni sito; indicizzabili (noindex=false); cross-linkate tra loro
+- **Live data injection** — `content-engine/src/data-fetcher.js`; fetch dati reali da FRED/BLS/NREL/Census prima di ogni generazione; cache 24h; block `LIVE DATA` iniettato nel prompt con date aggiornate; degrada silenziosamente senza API key
 
-#### Stato VPS (aggiornato 2026-03-22)
-- VPS aggiornato a commit `bdcc8d0` (in sync con GitHub)
-- DB: 20 nicchie, migration tags + rankings + ab_variant + gsc_submitted_at completata
-- PM2: `content-scheduler` (cron orario), `email-api` (porta 3001), `health-check` (cron ogni 15min)
+#### Funzionalità implementate — Keyword Engine (10 fonti)
+1. **Seeds per-niche** da `NICHE_PROMPT_CONFIGS`
+2. **PAA (People Also Ask)** — `keyword-engine/src/paa.js`; SerpAPI primary (campo `related_questions`), Google scraper fallback; campiona 10 keyword per preservare quota
+3. **Seed expansion DB** — `--expand` flag: usa top 15 pillar keyword dal DB come seed aggiuntivi (rompe saturazione)
+4. **Modifier matrix** — `keyword-engine/src/modifiers.js`; zero-cost; QUESTION_PREFIXES, COST_PREFIXES, INTENT_SUFFIXES, QUALIFIERS, COMPARISON_TEMPLATES; ~100-200 varianti per seed
+5. **Related Searches Google** — `keyword-engine/src/related-searches.js`; scrapa "Searches related to X" dal fondo SERP; ~8 query per seed
+6. **Location expansion** — `keyword-engine/src/locations.js`; top 25 US states × 4 template × top 3 seeds; solo per 10 nicchie geo-rilevanti
+7. **Entity lists** — `keyword-engine/src/entities.js`; liste statiche per-nicchia (razze, diete, software, regioni, prodotti finanziari, ecc.); seed × entity combinations
+8. **Competitor H2 scraping** — `keyword-engine/src/competitor-scraper.js`; top 3 URL organici per seed → estrae H2/H3 (10-100 char, 3-10 parole); salta domini noti (YouTube, Reddit, ecc.)
+9. **Year filter** — `filter.js`; salta keyword con anno ≤ currentYear-2 (es. "best X 2022")
+10. **Volume scoring** — `keyword-engine/src/volume-scorer.js`; Keywords Everywhere primary ($0.0001/kw, key: `246b21d52651ea1cafc8`), DataForSEO fallback ($0.0005/kw); aggiorna `search_volume`, `cpc`, `difficulty` su DB
+- **Auto-trigger refill** — scheduler controlla `getUnusedKeywordCount()` ogni ora; soglia 200; passa `--expand` se count < 50
+- **DB schema aggiornato** — colonne `cpc`, `volume_scored`, indice `idx_keywords_volume`; `getUnusedKeywords` ordina `is_pillar DESC, search_volume DESC NULLS LAST`
 
-#### Automazione implementata
+#### Funzionalità implementate — Automazione & Infrastructure
 - **Keyword dedup Jaccard** — `keyword-engine/src/filter.js` (threshold 75%)
 - **Email alerts** — `vps/src/alert.js` (Resend API o SMTP); env: `RESEND_API_KEY`, `ALERT_EMAIL_TO`
-- **Health-check** — ogni 15min, disk check, alert su errori
+- **Health-check** — ogni 15min, disk check; `ads.txt` e `404.html` spostati in `optionalFiles` (warnings, non errori critici)
 - **A/B template** — `sites.ab_variant` (A=default nicchia, B=altro); `--template` flag su site-spawner
 - **GSC Indexing API** — `vps/src/gsc.js`; env: `GSC_SERVICE_ACCOUNT_JSON`; daily alle 02:xx
 - **Ranking tracker** — `vps/src/ranking-tracker.js`; env: `SERPAPI_KEY`; domenica 04:xx
 - **Smart refresh** — Claude riscrive articoli in pos 21-50; domenica 05:xx
 - **Link graph** — `vps/src/link-graph.js`; PageRank + orphan detection; domenica 06:xx
 - **Weekly email report** — domenica 07:xx
+- **Weekly backup** — `vps/src/backup.js`; domenica 08:xx; pg_dump DB su Neon (path assoluto `/usr/lib/postgresql/17/bin/pg_dump` per PG17), tar.gz `/var/www`; mantiene ultimi 7 backup; alert email su fallimento DB
 
-#### Env vars da configurare sul VPS
+#### File chiave
 ```
-RESEND_API_KEY=          # alert email (resend.com — gratuito 3000/mese)
-ALERT_EMAIL_FROM=        # es. alerts@tuodominio.com
-ALERT_EMAIL_TO=          # tua email
-SERPAPI_KEY=             # ranking tracker (serpapi.com — 100 free/mese)
+packages/content-engine/src/data-fetcher.js      # live data da FRED/BLS/NREL/Census
+packages/content-engine/src/prompts.js           # NICHE_PROMPT_CONFIGS, E-E-A-T, blacklist, variation
+packages/content-engine/src/html-builder.js      # expertTip callout, feedback widget
+packages/content-engine/src/generator.js         # inietta liveDataBlock nel prompt
+packages/email-api/src/index.js                  # /api/subscribe + /api/feedback
+packages/keyword-engine/src/paa.js               # PAA via SerpAPI
+packages/keyword-engine/src/modifiers.js         # modifier matrix zero-cost
+packages/keyword-engine/src/related-searches.js  # Google related searches scraper
+packages/keyword-engine/src/locations.js         # location expansion geo-niches
+packages/keyword-engine/src/entities.js          # entity lists per niche
+packages/keyword-engine/src/competitor-scraper.js # H2/H3 da top URL organici
+packages/keyword-engine/src/volume-scorer.js     # Keywords Everywhere + DataForSEO
+packages/vps/src/backup.js                       # weekly backup DB + WWW
+packages/vps/src/health-check.js                 # fix alert spurie (warnings vs errors)
+packages/site-spawner/src/index.js               # pagine editoriali E-E-A-T
+```
+
+#### Stato VPS (aggiornato 2026-03-22)
+- Latest commit: `5c7d929` (live data injection)
+- DB: 20 nicchie, migration tags + rankings + ab_variant + gsc_submitted_at + cpc + volume_scored completata
+- PM2: `content-scheduler` (cron orario), `email-api` (porta 3001), `health-check` (cron ogni 15min)
+- Deploy: `ssh root@178.104.17.161` → `cd /opt/content-network && git pull origin main` → `cd content-network && npm install` → `pm2 restart email-api content-scheduler`
+
+#### Setup `.env` completo (VPS)
+```
+ANTHROPIC_API_KEY=
+DATABASE_URL=                    # Neon PostgreSQL
+CLOUDFLARE_API_TOKEN=            # Auto DNS+CDN+SSL per ogni dominio
+SERVER_IP=178.104.17.161
+CERTBOT_EMAIL=                   # Fallback SSL se no Cloudflare
+ADSENSE_ID=ca-pub-XXXXXXXXXXXXXXXX
+EZOIC_SITE_ID=                   # Ezoic (alternativa AdSense)
+GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+GOOGLE_SITE_VERIFICATION=        # da Search Console > Settings > Ownership verification
+PEXELS_API_KEY=
+MAX_ARTICLES_PER_DAY=35
+WWW_ROOT=/var/www
+BACKUP_DIR=/opt/backups
+DISQUS_SHORTNAME=                # opzionale — commenti su articoli
+RESEND_API_KEY=                  # alert email (resend.com — gratuito 3000/mese)
+ALERT_EMAIL_FROM=                # es. alerts@tuodominio.com
+ALERT_EMAIL_TO=                  # tua email
+SERPAPI_KEY=                     # ranking tracker + PAA (100 free/mese)
 GSC_SERVICE_ACCOUNT_JSON=/opt/content-network/gsc-service-account.json
+KEYWORDS_EVERYWHERE_API_KEY=246b21d52651ea1cafc8   # volume scoring ($0.0001/kw — acquistare crediti)
+DATAFORSEO_LOGIN=                # fallback volume scoring ($0.0005/kw)
+DATAFORSEO_PASSWORD=
+FRED_API_KEY=                    # live data Federal Reserve (gratis: fred.stlouisfed.org)
+BLS_API_KEY=                     # live data Bureau of Labor Statistics (gratis: bls.gov/developers)
+NREL_API_KEY=                    # live data solar/energy (gratis: developer.nrel.gov)
 ```
 
 #### Prossimi step
 - Acquistare dominio reale → site-spawner crea zona CF automaticamente
-- Configurare env vars alert/ranking/GSC sul VPS
-- Applicare a Google AdSense (inserire ADSENSE_ID in `.env`)
+- Configurare env vars FRED/BLS/NREL sul VPS (tutti gratuiti, registrazione online)
+- Acquistare crediti Keywords Everywhere ($10 per 100k keyword)
+- Applicare a Google AdSense/Ezoic dopo primi 30 articoli live
+- GSC: caricare service account JSON sul VPS dopo primo sito live
