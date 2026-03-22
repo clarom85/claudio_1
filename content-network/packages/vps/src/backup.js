@@ -57,7 +57,7 @@ export async function runBackup() {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) throw new Error('DATABASE_URL not set');
 
-    execSync(`pg_dump "${dbUrl}" -Fc -f "${dbFile}"`, {
+    execSync(`/usr/bin/pg_dump "${dbUrl}" -Fc -f "${dbFile}"`, {
       timeout: 120000,
       stdio: 'pipe'
     });
