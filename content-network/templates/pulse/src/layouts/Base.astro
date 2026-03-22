@@ -57,6 +57,7 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${siteUrl}/#website`,
     "name": siteName,
     "url": siteUrl,
     "potentialAction": {

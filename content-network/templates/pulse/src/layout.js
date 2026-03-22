@@ -157,7 +157,7 @@ img{max-width:100%;height:auto;display:block}
 }
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '' }) {
+export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '' }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
@@ -179,6 +179,7 @@ ${gscVerification ? `<meta name="google-site-verification" content="${gscVerific
 <meta name="description" content="${esc(description)}"/>
 <link rel="canonical" href="${canonical}"/>
 <link rel="alternate" type="application/rss+xml" title="${esc(siteName)}" href="${siteUrl}/feed.xml"/>
+${authorUrl ? `<link rel="author" href="${authorUrl}"/>` : ''}
 <meta property="og:title" content="${esc(title)}"/>
 <meta property="og:description" content="${esc(description)}"/>
 <meta property="og:url" content="${canonical}"/>
@@ -303,7 +304,7 @@ ${footer(site)}`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso });
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/` });
 }
 
 export function renderHomePage(articles, site) {

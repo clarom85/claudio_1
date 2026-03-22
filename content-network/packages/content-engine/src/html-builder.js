@@ -196,6 +196,20 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         </ol>
       </section>` : ''}
 
+      <!-- Social share buttons -->
+      ${(() => {
+        const articleUrl = encodeURIComponent(`${siteUrl}/${slug}/`);
+        const articleTitle = encodeURIComponent(title);
+        const btnStyle = 'display:inline-flex;align-items:center;padding:7px 16px;border-radius:3px;font-size:13px;font-weight:600;text-decoration:none;color:#fff;';
+        return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:28px 0;padding:16px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;">
+        <span style="font-size:13px;font-weight:700;color:#555;margin-right:4px;">Share:</span>
+        <a href="https://twitter.com/intent/tweet?url=${articleUrl}&text=${articleTitle}" target="_blank" rel="noopener noreferrer" style="${btnStyle}background:#000;">&#x58; Post</a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=${articleUrl}" target="_blank" rel="noopener noreferrer" style="${btnStyle}background:#1877f2;">Facebook</a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=${articleUrl}" target="_blank" rel="noopener noreferrer" style="${btnStyle}background:#0a66c2;">LinkedIn</a>
+        <a href="https://wa.me/?text=${articleTitle}%20${articleUrl}" target="_blank" rel="noopener noreferrer" style="${btnStyle}background:#25d366;">WhatsApp</a>
+      </div>`;
+      })()}
+
       <!-- About the Author box — E-E-A-T signal -->
       <div class="author-bio-box" style="display:flex;gap:20px;align-items:flex-start;background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:24px;margin:32px 0;" itemscope itemtype="https://schema.org/Person">
         <a href="/author/${author.avatar}/" style="flex-shrink:0;display:block;">

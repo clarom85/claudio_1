@@ -39,7 +39,13 @@ export function buildArticleSchema({ title, description, slug, author, siteName,
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${siteUrl}/${slug}`
+      '@id': `${siteUrl}/${slug}/`
+    },
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      name: siteName,
+      url: siteUrl
     }
   };
 }
