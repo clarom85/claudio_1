@@ -128,14 +128,12 @@ export function enableSSL(domain, email) {
  * @param {object} extras  - { categories, authorSlugs, toolSlug }
  */
 export function generateSitemap(domain, articles, extras = {}) {
-  const { categories = [], authorSlugs = [], toolSlug = null } = extras;
+  const { categories = [], authorSlugs = [], toolSlug = null, siteName = domain } = extras;
   const today = new Date().toISOString().split('T')[0];
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
-  const urls = [
-    // Homepage
+  const staticEntries = [
     { loc: `https://${domain}/`, priority: '1.0', changefreq: 'daily', lastmod: today },
-
-    // Static pages
     { loc: `https://${domain}/about/`,             priority: '0.4', changefreq: 'monthly' },
     { loc: `https://${domain}/contact/`,           priority: '0.3', changefreq: 'yearly' },
     { loc: `https://${domain}/editorial-process/`, priority: '0.4', changefreq: 'monthly' },
@@ -143,46 +141,112 @@ export function generateSitemap(domain, articles, extras = {}) {
     { loc: `https://${domain}/privacy/`,           priority: '0.2', changefreq: 'yearly' },
     { loc: `https://${domain}/terms/`,             priority: '0.2', changefreq: 'yearly' },
     { loc: `https://${domain}/disclaimer/`,        priority: '0.2', changefreq: 'yearly' },
-
-    // Tool page (1 per sito)
     ...(toolSlug ? [{ loc: `https://${domain}/tools/${toolSlug}/`, priority: '0.7', changefreq: 'monthly', lastmod: today }] : []),
-
-    // Category pages
-    ...categories.map(cat => ({
-      loc: `https://${domain}/category/${cat.slug}/`,
-      priority: '0.6',
-      changefreq: 'weekly',
-      lastmod: today
-    })),
-
-    // Author pages
-    ...authorSlugs.map(slug => ({
-      loc: `https://${domain}/author/${slug}/`,
-      priority: '0.5',
-      changefreq: 'monthly'
-    })),
-
-    // Articles
-    ...articles.map(a => ({
-      loc: `https://${domain}/${a.slug}/`,
-      priority: '0.8',
-      changefreq: 'weekly',
-      lastmod: a.published_at ? new Date(a.published_at).toISOString().split('T')[0] : today
-    }))
+    ...categories.map(cat => ({ loc: `https://${domain}/category/${cat.slug}/`, priority: '0.6', changefreq: 'weekly', lastmod: today })),
+    ...authorSlugs.map(slug => ({ loc: `https://${domain}/author/${slug}/`, priority: '0.5', changefreq: 'monthly' })),
   ];
+
+  function buildUrlEntry(a) {
+    const isCategory = a.slug.startsWith('category/');
+    const isTag = a.slug.startsWith('tag/');
+    const priority = isCategory ? '0.6' : isTag ? '0.4' : '0.8';
+    const lastmod = a.published_at ? new Date(a.published_at).toISOString().split('T')[0] : today;
+    const isRecent = a.published_at && new Date(a.published_at) > twoDaysAgo;
+
+    let inner = `    <loc>https://${domain}/${a.slug}/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>${priority}</priority>
+    <lastmod>${lastmod}</lastmod>`;
+
+    // news:news — only for real articles published in the last 2 days
+    if (!isCategory && !isTag && isRecent && a.title) {
+      inner += `
+    <news:news>
+      <news:publication>
+        <news:name>${escXml(siteName)}</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>${new Date(a.published_at).toISOString()}</news:publication_date>
+      <news:title>${escXml(a.title)}</news:title>
+    </news:news>`;
+    }
+
+    // image:image — for articles with an image
+    if (!isCategory && !isTag && a.image) {
+      const imageUrl = a.image.startsWith('http') ? a.image : `https://${domain}${a.image}`;
+      inner += `
+    <image:image>
+      <image:loc>${escXml(imageUrl)}</image:loc>
+      ${a.title ? `<image:title>${escXml(a.title)}</image:title>` : ''}
+    </image:image>`;
+    }
+
+    return `  <url>\n${inner}\n  </url>`;
+  }
+
+  const staticXml = staticEntries.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ''}
+  </url>`).join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${urls.map(u => `  <url>
-    <loc>${u.loc}</loc>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ''}
-  </url>`).join('\n')}
+${staticXml}
+${articles.map(buildUrlEntry).join('\n')}
 </urlset>`;
 
   writeSiteFile(domain, 'sitemap.xml', xml);
+}
+
+export function generateRssFeed(domain, articles, { siteName = domain } = {}) {
+  const siteUrl = `https://${domain}`;
+  const items = articles
+    .filter(a => !a.slug?.startsWith('category/') && !a.slug?.startsWith('tag/'))
+    .slice(0, 50)
+    .map(a => {
+      const pubDate = a.published_at ? new Date(a.published_at).toUTCString() : new Date().toUTCString();
+      return `    <item>
+      <title>${escXml(a.title || '')}</title>
+      <link>${siteUrl}/${a.slug}/</link>
+      <description>${escXml(a.meta_description || a.excerpt || '')}</description>
+      <pubDate>${pubDate}</pubDate>
+      <guid isPermaLink="true">${siteUrl}/${a.slug}/</guid>
+      ${a.category ? `<category>${escXml(a.category)}</category>` : ''}
+    </item>`;
+    }).join('\n');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>${escXml(siteName)}</title>
+    <link>${siteUrl}/</link>
+    <description>Expert guides, how-to articles, and practical advice from ${escXml(siteName)}.</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml"/>
+${items}
+  </channel>
+</rss>`;
+
+  writeSiteFile(domain, 'feed.xml', xml);
+}
+
+export async function pingSitemap(domain) {
+  const sitemapUrl = encodeURIComponent(`https://${domain}/sitemap.xml`);
+  try {
+    await Promise.all([
+      fetch(`https://www.google.com/ping?sitemap=${sitemapUrl}`),
+      fetch(`https://www.bing.com/ping?sitemap=${sitemapUrl}`)
+    ]);
+    console.log(`  Pinged Google + Bing: ${domain}`);
+  } catch (_) { /* non-blocking */ }
+}
+
+function escXml(str = '') {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export function generateRobotsTxt(domain) {

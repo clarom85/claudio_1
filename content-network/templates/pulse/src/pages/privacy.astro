@@ -4,7 +4,7 @@ const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
 const siteUrl = import.meta.env.SITE_URL || '';
 const year = new Date().getFullYear();
 ---
-<Base title={`Privacy Policy | ${siteName}`} description={`Privacy Policy for ${siteName}. Learn how we collect, use, and protect your personal information.`}>
+<Base title={`Privacy Policy | ${siteName}`} description={`Privacy Policy for ${siteName}. Learn how we collect, use, and protect your personal information.`} noindex={true}>
   <article class="article-content" style="max-width:800px; margin:32px auto;">
     <h1 class="article-title" style="margin-bottom:12px;">Privacy Policy</h1>
     <p style="color:#666; font-size:13px; margin-bottom:28px;">Last updated: January 1, {year}</p>

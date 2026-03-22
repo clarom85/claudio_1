@@ -157,7 +157,7 @@ img{max-width:100%;height:auto;display:block}
 }
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false }) {
+export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '' }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
@@ -166,6 +166,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
   const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
   const effectiveOgImage = ogImage || (siteUrl ? `${siteUrl}/images/og-default.jpg` : '');
+  const isArticle = slug && !slug.startsWith('category/') && !slug.startsWith('tag/') && slug !== 'about' && slug !== 'contact' && slug !== 'privacy' && slug !== 'terms' && slug !== 'disclaimer' && slug !== 'advertise' && slug !== 'editorial-process';
 
   return `<!DOCTYPE html>
 <html lang="en" data-adsense="${adsenseId}">
@@ -177,17 +178,22 @@ ${gscVerification ? `<meta name="google-site-verification" content="${gscVerific
 <title>${esc(title)} | ${esc(siteName)}</title>
 <meta name="description" content="${esc(description)}"/>
 <link rel="canonical" href="${canonical}"/>
+<link rel="alternate" type="application/rss+xml" title="${esc(siteName)}" href="${siteUrl}/feed.xml"/>
 <meta property="og:title" content="${esc(title)}"/>
 <meta property="og:description" content="${esc(description)}"/>
 <meta property="og:url" content="${canonical}"/>
 <meta property="og:site_name" content="${esc(siteName)}"/>
-<meta property="og:type" content="${slug ? 'article' : 'website'}"/>
-${effectiveOgImage ? `<meta property="og:image" content="${effectiveOgImage}"/><meta name="twitter:image" content="${effectiveOgImage}"/>` : ''}
+<meta property="og:type" content="${isArticle ? 'article' : 'website'}"/>
+${effectiveOgImage ? `<meta property="og:image" content="${effectiveOgImage}"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta name="twitter:image" content="${effectiveOgImage}"/>` : ''}
+${isArticle && datePublished ? `<meta property="og:article:published_time" content="${datePublished}"/>` : ''}
+${isArticle && (dateModified || datePublished) ? `<meta property="og:article:modified_time" content="${dateModified || datePublished}"/>` : ''}
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${esc(title)}"/>
 <meta name="twitter:description" content="${esc(description)}"/>
 ${schemasHtml}
 ${ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : ''}
+<link rel="icon" href="/favicon.ico"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
@@ -295,7 +301,9 @@ ${header(site)}
 </main>
 ${footer(site)}`;
 
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '' });
+  const pubIso = article.date ? new Date(article.date).toISOString() : '';
+  const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso });
 }
 
 export function renderHomePage(articles, site) {

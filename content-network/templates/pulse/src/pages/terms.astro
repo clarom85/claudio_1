@@ -4,7 +4,7 @@ const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
 const siteUrl = import.meta.env.SITE_URL || '';
 const year = new Date().getFullYear();
 ---
-<Base title={`Terms of Service | ${siteName}`} description={`Terms of Service for ${siteName}. Read the terms governing your use of our website and content.`}>
+<Base title={`Terms of Service | ${siteName}`} description={`Terms of Service for ${siteName}. Read the terms governing your use of our website and content.`} noindex={true}>
   <article class="article-content" style="max-width:800px; margin:32px auto;">
     <h1 class="article-title" style="margin-bottom:12px;">Terms of Service</h1>
     <p style="color:#666; font-size:13px; margin-bottom:28px;">Last updated: January 1, {year}</p>

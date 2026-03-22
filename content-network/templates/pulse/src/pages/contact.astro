@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
 const siteUrl = import.meta.env.SITE_URL || '';
 ---
-<Base title={`Contact Us | ${siteName}`} description={`Get in touch with the ${siteName} editorial team. Send corrections, tips, partnership inquiries, or general feedback.`}>
+<Base title={`Contact Us | ${siteName}`} description={`Get in touch with the ${siteName} editorial team. Send corrections, tips, partnership inquiries, or general feedback.`} noindex={true}>
   <article class="article-content" style="max-width:800px; margin:32px auto;">
     <h1 class="article-title" style="margin-bottom:24px;">Contact {siteName}</h1>
 

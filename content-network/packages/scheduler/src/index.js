@@ -14,7 +14,7 @@ import {
   getDueItems, updateQueueItem, updateArticleStatus,
   getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql
 } from '@content-network/db';
-import { generateSitemap, writeSiteFile } from '@content-network/vps';
+import { generateSitemap, writeSiteFile, generateRssFeed, pingSitemap } from '@content-network/vps';
 import { purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { getDailyArticleLimit, logScheduleInfo } from '@content-network/content-engine/src/publishing-schedule.js';
@@ -189,10 +189,12 @@ async function rebuildAffectedSites(stats) {
       // Tag pages — eliminates 404s from tag links in articles
       await generateTagPages(site.domain, articlesData, siteConfig);
 
-      // Sitemap (articles + category + tag pages)
+      // Sitemap + RSS feed + ping search engines
       const categoryUrls = buildCategoryUrls(articlesData);
       const tagUrls = buildTagUrls(articlesData);
-      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls]);
+      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls], { siteName: siteConfig.name });
+      generateRssFeed(site.domain, published, { siteName: siteConfig.name });
+      await pingSitemap(site.domain);
 
       stats.rebuilt++;
       console.log(`  ✅ Rebuilt: ${site.domain} (${published.length} articles)`);

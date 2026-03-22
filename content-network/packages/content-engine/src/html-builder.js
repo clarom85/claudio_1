@@ -20,10 +20,13 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
   const datePublished = new Date().toISOString();
   const dateFormatted = new Date(datePublished).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const wordCount = countWords(intro + sections.map(s => s.content).join(' ') + conclusion);
+  const readingTime = Math.max(1, Math.ceil(wordCount / 230));
 
   const articleSchema = buildArticleSchema({
     title, description: metaDescription, slug, author,
-    siteName, siteUrl, datePublished, dateModified: datePublished, imageSlug: slug
+    siteName, siteUrl, datePublished, dateModified: datePublished, imageSlug: slug,
+    wordCount
   });
 
   const faqSchema = buildFAQSchema(faq);
@@ -114,6 +117,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       <time class="article-date" itemprop="datePublished" datetime="${datePublished}">
         ${new Date(datePublished).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
       </time>
+      <span class="article-reading-time" style="font-size:13px;color:#888;">${readingTime} min read</span>
     </div>
     <div class="ad ad-leader" style="min-height:90px" data-ad-slot="top-leaderboard">
       <ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins>
@@ -192,6 +196,24 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         </ol>
       </section>` : ''}
 
+      <!-- About the Author box — E-E-A-T signal -->
+      <div class="author-bio-box" style="display:flex;gap:20px;align-items:flex-start;background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:24px;margin:32px 0;" itemscope itemtype="https://schema.org/Person">
+        <a href="/author/${author.avatar}/" style="flex-shrink:0;display:block;">
+          <img src="/authors/${author.avatar}.jpg" alt="${escapeHtml(author.name)}"
+            width="80" height="80"
+            style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #eee;"
+            loading="lazy"
+            onerror="this.src='/authors/${author.avatar}.webp'" />
+        </a>
+        <div>
+          <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin:0 0 4px;">Written by</p>
+          <a href="/author/${author.avatar}/" style="font-size:17px;font-weight:700;color:#1a1a2e;text-decoration:none;" itemprop="name">${escapeHtml(author.name)}</a>
+          <p style="font-size:13px;color:#888;margin:4px 0 10px;" itemprop="jobTitle">${escapeHtml(author.title)}</p>
+          <p style="font-size:14px;line-height:1.65;color:#444;margin:0 0 10px;">${escapeHtml((author.bio || '').slice(0, 220))}${(author.bio || '').length > 220 ? '...' : ''}</p>
+          <a href="/author/${author.avatar}/" style="font-size:13px;color:#c0392b;text-decoration:none;font-weight:600;">See all articles &rarr;</a>
+        </div>
+      </div>
+
       <div class="article-tags">
         <span class="tags-label">Topics:</span>
         ${tagsHTML}
@@ -230,7 +252,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
     schemas: [articleSchema, faqSchema, breadcrumb, ...(howToSchema ? [howToSchema] : [])],
     metaDescription,
-    wordCount: countWords(intro + sections.map(s => s.content).join(' ') + conclusion)
+    wordCount
   };
 }
 

@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 const siteName = import.meta.env.SITE_NAME || 'The Daily Pulse';
 const year = new Date().getFullYear();
 ---
-<Base title={`Disclaimer | ${siteName}`} description={`Disclaimer for ${siteName}. Important information about the nature and limitations of our content.`}>
+<Base title={`Disclaimer | ${siteName}`} description={`Disclaimer for ${siteName}. Important information about the nature and limitations of our content.`} noindex={true}>
   <article class="article-content" style="max-width:800px; margin:32px auto;">
     <h1 class="article-title" style="margin-bottom:12px;">Disclaimer</h1>
     <p style="color:#666; font-size:13px; margin-bottom:28px;">Last updated: January 1, {year}</p>
