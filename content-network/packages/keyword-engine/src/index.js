@@ -12,6 +12,9 @@ import { getTrendingForNiche } from './trends.js';
 import { getRedditKeywords } from './reddit.js';
 import { expandWithModifiers } from './modifiers.js';
 import { getRelatedSearches } from './related-searches.js';
+import { expandWithLocations } from './locations.js';
+import { expandWithEntities } from './entities.js';
+import { scrapeCompetitorHeadings } from './competitor-scraper.js';
 import { filterKeywords, deduplicateAcrossSites } from './filter.js';
 import { clusterKeywords, logClusterStats } from './cluster.js';
 import { getNicheBySlug, bulkInsertKeywords, getExpansionSeeds, sql } from '@content-network/db';
@@ -103,6 +106,24 @@ async function run() {
   const related = await getRelatedSearches(seeds);
   console.log(`   → ${related.length} related searches`);
   allRaw.push(...related);
+
+  // 8. Entity expansion (entità specifiche della nicchia)
+  console.log('🏷️  Entity expansion...');
+  const entities = expandWithEntities(seeds, niche.slug);
+  console.log(`   → ${entities.length} entity combinations`);
+  allRaw.push(...entities);
+
+  // 9. Location expansion (varianti geografiche — solo nicchie location-relevant)
+  console.log('📍 Location expansion...');
+  const locations = expandWithLocations(seeds, niche.slug);
+  console.log(`   → ${locations.length} location variants`);
+  allRaw.push(...locations);
+
+  // 10. Competitor H2/H3 scraping (heading validate dai top-ranking)
+  console.log('🔎 Competitor heading scraping...');
+  const competitorHeadings = await scrapeCompetitorHeadings(seeds);
+  console.log(`   → ${competitorHeadings.length} competitor headings`);
+  allRaw.push(...competitorHeadings);
 
   // Filter + classify
   console.log('\n🧹 Filtering and classifying...');
