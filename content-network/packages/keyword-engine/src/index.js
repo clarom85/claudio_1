@@ -6,6 +6,7 @@
  */
 import 'dotenv/config';
 import { expandAllSeeds } from './autocomplete.js';
+import { expandAllExtended } from './autocomplete-extended.js';
 import { getPAAKeywords } from './paa.js';
 import { getTrendingForNiche } from './trends.js';
 import { getRedditKeywords } from './reddit.js';
@@ -62,6 +63,12 @@ async function run() {
   const reddit = await getRedditKeywords(niche.slug);
   console.log(`   → ${reddit.length} Reddit-derived keywords`);
   allRaw.push(...reddit);
+
+  // 5. YouTube + Bing + Amazon + Quora (long-tail esteso)
+  console.log('🎯 Extended sources (YouTube, Bing, Amazon, Quora)...');
+  const extended = await expandAllExtended(niche.seed_keywords);
+  console.log(`   → ${extended.length} extended suggestions`);
+  allRaw.push(...extended);
 
   // Filter + classify
   console.log('\n🧹 Filtering and classifying...');
