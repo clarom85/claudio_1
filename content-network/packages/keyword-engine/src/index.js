@@ -10,6 +10,8 @@ import { expandAllExtended } from './autocomplete-extended.js';
 import { getPAAKeywords } from './paa.js';
 import { getTrendingForNiche } from './trends.js';
 import { getRedditKeywords } from './reddit.js';
+import { expandWithModifiers } from './modifiers.js';
+import { getRelatedSearches } from './related-searches.js';
 import { filterKeywords, deduplicateAcrossSites } from './filter.js';
 import { clusterKeywords, logClusterStats } from './cluster.js';
 import { getNicheBySlug, bulkInsertKeywords, getExpansionSeeds, sql } from '@content-network/db';
@@ -89,6 +91,18 @@ async function run() {
   const extended = await expandAllExtended(seeds);
   console.log(`   → ${extended.length} extended suggestions`);
   allRaw.push(...extended);
+
+  // 6. Modifier matrix (zero costo — combinazioni sistematiche)
+  console.log('🔧 Modifier matrix...');
+  const modifiers = expandWithModifiers(seeds);
+  console.log(`   → ${modifiers.length} modifier combinations`);
+  allRaw.push(...modifiers);
+
+  // 7. Google Related Searches (query laterali in fondo alla SERP)
+  console.log('🔗 Google Related Searches...');
+  const related = await getRelatedSearches(seeds);
+  console.log(`   → ${related.length} related searches`);
+  allRaw.push(...related);
 
   // Filter + classify
   console.log('\n🧹 Filtering and classifying...');
