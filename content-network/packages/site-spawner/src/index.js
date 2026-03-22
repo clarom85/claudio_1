@@ -15,7 +15,7 @@ import {
 } from '@content-network/db';
 import {
   createSiteDirectory, createNginxConfig, reloadNginx,
-  generateRobotsTxt, generateSitemap, writeSiteFile, enableSSL
+  generateRobotsTxt, generateAdsTxt, generateSitemap, writeSiteFile, enableSSL
 } from '@content-network/vps';
 import { setupDomain as cfSetupDomain, purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
@@ -97,8 +97,9 @@ async function run() {
     // 4. Immagine placeholder + og:image default
     writePlaceholderImage(domain, siteConfig.name);
 
-    // 5. robots.txt
+    // 5. robots.txt + ads.txt
     generateRobotsTxt(domain);
+    generateAdsTxt(domain, process.env.ADSENSE_ID);
 
     // 6. API endpoints JSON (vuoti inizialmente)
     writeApiFiles(domain, [], niche);

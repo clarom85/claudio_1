@@ -36,10 +36,18 @@ export function writeSiteFile(domain, filename, content) {
 
 // ── Nginx virtual host ───────────────────────────────────────
 export function createNginxConfig(domain) {
-  const config = `server {
+  const config = `# Redirect www → non-www (301 permanent)
+server {
     listen 80;
     listen [::]:80;
-    server_name ${domain} www.${domain};
+    server_name www.${domain};
+    return 301 http://${domain}$request_uri;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${domain};
     root /var/www/${domain};
     index index.html;
 
@@ -66,7 +74,7 @@ export function createNginxConfig(domain) {
         access_log off;
     }
 
-    # Sitemap e robots no cache
+    # Sitemap, robots, ads.txt, feed — no cache
     location ~* \\.(xml|txt)$ {
         expires 1d;
         add_header Cache-Control "public";
@@ -256,4 +264,14 @@ Disallow: /api/
 
 Sitemap: https://${domain}/sitemap.xml
 `);
+}
+
+/**
+ * ads.txt — IAB standard for authorized digital sellers.
+ * Senza questo file i DSP pagano meno (o non comprano) l'inventory AdSense.
+ * f08c47fec0942fa0 è il TAG-ID pubblico di Google (non un segreto).
+ */
+export function generateAdsTxt(domain, adsensePublisherId) {
+  if (!adsensePublisherId) return;
+  writeSiteFile(domain, 'ads.txt', `google.com, ${adsensePublisherId}, DIRECT, f08c47fec0942fa0\n`);
 }
