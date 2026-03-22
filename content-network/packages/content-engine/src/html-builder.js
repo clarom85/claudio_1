@@ -62,10 +62,11 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     </ol>
   </nav>` : '';
 
+  // Max 2 inline ads inside sections: only after section index 1 and 3 (2nd and 4th)
+  const INLINE_AD_POSITIONS = new Set([1, 3]);
   let sectionsHTML = '';
   sections.forEach((section, i) => {
-    // Ad after every section
-    const adAfter = AD_UNIT_INLINE;
+    const adAfter = INLINE_AD_POSITIONS.has(i) ? AD_UNIT_INLINE : '';
 
     let listHTML = '';
     if (section.hasList && section.listItems?.length) {
@@ -165,8 +166,6 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
           <cite>— ${author.name}, ${author.title}</cite>
         </blockquote>
       </div>
-
-      ${AD_UNIT_INLINE}
 
       <section class="article-faq" itemscope itemtype="https://schema.org/FAQPage">
         <h2>Frequently Asked Questions</h2>

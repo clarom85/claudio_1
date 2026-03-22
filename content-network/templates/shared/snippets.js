@@ -130,7 +130,7 @@ export const NATIVE_ADS_HTML = (siteUrl = '') => `
   </script>
 </div>
 <div class="native-ads" id="native-ads-block">
-  <span class="native-ads-label">Sponsored Content</span>
+  <span class="native-ads-label">You May Also Like</span>
   <div class="native-ads-grid" id="native-ads-grid">
     <!-- Popolato via JS con articoli correlati come native content -->
   </div>
@@ -147,7 +147,7 @@ fetch('/api/articles.json').then(function(r){ return r.json(); }).then(function(
     return '<div class="native-card" onclick="location.href=\'/'+a.slug+'/\'">'
       + '<img class="native-card-img" src="/images/'+a.slug+'.webp" loading="lazy" onerror="this.src=\'/images/placeholder.webp\'" alt="'+a.title+'">'
       + '<div class="native-card-body"><div class="native-card-title">'+a.title+'</div>'
-      + '<div class="native-card-src">Sponsored</div></div></div>';
+      + '<div class="native-card-src">Related</div></div></div>';
   }).join('');
 }).catch(function(){});
 `;
