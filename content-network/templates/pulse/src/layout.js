@@ -157,7 +157,7 @@ img{max-width:100%;height:auto;display:block}
 }
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '' }) {
+export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '' }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
@@ -180,7 +180,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
 ${gscVerification ? `<meta name="google-site-verification" content="${gscVerification}"/>` : ''}
 <title>${esc(title)} | ${esc(siteName)}</title>
 <meta name="description" content="${esc(description)}"/>
-<link rel="canonical" href="${canonical}"/>
+<link rel="canonical" href="${canonical}"/>${prevUrl ? `<link rel="prev" href="${prevUrl}"/>` : ''}${nextUrl ? `<link rel="next" href="${nextUrl}"/>` : ''}
 <link rel="alternate" type="application/rss+xml" title="${esc(siteName)}" href="${siteUrl}/feed.xml"/>
 ${authorUrl ? `<link rel="author" href="${authorUrl}"/>` : ''}
 <meta property="og:title" content="${esc(title)}"/>
@@ -390,7 +390,7 @@ ${footer(site)}`;
   return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body, noindex: true });
 }
 
-export function renderCategoryPage(articles, category, site) {
+export function renderCategoryPage(articles, category, site, page = 1, totalPages = 1) {
   const gridHtml = articles.map(a => `
     <article class="card">
       <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
@@ -418,6 +418,11 @@ export function renderCategoryPage(articles, category, site) {
     }))
   };
 
+  const catBase = `${site.url}/category/${category.slug}`;
+  const prevUrl = page > 1 ? (page === 2 ? `${catBase}/` : `${catBase}/page/${page - 1}/`) : '';
+  const nextUrl = page < totalPages ? `${catBase}/page/${page + 1}/` : '';
+  const paginationHtml = totalPages > 1 ? `<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${page > 1 ? `<a href="${page === 2 ? `/category/${category.slug}/` : `/category/${category.slug}/page/${page - 1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">&#8592; Prev</a>` : '<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page < totalPages ? `<a href="/category/${category.slug}/page/${page + 1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">Next &#8594;</a>` : '<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>` : '';
+
   const body = `
 ${header(site)}
 <main class="site-main">
@@ -428,17 +433,21 @@ ${header(site)}
     <p style="color:var(--muted);margin-bottom:28px">${articles.length} expert article${articles.length !== 1 ? 's' : ''}</p>
     <div class="art-grid">${gridHtml}</div>
     <div class="ad ad-leader" style="min-height:90px;margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    ${paginationHtml}
   </div>
 </main>
 ${footer(site)}`;
 
+  const pageTitle = page > 1 ? `${category.name} — Page ${page} — ${site.name}` : `${category.name} — ${site.name}`;
+  const pageSchemas = page === 1 ? [breadcrumbSchema, itemListSchema] : [breadcrumbSchema];
   return renderBase({
-    title: `${category.name} — ${site.name}`,
+    title: pageTitle,
     description: `Browse ${articles.length} expert articles about ${category.name} on ${site.name}. Practical guides, cost estimates, and how-to advice.`,
-    slug: `category/${category.slug}`,
+    slug: page > 1 ? `category/${category.slug}/page/${page}` : `category/${category.slug}`,
     siteName: site.name, siteUrl: site.url,
-    schemas: [breadcrumbSchema, itemListSchema], body, adsenseId: site.adsenseId,
-    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
+    schemas: pageSchemas, body, adsenseId: site.adsenseId,
+    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : '',
+    prevUrl, nextUrl
   });
 }
 
