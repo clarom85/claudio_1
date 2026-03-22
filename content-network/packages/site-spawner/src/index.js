@@ -99,7 +99,7 @@ async function run() {
 
     // 5. robots.txt + ads.txt
     generateRobotsTxt(domain);
-    generateAdsTxt(domain, process.env.ADSENSE_ID);
+    generateAdsTxt(domain, process.env.ADSENSE_ID, process.env.EZOIC_SITE_ID);
 
     // 6. API endpoints JSON (vuoti inizialmente)
     writeApiFiles(domain, [], niche);

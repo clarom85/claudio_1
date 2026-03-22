@@ -190,7 +190,7 @@ async function rebuildAffectedSites(stats) {
       await generateTagPages(site.domain, articlesData, siteConfig);
 
       // ads.txt — rigenera ad ogni rebuild per recepire ADSENSE_ID se aggiunto dopo lo spawn
-      generateAdsTxt(site.domain, process.env.ADSENSE_ID);
+      generateAdsTxt(site.domain, process.env.ADSENSE_ID, process.env.EZOIC_SITE_ID);
 
       // Sitemap + RSS feed + ping search engines
       const categoryUrls = buildCategoryUrls(articlesData);

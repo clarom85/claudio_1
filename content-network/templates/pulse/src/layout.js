@@ -165,6 +165,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
   const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
+  const ezoicId = process.env.EZOIC_SITE_ID || '';
   const effectiveOgImage = ogImage || (siteUrl ? `${siteUrl}/images/og-default.jpg` : '');
   const isArticle = slug && !slug.startsWith('category/') && !slug.startsWith('tag/') && slug !== 'about' && slug !== 'contact' && slug !== 'privacy' && slug !== 'terms' && slug !== 'disclaimer' && slug !== 'advertise' && slug !== 'editorial-process';
 
@@ -195,6 +196,7 @@ ${isArticle && (dateModified || datePublished) ? `<meta property="og:article:mod
 <meta name="twitter:description" content="${esc(description)}"/>
 ${schemasHtml}
 ${ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : ''}
+${ezoicId ? `<script src="//www.ezojs.com/ezoic/sa.min.js" async></script>` : ''}
 <link rel="icon" href="/favicon.ico"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -207,9 +209,9 @@ ${ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4I
 </head>
 <body>
 ${body}
-${COOKIE_BANNER_HTML}
+${ezoicId ? '' : COOKIE_BANNER_HTML}
 <script>
-${COOKIE_BANNER_JS}
+${ezoicId ? '' : COOKIE_BANNER_JS}
 ${EMAIL_FORM_JS}
 ${NATIVE_ADS_JS}
 // Trending ticker
@@ -252,9 +254,7 @@ ${header(site)}
         </div>
         <time class="art-date" datetime="${dateIso}">${dateStr}</time>
       </div>
-      <div class="ad ad-leader">
-        <ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins>
-      </div>
+      ${adUnit('leaderboard')}
     </header>
 
     <div class="art-layout">
@@ -281,13 +281,9 @@ ${header(site)}
 </div>`;
         })()}
       <aside class="sidebar">
-        <div class="ad ad-sidebar">
-          <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
-        </div>
+        ${adUnit('sidebar')}
         ${relatedHtml ? `<div class="sidebar-box"><h3>Related Articles</h3>${relatedHtml}</div>` : ''}
-        <div class="ad ad-sidebar">
-          <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
-        </div>
+        ${adUnit('sidebar')}
         <div class="sidebar-newsletter">
           <h3>Get Expert Tips Weekly</h3>
           <form class="nl-form" onsubmit="return false">
@@ -295,9 +291,7 @@ ${header(site)}
             <button type="submit">Subscribe Free</button>
           </form>
         </div>
-        <div class="ad ad-sidebar">
-          <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
-        </div>
+        ${adUnit('sidebar')}
       </aside>
     </div>
   </div>
@@ -357,9 +351,9 @@ export function renderHomePage(articles, site) {
 ${header(site)}
 <main class="site-main">
   <div class="wrap">
-    <div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    ${adUnit('leaderboard')}
     ${heroHtml}
-    <div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    ${adUnit('leaderboard')}
     ${gridHtml}
   </div>
 </main>
@@ -529,7 +523,7 @@ function header(site) {
 function footer(site) {
   return `
 <footer class="site-footer">
-  <div class="ad-footer"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+  ${adUnit('footer')}
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-about">
@@ -559,6 +553,21 @@ function footer(site) {
     </div>
   </div>
 </footer>`;
+}
+
+// Ad unit helper — switches between Ezoic placeholders and AdSense <ins> based on env
+// Ezoic placeholder IDs must match what you configure in the Ezoic dashboard:
+//   101 = top leaderboard, 102 = inline/in-article, 104 = sidebar, 106 = footer
+function adUnit(type) {
+  const ezoicId = process.env.EZOIC_SITE_ID || '';
+  const minH = { leaderboard: 90, inline: 280, sidebar: 250, footer: 90 }[type] || 250;
+  if (ezoicId) {
+    const ids = { leaderboard: 101, inline: 102, sidebar: 104, footer: 106 };
+    return `<div id="ezoic-pub-ad-placeholder-${ids[type] || 102}" style="min-height:${minH}px"></div>`;
+  }
+  const cls = { leaderboard: 'ad-leader', inline: 'ad-inline', sidebar: 'ad-sidebar', footer: 'ad-footer' };
+  const fmt = { leaderboard: 'leaderboard', inline: 'fluid', sidebar: 'rectangle', footer: 'leaderboard' };
+  return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-format="${fmt[type]}"></ins></div>`;
 }
 
 function esc(str = '') {

@@ -5,15 +5,23 @@
 
 import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema, buildHowToSchema } from './schema.js';
 
-// Inserisce ads inline — usa classi CSS del template (.ad .ad-inline)
-// min-height esplicito previene CLS (Core Web Vital) quando AdSense carica
-const AD_UNIT_INLINE = `<div class="ad ad-inline" style="min-height:280px">
-  <ins class="adsbygoogle" style="display:block;text-align:center" data-ad-format="fluid" data-ad-layout="in-article"></ins>
-</div>`;
+// Ad unit helper — Ezoic placeholders if EZOIC_SITE_ID is set, else AdSense <ins>
+// Ezoic IDs: 102 = in-article, 103 = in-article-2, 104 = sidebar (configure in Ezoic dashboard)
+function adUnit(type) {
+  const ezoicId = process.env.EZOIC_SITE_ID || '';
+  if (ezoicId) {
+    const ids = { inline: 102, inline2: 103, sidebar: 104 };
+    const minH = type === 'sidebar' ? 250 : 280;
+    return `<div id="ezoic-pub-ad-placeholder-${ids[type] || 102}" style="min-height:${minH}px"></div>`;
+  }
+  if (type === 'sidebar') {
+    return `<div class="ad ad-sidebar" style="min-height:250px"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>`;
+  }
+  return `<div class="ad ad-inline" style="min-height:280px"><ins class="adsbygoogle" style="display:block;text-align:center" data-ad-format="fluid" data-ad-layout="in-article"></ins></div>`;
+}
 
-const AD_UNIT_SIDEBAR = `<div class="ad ad-sidebar" style="min-height:250px">
-  <ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins>
-</div>`;
+const AD_UNIT_INLINE = adUnit('inline');
+const AD_UNIT_SIDEBAR = adUnit('sidebar');
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword }) {
   const { title, metaDescription, intro, sections, faq, conclusion, authorNote, tags, citations } = articleData;
@@ -63,10 +71,10 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
   </nav>` : '';
 
   // Max 2 inline ads inside sections: only after section index 1 and 3 (2nd and 4th)
-  const INLINE_AD_POSITIONS = new Set([1, 3]);
+  // Use different Ezoic placeholder IDs (102 vs 103) to avoid duplicate IDs on page
   let sectionsHTML = '';
   sections.forEach((section, i) => {
-    const adAfter = INLINE_AD_POSITIONS.has(i) ? AD_UNIT_INLINE : '';
+    const adAfter = i === 1 ? adUnit('inline') : i === 3 ? adUnit('inline2') : '';
 
     let listHTML = '';
     if (section.hasList && section.listItems?.length) {
