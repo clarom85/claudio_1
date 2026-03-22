@@ -68,14 +68,12 @@ async function run() {
       continue;
     }
 
-    // ── 2. File critici ───────────────────────────────────────────────────
+    // ── 2. File critici (assenza = errore) ───────────────────────────────
     const criticalFiles = [
       ['index.html',         'Homepage'],
       ['assets/style.css',   'CSS'],
       ['sitemap.xml',        'Sitemap'],
       ['robots.txt',         'robots.txt'],
-      ['ads.txt',            'ads.txt'],
-      ['404.html',           '404 page'],
       ['api/articles.json',  'API articles'],
       ['api/categories.json','API categories'],
     ];
@@ -87,6 +85,22 @@ async function run() {
         issues.push(file);
       } else {
         ok(`${label} exists`);
+      }
+    }
+
+    // ── File opzionali (assenza = warning, non errore) ────────────────────
+    const optionalFiles = [
+      ['ads.txt',  'ads.txt (add ADSENSE_ID to activate)'],
+      ['404.html', '404 page'],
+    ];
+
+    for (const [file, label] of optionalFiles) {
+      const path = join(siteDir, file);
+      if (!existsSync(path)) {
+        warn(`${label} missing`);
+        warnings.push(file);
+      } else {
+        ok(`${file} exists`);
       }
     }
 
