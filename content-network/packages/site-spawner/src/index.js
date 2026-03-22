@@ -176,7 +176,6 @@ async function run() {
     }
 
     // 11. Sitemap completa
-    const toolConfig = TOOL_CONFIGS[nicheSlug];
     const authorSlugs = siteConfig.authorData ? [siteConfig.authorData.avatar] : [];
     generateSitemap(domain, [], {
       categories,

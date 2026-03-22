@@ -112,7 +112,7 @@ async function run() {
   }
 
   console.log(`\n📊 Results: ${success} generated, ${failed} failed`);
-  console.log(`Articles queued for gradual publishing (max 50/day)`);
+  console.log(`Articles queued for gradual publishing (scheduler publishes progressively)`);
 
   // Purge Cloudflare cache dopo pubblicazione nuovi articoli
   if (process.env.CLOUDFLARE_API_TOKEN && success > 0) {
