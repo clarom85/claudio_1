@@ -124,10 +124,13 @@ WWW_ROOT=/var/www
 DISQUS_SHORTNAME=       # opzionale — commenti su articoli
 ```
 
+#### Stato VPS (aggiornato 2026-03-22)
+- VPS aggiornato a commit `070c3ed` (in sync con GitHub)
+- DB: 20 nicchie, migration tags completata, 49 articoli, 1421 keywords
+- PM2: `content-scheduler` online (cron orario), `email-api` online (porta 3001)
+- Bug fix: `paginationHtml` era misplaced in `renderArticlePage` su tutti e 5 i template — fixato
+
 #### Prossimi step
-- **Replicare tutte le feature SEO ai 4 template rimanenti** (tribune, nexus, echo, vortex): renderBase (ogImage, noindex, GA4, GSC, preconnect), renderTagPage, renderCategoryPage ItemList, render404Page noindex, CLS ad fix
-- Inserire le 15 nuove nicchie nel DB (`niches` table) prima che keyword/content engine le usino
-- Eseguire migration DB tags: `ALTER TABLE articles ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';`
 - Acquistare dominio reale → site-spawner crea zona CF automaticamente
 - Applicare a Google AdSense (inserire ADSENSE_ID in `.env`)
-- Paginazione category pages (rel=prev/next per 50+ articoli)
+- Dopo spawn primo sito: verificare category pages con paginazione funzionino
