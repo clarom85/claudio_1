@@ -84,6 +84,156 @@ async function seedNiches() {
         'weekend getaway small towns', 'best small towns to visit',
         'charming small towns europe', 'small town restaurants guide'
       ]
+    },
+    {
+      slug: 'personal-finance',
+      name: 'Personal Finance',
+      template: 'pulse',
+      seedKeywords: [
+        'how to save money fast', 'best high yield savings account',
+        'how to pay off debt', 'emergency fund how much',
+        'budget for beginners', 'how to invest 1000 dollars'
+      ]
+    },
+    {
+      slug: 'insurance-guide',
+      name: 'Insurance Guide',
+      template: 'tribune',
+      seedKeywords: [
+        'cheapest car insurance', 'health insurance for self employed',
+        'life insurance how much do i need', 'home insurance what does it cover',
+        'renters insurance worth it', 'term vs whole life insurance'
+      ]
+    },
+    {
+      slug: 'legal-advice',
+      name: 'Legal Advice',
+      template: 'tribune',
+      seedKeywords: [
+        'how to write a will', 'landlord tenant rights',
+        'small claims court how to file', 'how to dispute a charge',
+        'employment rights wrongful termination', 'divorce process steps'
+      ]
+    },
+    {
+      slug: 'real-estate-investing',
+      name: 'Real Estate Investing',
+      template: 'echo',
+      seedKeywords: [
+        'how to start investing in real estate', 'rental property cash flow',
+        'house hacking strategy', 'real estate vs stocks',
+        'how to buy investment property', 'short term rental profitability'
+      ]
+    },
+    {
+      slug: 'health-symptoms',
+      name: 'Health Symptoms',
+      template: 'pulse',
+      seedKeywords: [
+        'chest pain when to worry', 'fatigue causes in women',
+        'high blood pressure symptoms', 'anxiety symptoms physical',
+        'vitamin d deficiency signs', 'thyroid symptoms in women'
+      ]
+    },
+    {
+      slug: 'credit-cards-banking',
+      name: 'Credit Cards & Banking',
+      template: 'nexus',
+      seedKeywords: [
+        'best cash back credit card', 'how to improve credit score fast',
+        'balance transfer credit card', 'credit card vs debit card',
+        'how to build credit from scratch', 'best travel rewards card'
+      ]
+    },
+    {
+      slug: 'weight-loss-fitness',
+      name: 'Weight Loss & Fitness',
+      template: 'echo',
+      seedKeywords: [
+        'how to lose belly fat', 'intermittent fasting for beginners',
+        'strength training at home', 'how many calories to lose weight',
+        'best exercises for weight loss', 'why am i not losing weight'
+      ]
+    },
+    {
+      slug: 'automotive-guide',
+      name: 'Automotive Guide',
+      template: 'vortex',
+      seedKeywords: [
+        'how to negotiate car price', 'check engine light causes',
+        'when to replace brake pads', 'best first car for teenager',
+        'car maintenance schedule', 'how to buy used car from dealer'
+      ]
+    },
+    {
+      slug: 'online-education',
+      name: 'Online Education',
+      template: 'nexus',
+      seedKeywords: [
+        'best online coding bootcamp', 'google certification worth it',
+        'free online courses with certificates', 'coursera vs udemy',
+        'how to learn programming for free', 'best data science courses online'
+      ]
+    },
+    {
+      slug: 'cybersecurity-privacy',
+      name: 'Cybersecurity & Privacy',
+      template: 'nexus',
+      seedKeywords: [
+        'best password manager', 'how to tell if email is phishing',
+        'vpn worth it', 'how to secure home wifi',
+        'identity theft what to do', 'two factor authentication setup'
+      ]
+    },
+    {
+      slug: 'mental-health-wellness',
+      name: 'Mental Health & Wellness',
+      template: 'echo',
+      seedKeywords: [
+        'how to deal with anxiety', 'signs of depression in adults',
+        'how to improve sleep quality', 'burnout symptoms and recovery',
+        'mindfulness for beginners', 'how to stop overthinking'
+      ]
+    },
+    {
+      slug: 'home-security-systems',
+      name: 'Home Security Systems',
+      template: 'tribune',
+      seedKeywords: [
+        'best home security system', 'ring vs adt comparison',
+        'diy home security setup', 'home alarm system cost',
+        'best outdoor security cameras', 'smart lock reviews'
+      ]
+    },
+    {
+      slug: 'solar-energy',
+      name: 'Solar Energy',
+      template: 'vortex',
+      seedKeywords: [
+        'solar panels cost for home', 'solar panel payback period',
+        'best solar companies', 'solar battery storage worth it',
+        'how do solar panels work', 'solar tax credit 2024'
+      ]
+    },
+    {
+      slug: 'senior-care-medicare',
+      name: 'Senior Care & Medicare',
+      template: 'tribune',
+      seedKeywords: [
+        'medicare vs medicaid difference', 'best medicare supplement plans',
+        'assisted living cost by state', 'how to care for aging parent',
+        'medicare enrollment deadlines', 'long term care insurance worth it'
+      ]
+    },
+    {
+      slug: 'business-startup',
+      name: 'Business Startup',
+      template: 'pulse',
+      seedKeywords: [
+        'how to start a business with no money', 'llc vs sole proprietorship',
+        'best small business ideas', 'how to write a business plan',
+        'small business grants', 'how to get first client freelance'
+      ]
     }
   ];
 

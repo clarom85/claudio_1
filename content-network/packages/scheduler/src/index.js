@@ -433,6 +433,8 @@ function updateApiFiles(domain, articles, niche) {
   writeFileSync(join(apiDir, 'categories.json'), JSON.stringify(cats), 'utf-8');
 }
 
+const ARTICLES_PER_CAT_PAGE = 20;
+
 async function generateCategoryPages(domain, articles, siteConfig, template) {
   const { renderCategoryPage } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
 
@@ -444,19 +446,47 @@ async function generateCategoryPages(domain, articles, siteConfig, template) {
     catMap[slug].articles.push(a);
   }
 
+  let pageCount = 0;
   for (const cat of Object.values(catMap)) {
     if (!cat.articles.length) continue;
-    const html = renderCategoryPage(cat.articles, cat, siteConfig);
-    const dir = join(WWW_ROOT, domain, 'category', cat.slug);
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+    const totalPages = Math.ceil(cat.articles.length / ARTICLES_PER_CAT_PAGE);
+
+    for (let page = 1; page <= totalPages; page++) {
+      const pageArticles = cat.articles.slice((page - 1) * ARTICLES_PER_CAT_PAGE, page * ARTICLES_PER_CAT_PAGE);
+      const html = renderCategoryPage(pageArticles, cat, siteConfig, page, totalPages);
+
+      if (page === 1) {
+        const dir = join(WWW_ROOT, domain, 'category', cat.slug);
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+      } else {
+        const dir = join(WWW_ROOT, domain, 'category', cat.slug, 'page', String(page));
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+      }
+      pageCount++;
+    }
   }
-  console.log(`  📂 Generated ${Object.keys(catMap).length} category pages`);
+  console.log(`  📂 Generated ${Object.keys(catMap).length} category pages (${pageCount} total pages)`);
 }
 
 function buildCategoryUrls(articles) {
-  const slugs = [...new Set(articles.map(a => a.categorySlug).filter(Boolean))];
-  return slugs.map(slug => ({ slug: `category/${slug}`, published_at: new Date().toISOString() }));
+  const catMap = {};
+  for (const a of articles) {
+    const slug = a.categorySlug;
+    if (!slug) continue;
+    catMap[slug] = (catMap[slug] || 0) + 1;
+  }
+  const now = new Date().toISOString();
+  const urls = [];
+  for (const [slug, count] of Object.entries(catMap)) {
+    urls.push({ slug: `category/${slug}`, published_at: now });
+    const totalPages = Math.ceil(count / ARTICLES_PER_CAT_PAGE);
+    for (let p = 2; p <= totalPages; p++) {
+      urls.push({ slug: `category/${slug}/page/${p}`, published_at: now });
+    }
+  }
+  return urls;
 }
 
 function buildTagUrls(articles) {

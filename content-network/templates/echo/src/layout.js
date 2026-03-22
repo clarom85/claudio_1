@@ -122,7 +122,7 @@ function adUnit(type){
   const fmt={leaderboard:'leaderboard',inline:'fluid',sidebar:'rectangle',footer:'leaderboard'};
   return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-format="${fmt[type]}"></ins></div>`;}
 
-function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl=''}){
+function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
   const robots=noindex?'noindex, follow':'index, follow, max-image-preview:large';
@@ -135,7 +135,7 @@ function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,ads
 <meta name="robots" content="${robots}"/><meta name="theme-color" content="#c4622d"/>
 <meta property="og:locale" content="en_US"/>${gscVerification?`<meta name="google-site-verification" content="${gscVerification}"/>`:''}
 <title>${esc(title)} | ${esc(siteName)}</title>
-<meta name="description" content="${esc(description)}"/><link rel="canonical" href="${canonical}"/>
+<meta name="description" content="${esc(description)}"/><link rel="canonical" href="${canonical}"/>${prevUrl?`<link rel="prev" href="${prevUrl}"/>`:''}${nextUrl?`<link rel="next" href="${nextUrl}"/>`:''}
 <link rel="alternate" type="application/rss+xml" title="${esc(siteName)}" href="${siteUrl}/feed.xml"/>${authorUrl?`<link rel="author" href="${authorUrl}"/>`:''}
 <meta property="og:title" content="${esc(title)}"/><meta property="og:description" content="${esc(description)}"/><meta property="og:url" content="${canonical}"/><meta property="og:site_name" content="${esc(siteName)}"/>
 <meta property="og:type" content="${isArticle?'article':'website'}"/>
@@ -176,6 +176,7 @@ function footer(site){return`
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="/images/${r.slug}.webp" alt="${esc(r.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
+  const paginationHtml=totalPages>1?`<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${prevUrl?'' : ''}${page>1?`<a href="${page===2?`/category/${category.slug}/`:`/category/${category.slug}/page/${page-1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">&#8592; Prev</a>`:'<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page<totalPages?`<a href="/category/${category.slug}/page/${page+1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">Next &#8594;</a>`:'<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>`:'';
   const body=`${header(site)}<main class="site-main"><div class="wrap">
     <header class="art-hdr">
       <span class="art-category"><a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'Lifestyle')}</a></span>
@@ -212,12 +213,17 @@ export function renderHomePage(articles,site){
   return renderBase({title:`${site.name} — Lifestyle & Wellness Guides`,description:`${site.name}: inspiring guides for better living.`,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ogImage:hero?`${site.url}/images/${hero.slug}.jpg`:'',schemas:[orgSchema]});
 }
 
-export function renderCategoryPage(articles,category,site){
+export function renderCategoryPage(articles,category,site,page=1,totalPages=1){
   const gridHtml=articles.map(a=>`<article class="card"><div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'" style="aspect-ratio:3/2"/></div><div class="card-body"><div class="card-cat">${esc(category.name)}</div><h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2><p class="card-excerpt">${esc(a.excerpt||'')}</p></div></article>`).join('');
   const schema={'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:`${site.url}/`},{'@type':'ListItem',position:2,name:category.name,item:`${site.url}/category/${category.slug}/`}]};
   const itemListSchema={'@context':'https://schema.org','@type':'ItemList',name:category.name,numberOfItems:articles.length,itemListElement:articles.slice(0,10).map((a,i)=>({'@type':'ListItem',position:i+1,url:`${site.url}/${a.slug}/`,name:a.title}))};
-  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}<p style="text-align:center;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px"><a href="/" style="color:var(--terra)">Home</a> › <span>${esc(category.name)}</span></p><h1 class="section-title" style="text-align:center;font-size:clamp(28px,4vw,46px)">${esc(category.name)}</h1><p style="text-align:center;color:var(--muted);margin-bottom:32px;font-size:13px;letter-spacing:1px">${articles.length} ARTICLE${articles.length!==1?'S':''}</p><div class="art-grid">${gridHtml}</div>${adUnit('leaderboard')}</div></main>${footer(site)}`;
-  return renderBase({title:`${category.name} — ${site.name}`,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:[schema,itemListSchema],body,adsenseId:site.adsenseId,ogImage:articles[0]?`${site.url}/images/${articles[0].slug}.jpg`:''});
+  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}<p style="text-align:center;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px"><a href="/" style="color:var(--terra)">Home</a> › <span>${esc(category.name)}</span></p><h1 class="section-title" style="text-align:center;font-size:clamp(28px,4vw,46px)">${esc(category.name)}</h1><p style="text-align:center;color:var(--muted);margin-bottom:32px;font-size:13px;letter-spacing:1px">${articles.length} ARTICLE${articles.length!==1?'S':''}</p><div class="art-grid">${gridHtml}</div>${adUnit('leaderboard')}${paginationHtml}</div></main>${footer(site)}`;
+  const catBase=`${site.url}/category/${category.slug}`;
+  const prevUrl=page>1?(page===2?`${catBase}/`:`${catBase}/page/${page-1}/`):'';
+  const nextUrl=page<totalPages?`${catBase}/page/${page+1}/`:'';
+  const pageTitle=page>1?`${category.name} — Page ${page} — ${site.name}`:`${category.name} — ${site.name}`;
+  const pageSchemas=page===1?[schema,itemListSchema]:[schema];
+  return renderBase({title:pageTitle,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:page>1?`category/${category.slug}/page/${page}`:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:pageSchemas,body,adsenseId:site.adsenseId,ogImage:articles[0]?`${site.url}/images/${articles[0].slug}.jpg`:'',prevUrl,nextUrl});
 }
 
 export function render404Page(site){
