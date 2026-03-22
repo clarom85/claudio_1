@@ -47,6 +47,7 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .ad-leader{width:100%;min-height:90px;margin:16px 0}
 .ad-inline{width:100%;min-height:250px;margin:28px 0}
 .ad-sidebar{width:100%;min-height:250px;margin-bottom:24px}
+.ad-footer{width:100%;min-height:90px;text-align:center;padding:8px 0}
 
 /* Content */
 .art-body{background:var(--white);padding:36px;border:1px solid var(--border)}
@@ -113,40 +114,57 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:16px;text-align:center;font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.5px}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId=''}){
+function adUnit(type){
+  const ezoicId=process.env.EZOIC_SITE_ID||'';
+  const minH={leaderboard:90,inline:280,sidebar:250,footer:90}[type]||250;
+  if(ezoicId){const ids={leaderboard:101,inline:102,sidebar:104,footer:106};return `<div id="ezoic-pub-ad-placeholder-${ids[type]||102}" style="min-height:${minH}px"></div>`;}
+  const cls={leaderboard:'ad-leader',inline:'ad-inline',sidebar:'ad-sidebar',footer:'ad-footer'};
+  const fmt={leaderboard:'leaderboard',inline:'fluid',sidebar:'rectangle',footer:'leaderboard'};
+  return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-format="${fmt[type]}"></ins></div>`;}
+
+function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
-  return`<!DOCTYPE html><html lang="en" data-adsense="${adsenseId}"><head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="robots" content="index,follow,max-image-preview:large"/>
+  const robots=noindex?'noindex, follow':'index, follow, max-image-preview:large';
+  const ga4Id=process.env.GA4_MEASUREMENT_ID||'';
+  const gscVerification=process.env.GOOGLE_SITE_VERIFICATION||'';
+  const ezoicId=process.env.EZOIC_SITE_ID||'';
+  const effectiveOgImage=ogImage||(siteUrl?`${siteUrl}/images/og-default.jpg`:'');
+  const isArticle=slug&&!slug.startsWith('category/')&&!slug.startsWith('tag/')&&slug!=='about'&&slug!=='contact'&&slug!=='privacy'&&slug!=='terms'&&slug!=='disclaimer'&&slug!=='advertise'&&slug!=='editorial-process';
+  return `<!DOCTYPE html><html lang="en" data-adsense="${adsenseId}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="${robots}"/><meta name="theme-color" content="#c4622d"/>
+<meta property="og:locale" content="en_US"/>${gscVerification?`<meta name="google-site-verification" content="${gscVerification}"/>`:''}
 <title>${esc(title)} | ${esc(siteName)}</title>
-<meta name="description" content="${esc(description)}"/>
-<link rel="canonical" href="${canonical}"/>
-<meta property="og:title" content="${esc(title)}"/>
-<meta property="og:description" content="${esc(description)}"/>
-<meta property="og:url" content="${canonical}"/>
-<meta property="og:type" content="${slug?'article':'website'}"/>
+<meta name="description" content="${esc(description)}"/><link rel="canonical" href="${canonical}"/>
+<link rel="alternate" type="application/rss+xml" title="${esc(siteName)}" href="${siteUrl}/feed.xml"/>${authorUrl?`<link rel="author" href="${authorUrl}"/>`:''}
+<meta property="og:title" content="${esc(title)}"/><meta property="og:description" content="${esc(description)}"/><meta property="og:url" content="${canonical}"/><meta property="og:site_name" content="${esc(siteName)}"/>
+<meta property="og:type" content="${isArticle?'article':'website'}"/>
+${effectiveOgImage?`<meta property="og:image" content="${effectiveOgImage}"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta name="twitter:image" content="${effectiveOgImage}"/>`:''}
+${isArticle&&datePublished?`<meta property="og:article:published_time" content="${datePublished}"/>`:''}${isArticle&&(dateModified||datePublished)?`<meta property="og:article:modified_time" content="${dateModified||datePublished}"/>`:''}<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="${esc(title)}"/><meta name="twitter:description" content="${esc(description)}"/>
 ${schemasHtml}
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
+${ga4Id?`<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>`:''}
+${ezoicId?`<script src="//www.ezojs.com/ezoic/sa.min.js" async></script>`:''}
+<link rel="icon" href="/favicon.ico"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://pagead2.googlesyndication.com"/><link rel="preconnect" href="https://www.googletagmanager.com"/><link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@400;700&display=swap"/>
 <link rel="stylesheet" href="/assets/style.css"/>
 </head><body>${body}
-${COOKIE_BANNER_HTML}
-<script>${COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
-</script></body></html>`}
+${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}</script></body></html>`}
 
 function header(site){return`
 <div class="hdr-top">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
 <header>
   <div class="hdr-main"><div class="wrap">
     <a href="/" class="logo"><span class="logo-name">${esc(site.name)}</span><span class="logo-sub">Living · Wellness · Inspiration</span></a>
-    <div class="hdr-ad ad" style="min-height:90px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    ${adUnit('leaderboard')}
   </div></div>
   <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
 </header>`}
 
 function footer(site){return`
-<footer class="site-footer"><div class="wrap">
+<footer class="site-footer">${adUnit('footer')}<div class="wrap">
   <div class="footer-grid">
     <div><div class="footer-logo">${esc(site.name)}</div><p style="font-size:13px;line-height:1.7">Inspiring guides for a better everyday life.</p></div>
     <div class="footer-col"><h4>Explore</h4><ul><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li></ul></div>
@@ -164,19 +182,22 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <h1 class="art-title">${esc(article.title)}</h1>
       <p class="art-deck">${esc(article.metaDescription)}</p>
       <div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
-      <div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+      ${adUnit('leaderboard')}
     </header>
     <div class="art-layout">
-      <div class="art-body">${article.content}</div>
+      <div class="art-body">${article.content}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>
-        <div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>
+        ${adUnit('sidebar')}
         ${relatedHtml?`<div class="sidebar-box"><h3>You May Also Like</h3>${relatedHtml}</div>`:''}
-        <div class="nl-box"><h3>Weekly Inspiration</h3><p>Expert tips delivered to your inbox</p><form class="nl-form" onsubmit="return false"><input type="email" placeholder="your@email.com"/><button>Subscribe</button></form></div>
-        <div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>
+        <div class="nl-box"><h3>Weekly Inspiration</h3><p>Expert tips delivered to your inbox</p><form class="nl-form newsletter-form"><input type="email" placeholder="your@email.com"/><button type="submit">Subscribe</button></form></div>
+        ${adUnit('sidebar')}
       </aside>
     </div>
+  ${adUnit('leaderboard')}
   </div></main>${footer(site)}`;
-  return renderBase({title:article.title,description:article.metaDescription,slug:article.slug,siteName:site.name,siteUrl:site.url,schemas:article.schemas||[],body,adsenseId:site.adsenseId});
+  const pubIso=article.date?new Date(article.date).toISOString():'';
+  const modIso=article.updatedAt?new Date(article.updatedAt).toISOString():pubIso;
+  return renderBase({title:article.title,description:article.metaDescription,slug:article.slug,siteName:site.name,siteUrl:site.url,schemas:article.schemas||[],body,adsenseId:site.adsenseId,ogImage:article.image?`${site.url}${article.image}`:'',datePublished:pubIso,dateModified:modIso,authorUrl:`${site.url}/author/${site.authorAvatar||''}/`});
 }
 
 export function renderHomePage(articles,site){
@@ -186,18 +207,54 @@ export function renderHomePage(articles,site){
     <div>${side.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'" style="aspect-ratio:3/2"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>
   </div>`:'';
   const gridHtml=latest.length?`<section><h2 class="section-title">Latest Stories</h2><div class="art-grid">${latest.map(a=>`<article class="card"><div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3><p class="card-excerpt">${esc(a.excerpt)}</p></div></article>`).join('')}</div></section>`:'';
-  const body=`${header(site)}<main class="site-main"><div class="wrap"><div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>${heroHtml}<div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>${gridHtml}</div></main>${footer(site)}`;
-  return renderBase({title:`${site.name} — Lifestyle & Wellness Guides`,description:`${site.name}: inspiring guides for better living.`,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId});
+  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${heroHtml}${adUnit('leaderboard')}${gridHtml}</div></main>${footer(site)}`;
+  const orgSchema={'@context':'https://schema.org','@type':'Organization','@id':`${site.url}/#organization`,name:site.name,url:site.url,logo:{'@type':'ImageObject',url:`${site.url}/logo.png`,width:200,height:60}};
+  return renderBase({title:`${site.name} — Lifestyle & Wellness Guides`,description:`${site.name}: inspiring guides for better living.`,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ogImage:hero?`${site.url}/images/${hero.slug}.jpg`:'',schemas:[orgSchema]});
 }
 
 export function renderCategoryPage(articles,category,site){
   const gridHtml=articles.map(a=>`<article class="card"><div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'" style="aspect-ratio:3/2"/></div><div class="card-body"><div class="card-cat">${esc(category.name)}</div><h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2><p class="card-excerpt">${esc(a.excerpt||'')}</p></div></article>`).join('');
   const schema={'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:`${site.url}/`},{'@type':'ListItem',position:2,name:category.name,item:`${site.url}/category/${category.slug}/`}]};
-  const body=`${header(site)}<main class="site-main"><div class="wrap"><div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div><p style="text-align:center;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px"><a href="/" style="color:var(--terra)">Home</a> › <span>${esc(category.name)}</span></p><h1 class="section-title" style="text-align:center;font-size:clamp(28px,4vw,46px)">${esc(category.name)}</h1><p style="text-align:center;color:var(--muted);margin-bottom:32px;font-size:13px;letter-spacing:1px">${articles.length} ARTICLE${articles.length!==1?'S':''}</p><div class="art-grid">${gridHtml}</div><div class="ad ad-leader" style="margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div></div></main>${footer(site)}`;
-  return renderBase({title:`${category.name} — ${site.name}`,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:[schema],body,adsenseId:site.adsenseId});
+  const itemListSchema={'@context':'https://schema.org','@type':'ItemList',name:category.name,numberOfItems:articles.length,itemListElement:articles.slice(0,10).map((a,i)=>({'@type':'ListItem',position:i+1,url:`${site.url}/${a.slug}/`,name:a.title}))};
+  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}<p style="text-align:center;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px"><a href="/" style="color:var(--terra)">Home</a> › <span>${esc(category.name)}</span></p><h1 class="section-title" style="text-align:center;font-size:clamp(28px,4vw,46px)">${esc(category.name)}</h1><p style="text-align:center;color:var(--muted);margin-bottom:32px;font-size:13px;letter-spacing:1px">${articles.length} ARTICLE${articles.length!==1?'S':''}</p><div class="art-grid">${gridHtml}</div>${adUnit('leaderboard')}</div></main>${footer(site)}`;
+  return renderBase({title:`${category.name} — ${site.name}`,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:[schema,itemListSchema],body,adsenseId:site.adsenseId,ogImage:articles[0]?`${site.url}/images/${articles[0].slug}.jpg`:''});
 }
 
 export function render404Page(site){
   const body=`${header(site)}<main class="site-main"><div class="wrap" style="text-align:center;padding:80px 20px"><h1 style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:400">Not Found</h1><p style="margin:16px 0 24px;color:#7a6a5a">This page doesn't exist</p><a href="/" style="background:#c4622d;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:13px">← Back Home</a></div></main>${footer(site)}`;
-  return renderBase({title:'Page Not Found',description:'Page not found',siteName:site.name,siteUrl:site.url,body});
+  return renderBase({title:'Page Not Found',description:'Page not found',siteName:site.name,siteUrl:site.url,body,noindex:true});
+}
+
+export function renderTagPage(tag, articles, site) {
+  const listHtml = articles.slice(0, 40).map(a => `
+    <article class="card">
+      <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
+      <div class="card-body">
+        <div class="card-cat">${esc(a.category || '')}</div>
+        <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>
+        <p class="card-excerpt">${esc(a.excerpt || '')}</p>
+      </div>
+    </article>`).join('');
+  const itemListSchema = {
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    name: tag.name, numberOfItems: articles.length,
+    itemListElement: articles.slice(0, 10).map((a, i) => ({
+      '@type': 'ListItem', position: i + 1, url: `${site.url}/${a.slug}/`, name: a.title
+    }))
+  };
+  const body = `${header(site)}<main class="site-main"><div class="wrap">
+    ${adUnit('leaderboard')}
+    <h1 class="section-title">Topic: ${esc(tag.name)}</h1>
+    <p style="color:var(--muted);margin-bottom:28px">${articles.length} article${articles.length !== 1 ? 's' : ''}</p>
+    <div class="art-grid">${listHtml}</div>
+    ${adUnit('leaderboard')}
+  </div></main>${footer(site)}`;
+  return renderBase({
+    title: `${tag.name} — ${site.name}`,
+    description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
+    slug: `tag/${tag.slug}`,
+    siteName: site.name, siteUrl: site.url,
+    schemas: [itemListSchema], body, adsenseId: site.adsenseId,
+    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
+  });
 }
