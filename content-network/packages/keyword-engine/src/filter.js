@@ -29,6 +29,10 @@ export function classifyIntent(keyword) {
   return 'informational';
 }
 
+// Keywords con anni obsoleti (es. "best X 2022") vengono scartate.
+// Soglia: anni <= anno corrente - 2 (mantieni anno scorso e anno corrente).
+const CURRENT_YEAR = new Date().getFullYear();
+
 export function filterKeywords(keywords) {
   const seen = new Set();
   const filtered = [];
@@ -43,6 +47,10 @@ export function filterKeywords(keywords) {
 
     // Rimuovi caratteri strani
     if (/[^\w\s'-]/.test(normalized)) continue;
+
+    // Scarta keywords con anni obsoleti (es. "2022", "2023" nel 2026 → skip)
+    const yearMatch = normalized.match(/\b(20\d{2})\b/);
+    if (yearMatch && parseInt(yearMatch[1]) <= CURRENT_YEAR - 2) continue;
 
     // Deduplicazione fuzzy semplice (normalizza spazi multipli)
     const key = normalized.replace(/\s+/g, ' ');

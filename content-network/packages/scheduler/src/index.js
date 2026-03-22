@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import {
   getDueItems, updateQueueItem, updateArticleStatus,
-  getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql,
+  getSitesByStatus, getUnusedKeywords, getUnusedKeywordCount, getArticlesBySite, sql,
   markArticlesGscSubmitted, getUnsubmittedArticles, getLatestRankings, getTemplatePerformance
 } from '@content-network/db';
 import { generateSitemap, writeSiteFile, generateRssFeed, pingSitemap, generateAdsTxt } from '@content-network/vps';
@@ -249,16 +249,21 @@ async function triggerDailyGeneration() {
     console.log(`\n  📍 ${site.domain} — ${ageDays}d old — ${label}`);
     console.log(`  📰 Today's target: ${cappedLimit} articles`);
 
-    const unused = await getUnusedKeywords(site.niche_id, 1);
+    // Controlla keyword rimanenti — soglia 200 = ~6 giorni di buffer a ritmo max
+    const KEYWORD_REFILL_THRESHOLD = 200;
+    const remainingCount = await getUnusedKeywordCount(site.niche_id);
+    console.log(`  🔑 Keywords remaining: ${remainingCount}`);
 
-    // Replenish keywords se sotto il doppio del limite giornaliero
-    if (unused.length < cappedLimit * 2) {
+    if (remainingCount < KEYWORD_REFILL_THRESHOLD) {
       const [niche] = await sql`SELECT slug FROM niches WHERE id = ${site.niche_id}`;
-      console.log(`  📡 Replenishing keywords for ${site.domain}...`);
+      // --expand aggiunge i pillar già nel DB come seed aggiuntivi per massimizzare varietà
+      const expandFlag = remainingCount < 50 ? '' : '--expand';
+      console.log(`  📡 Replenishing keywords for ${site.domain} (${remainingCount} left)...`);
       try {
-        execSync(`node packages/keyword-engine/src/index.js --niche ${niche.slug}`, {
-          cwd: ROOT, stdio: 'pipe', timeout: 180000
-        });
+        execSync(
+          `node packages/keyword-engine/src/index.js --niche ${niche.slug} ${expandFlag}`.trim(),
+          { cwd: ROOT, stdio: 'pipe', timeout: 300000 }
+        );
       } catch (e) {
         console.log(`  ⚠️  Keyword engine: ${e.message?.slice(0, 80)}`);
       }

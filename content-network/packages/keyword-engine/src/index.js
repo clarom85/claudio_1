@@ -12,15 +12,17 @@ import { getTrendingForNiche } from './trends.js';
 import { getRedditKeywords } from './reddit.js';
 import { filterKeywords, deduplicateAcrossSites } from './filter.js';
 import { clusterKeywords, logClusterStats } from './cluster.js';
-import { getNicheBySlug, bulkInsertKeywords, sql } from '@content-network/db';
+import { getNicheBySlug, bulkInsertKeywords, getExpansionSeeds, sql } from '@content-network/db';
 
 async function run() {
   const args = process.argv.slice(2);
   const nicheArg = args.find(a => a.startsWith('--niche='))?.split('=')[1]
     || args[args.indexOf('--niche') + 1];
+  // --expand: aggiunge keyword pillar già nel DB come seed aggiuntivi
+  const expand = args.includes('--expand');
 
   if (!nicheArg) {
-    console.error('Usage: node index.js --niche <niche-slug>');
+    console.error('Usage: node index.js --niche <niche-slug> [--expand]');
     console.error('Available: home-improvement-costs | pet-care-by-breed | software-error-fixes | diet-specific-recipes | small-town-tourism');
     process.exit(1);
   }
@@ -32,13 +34,28 @@ async function run() {
   }
 
   console.log(`\n🔍 Keyword Engine — Niche: ${niche.name}`);
-  console.log(`Seeds: ${niche.seed_keywords.join(', ')}\n`);
+
+  // Seed expansion: aggiunge pillar keywords già nel DB come seed aggiuntivi
+  // Evita di rieseguire sempre le stesse query sui seed originali
+  let seeds = [...niche.seed_keywords];
+  if (expand) {
+    const extraSeeds = await getExpansionSeeds(niche.id, 15);
+    if (extraSeeds.length) {
+      seeds = [...new Set([...seeds, ...extraSeeds])];
+      console.log(`Seeds (expanded): ${seeds.join(', ')}`);
+    } else {
+      console.log(`Seeds: ${seeds.join(', ')} (no expansion seeds found yet)`);
+    }
+  } else {
+    console.log(`Seeds: ${seeds.join(', ')}`);
+  }
+  console.log();
 
   const allRaw = [];
 
   // 1. Google Autocomplete (principale fonte)
   console.log('📡 Google Autocomplete expansion...');
-  const autocomplete = await expandAllSeeds(niche.seed_keywords, {
+  const autocomplete = await expandAllSeeds(seeds, {
     lang: niche.language,
     country: niche.country.toLowerCase(),
     delay: 350
@@ -57,7 +74,7 @@ async function run() {
 
   // 3. Google Trends
   console.log('📈 Google Trends...');
-  const trending = await getTrendingForNiche(niche.seed_keywords);
+  const trending = await getTrendingForNiche(seeds);
   console.log(`   → ${trending.length} trending queries`);
   allRaw.push(...trending);
 
@@ -69,7 +86,7 @@ async function run() {
 
   // 5. YouTube + Bing + Amazon + Quora (long-tail esteso)
   console.log('🎯 Extended sources (YouTube, Bing, Amazon, Quora)...');
-  const extended = await expandAllExtended(niche.seed_keywords);
+  const extended = await expandAllExtended(seeds);
   console.log(`   → ${extended.length} extended suggestions`);
   allRaw.push(...extended);
 
@@ -88,7 +105,7 @@ async function run() {
   const clustered = clusterKeywords(
     deduped.map(k => k.keyword),
     niche.slug,
-    niche.seed_keywords
+    seeds
   );
   logClusterStats(clustered);
 

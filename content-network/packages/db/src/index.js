@@ -85,6 +85,27 @@ export async function markKeywordUsed(keywordId) {
   await sql`UPDATE keywords SET used = TRUE WHERE id = ${keywordId}`;
 }
 
+export async function getUnusedKeywordCount(nicheId) {
+  const [row] = await sql`
+    SELECT COUNT(*) as count FROM keywords
+    WHERE niche_id = ${nicheId} AND used = FALSE
+  `;
+  return parseInt(row.count);
+}
+
+// Ritorna keyword pillar già nel DB da usare come seed aggiuntivi per l'espansione.
+// Prende le più recenti (aggiunte nell'ultimo run) per massimizzare la varietà.
+export async function getExpansionSeeds(nicheId, limit = 15) {
+  const rows = await sql`
+    SELECT keyword FROM keywords
+    WHERE niche_id = ${nicheId}
+      AND is_pillar = TRUE
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+  return rows.map(r => r.keyword);
+}
+
 // ── Articles ─────────────────────────────────────────────────
 export async function insertArticle({ siteId, keywordId, slug, title, metaDescription, content, wordCount, schemaMarkup, tags = [] }) {
   const [article] = await sql`
