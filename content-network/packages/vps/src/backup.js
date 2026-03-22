@@ -57,10 +57,23 @@ export async function runBackup() {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) throw new Error('DATABASE_URL not set');
 
-    execSync(`/usr/bin/pg_dump "${dbUrl}" -Fc -f "${dbFile}"`, {
-      timeout: 120000,
-      stdio: 'pipe'
-    });
+    // Parsing URL → parametri separati per evitare problemi con caratteri speciali
+    // e parametri SSL (channel_binding, sslmode) che confondono pg_dump
+    const parsed   = new URL(dbUrl);
+    const host     = parsed.hostname;
+    const port     = parsed.port || '5432';
+    const user     = parsed.username;
+    const dbName   = parsed.pathname.replace(/^\//, '');
+    const password = parsed.password;
+
+    execSync(
+      `/usr/bin/pg_dump -h ${host} -p ${port} -U ${user} -d ${dbName} -Fc -f "${dbFile}"`,
+      {
+        timeout: 120000,
+        stdio: 'pipe',
+        env: { ...process.env, PGPASSWORD: password, PGSSLMODE: 'require' }
+      }
+    );
 
     const size = statSync(dbFile).size;
     results.db = `${dbFile} (${formatSize(size)})`;
