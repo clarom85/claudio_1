@@ -48,7 +48,10 @@ async function run() {
 
   // 2. People Also Ask
   console.log('❓ People Also Ask...');
-  const paa = await getPAAKeywords(autocomplete.slice(0, 30));
+  const paa = await getPAAKeywords(autocomplete.slice(0, 30), {
+    language: niche.language,
+    region: niche.country.toLowerCase()
+  });
   console.log(`   → ${paa.length} PAA questions`);
   allRaw.push(...paa);
 
