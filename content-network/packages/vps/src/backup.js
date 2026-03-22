@@ -67,7 +67,7 @@ export async function runBackup() {
     const password = parsed.password;
 
     execSync(
-      `/usr/bin/pg_dump -h ${host} -p ${port} -U ${user} -d ${dbName} -Fc -f "${dbFile}"`,
+      `/usr/lib/postgresql/17/bin/pg_dump -h ${host} -p ${port} -U ${user} -d ${dbName} -Fc -f "${dbFile}"`,
       {
         timeout: 120000,
         stdio: 'pipe',
