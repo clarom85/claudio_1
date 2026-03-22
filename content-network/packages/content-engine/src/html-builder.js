@@ -235,6 +235,30 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         </div>
       </div>
 
+      <!-- Was this helpful? — engagement signal for Google -->
+      <div class="helpful-widget" style="margin:28px 0;padding:20px 24px;background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;text-align:center;" data-slug="${slug}">
+        <p style="font-size:15px;font-weight:600;color:#333;margin:0 0 14px;">Was this article helpful?</p>
+        <div style="display:flex;justify-content:center;gap:12px;">
+          <button onclick="submitFeedback('${slug}','yes',this)" style="padding:8px 24px;border-radius:4px;border:2px solid #27ae60;background:#fff;color:#27ae60;font-size:14px;font-weight:600;cursor:pointer;">
+            👍 Yes
+          </button>
+          <button onclick="submitFeedback('${slug}','no',this)" style="padding:8px 24px;border-radius:4px;border:2px solid #e74c3c;background:#fff;color:#e74c3c;font-size:14px;font-weight:600;cursor:pointer;">
+            👎 No
+          </button>
+        </div>
+        <p class="helpful-thanks" style="display:none;font-size:14px;color:#27ae60;margin:10px 0 0;font-weight:600;">Thanks for your feedback!</p>
+      </div>
+      <script>
+      function submitFeedback(slug,vote,btn){
+        var w=btn.closest('.helpful-widget');
+        fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({slug:slug,vote:vote,site:location.hostname})})
+          .catch(function(){});
+        w.querySelectorAll('button').forEach(function(b){b.disabled=true;b.style.opacity='0.4';});
+        w.querySelector('.helpful-thanks').style.display='block';
+      }
+      </script>
+
       <div class="article-tags">
         <span class="tags-label">Topics:</span>
         ${tagsHTML}

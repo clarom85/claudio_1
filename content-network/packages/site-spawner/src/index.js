@@ -228,25 +228,50 @@ async function generateStaticPages(domain, siteConfig, template) {
     'about/index.html': {
       title: 'About Us',
       noindex: false,
-      description: `Learn about ${siteName} and our team of experts.`,
+      description: `Learn about ${siteName}, our editorial mission, and the experts behind our content.`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:20px">About ${siteName}</h1>
         <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          ${siteName} is dedicated to providing accurate, in-depth, and genuinely helpful
-          information. Our team of specialists brings years of hands-on experience to every
-          article we publish.
+          ${siteName} was founded on a simple premise: people deserve access to clear,
+          expert-level information without having to wade through vague, generic content.
+          We publish in-depth guides written by verified subject matter experts with
+          real-world experience — not generalists writing about everything.
         </p>
         <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          We believe everyone deserves access to clear, honest, expert-level guidance.
-          Everything we publish is thoroughly researched and reviewed by subject matter experts.
+          Every article on this site goes through our editorial review process before
+          publication and is updated regularly to reflect current data, costs, and best practices.
         </p>
-        <h2 style="font-size:22px;margin:28px 0 12px">Our Editorial Standards</h2>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Our Editorial Mission</h2>
         <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Every article is written by a verified expert, fact-checked against authoritative sources,
-          and updated regularly. We do not accept payment to influence editorial content.
+          We are not a content farm. We do not publish articles to rank for keywords —
+          we publish articles because real people have real questions that deserve
+          substantive, accurate answers. Our editorial team reviews every piece for
+          factual accuracy, source quality, and practical value before it goes live.
         </p>
-        <h2 style="font-size:22px;margin:28px 0 12px">Meet Our Expert</h2>
-        <p style="font-size:16px;line-height:1.8">${siteConfig.authorBio}</p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">How We Ensure Accuracy</h2>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px;">
+          <li style="margin-bottom:8px;">Every article is written by a vetted expert in the relevant field</li>
+          <li style="margin-bottom:8px;">Claims are supported by citations from government agencies, academic institutions, and established industry bodies</li>
+          <li style="margin-bottom:8px;">Articles are reviewed and updated at least every 90 days</li>
+          <li style="margin-bottom:8px;">We do not accept sponsored content or payment to influence editorial decisions</li>
+          <li style="margin-bottom:8px;">Reader feedback is monitored and incorporated into content updates</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Meet Our Lead Expert</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:8px;font-weight:600;">${siteConfig.authorName} — ${siteConfig.authorTitle}</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteConfig.authorBio}</p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Contact Us</h2>
+        <p style="font-size:16px;line-height:1.8">
+          Have a question, correction, or feedback? We read every message.
+          Reach us at <a href="mailto:editor@${domain}" style="color:#c0392b;">editor@${domain}</a>
+        </p>
+        <p style="font-size:14px;color:#999;margin-top:24px;">
+          <a href="/editorial-guidelines/" style="color:#c0392b;">Editorial Guidelines</a> ·
+          <a href="/editorial-process/" style="color:#c0392b;">Our Review Process</a>
+        </p>
       </div>`
     },
     'privacy/index.html': {
@@ -305,6 +330,143 @@ async function generateStaticPages(domain, siteConfig, template) {
         <h1 style="font-size:32px;margin-bottom:16px">Advertise With Us</h1>
         <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteName} reaches a highly targeted audience interested in ${siteName.toLowerCase()}. We offer display advertising, sponsored content, and affiliate partnerships.</p>
         <p style="font-size:16px">Contact us: <a href="mailto:ads@${domain}">ads@${domain}</a></p>
+      </div>`
+    },
+    'editorial-guidelines/index.html': {
+      title: 'Editorial Guidelines',
+      noindex: false,
+      description: `How ${siteName} creates, reviews, and updates content — our editorial standards and practices.`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:8px">Editorial Guidelines</h1>
+        <p style="color:#999;margin-bottom:28px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+
+        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">
+          These guidelines govern every piece of content published on ${siteName}.
+          They exist to protect our readers from inaccurate, misleading, or low-quality information.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Who Creates Our Content</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          All primary content on ${siteName} is produced by subject matter experts with verified credentials
+          in their respective fields. We do not hire generalist writers to cover topics outside their expertise.
+          Contributors are required to disclose conflicts of interest and follow our sourcing requirements.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Source Standards</h2>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px;">
+          <li style="margin-bottom:8px;">Primary sources: government agencies (.gov), academic journals, official industry bodies</li>
+          <li style="margin-bottom:8px;">Secondary sources: established news organizations with editorial standards</li>
+          <li style="margin-bottom:8px;">Anecdotal claims must be clearly labeled as such</li>
+          <li style="margin-bottom:8px;">Statistics must include the original study, date, and sample size where available</li>
+          <li style="margin-bottom:8px;">We do not cite press releases as independent evidence</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Corrections Policy</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          When errors are brought to our attention, we correct them promptly and transparently.
+          Significant corrections are noted at the top of the affected article with a date.
+          Minor corrections (typos, formatting) are fixed without notation.
+          To report an error, email <a href="mailto:editor@${domain}" style="color:#c0392b;">editor@${domain}</a>.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Sponsored Content & Advertising</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Advertising revenue supports our editorial operation, but advertisers have no influence over
+          editorial decisions. We clearly label any sponsored content as "Sponsored" or "Advertisement."
+          Affiliate links are disclosed in articles where they appear.
+          Our editorial team operates independently from our commercial team.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Update & Review Schedule</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          All articles are reviewed at minimum every 90 days. Time-sensitive topics (pricing,
+          regulations, medical guidance) are reviewed more frequently. Articles that contain
+          outdated information are updated or removed. Each article displays its last-reviewed date.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Independence Statement</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">
+          ${siteName} operates as an independent publication. We are not owned by or affiliated with
+          any company whose products we review or recommend. Our editorial positions are determined
+          solely by evidence and expert judgment.
+        </p>
+
+        <p style="font-size:14px;color:#999;border-top:1px solid #eee;padding-top:20px;">
+          Questions about these guidelines? Contact <a href="mailto:editor@${domain}" style="color:#c0392b;">editor@${domain}</a> ·
+          <a href="/about/" style="color:#c0392b;">About Us</a> ·
+          <a href="/editorial-process/" style="color:#c0392b;">Our Review Process</a>
+        </p>
+      </div>`
+    },
+    'editorial-process/index.html': {
+      title: 'Our Editorial Review Process',
+      noindex: false,
+      description: `How every article on ${siteName} is researched, written, reviewed, and kept up to date.`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:8px">Our Editorial Review Process</h1>
+        <p style="color:#999;margin-bottom:28px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+
+        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">
+          Every article published on ${siteName} follows a structured, multi-step process from
+          initial research to publication and ongoing maintenance. Here is exactly how that works.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Step 1 — Topic Selection</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Topics are selected based on reader demand, gaps in existing coverage, and the ability of
+          our experts to add genuine value. We prioritize questions that real people ask but
+          existing content answers poorly — with vague generalizations, outdated data, or no
+          actionable guidance.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Step 2 — Expert Assignment</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Each topic is assigned to the contributor best qualified to cover it based on their
+          professional background, credentials, and direct experience. Our contributors are
+          required to disclose any conflicts of interest before beginning an assignment.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Step 3 — Research & Drafting</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Contributors research the topic using primary sources: government data, peer-reviewed
+          studies, official agency guidelines, and direct professional experience.
+          All factual claims must be supported by a cited source. Contributors document their
+          sources before drafting begins.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Step 4 — Editorial Review</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Every draft goes through editorial review before publication. Editors check for:
+        </p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px;">
+          <li style="margin-bottom:8px;">Factual accuracy — every claim is verified against its cited source</li>
+          <li style="margin-bottom:8px;">Source quality — sources must meet our credibility standards</li>
+          <li style="margin-bottom:8px;">Completeness — does the article actually answer the reader's question?</li>
+          <li style="margin-bottom:8px;">Clarity — is the writing accessible to a general reader without sacrificing accuracy?</li>
+          <li style="margin-bottom:8px;">Bias — does the article present multiple perspectives where relevant?</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Step 5 — Publication</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Articles are published with a clear byline, publication date, and last-reviewed date.
+          All sources are cited at the bottom of the article. Affiliate links, if present,
+          are disclosed. The article is indexed in our sitemap and submitted to search engines.
+        </p>
+
+        <h2 style="font-size:22px;margin:28px 0 12px">Step 6 — Ongoing Maintenance</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+          Published articles are reviewed on a 90-day cycle — or sooner if a significant
+          development in the topic area occurs (regulation changes, new research, updated pricing).
+          Articles that cannot be updated to remain accurate are removed from the site.
+          Reader feedback submitted through the "Was this helpful?" widget and email is reviewed
+          and factored into content updates.
+        </p>
+
+        <p style="font-size:14px;color:#999;border-top:1px solid #eee;padding-top:20px;">
+          <a href="/editorial-guidelines/" style="color:#c0392b;">Editorial Guidelines</a> ·
+          <a href="/about/" style="color:#c0392b;">About Us</a> ·
+          Questions: <a href="mailto:editor@${domain}" style="color:#c0392b;">editor@${domain}</a>
+        </p>
       </div>`
     }
   };

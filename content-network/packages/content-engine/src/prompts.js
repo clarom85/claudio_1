@@ -243,10 +243,47 @@ const DEFAULT_NICHE_CONFIG = {
   schemaHint: 'Article',
 };
 
+// ── Word count variation — 30% short / 50% medium / 20% long ─────────────────
+function getVariedWordCount(base) {
+  const roll = Math.random();
+  if (roll < 0.30) return base - 300;           // short: 800-1100
+  if (roll < 0.80) return base;                 // medium: default
+  return base + 400;                            // long: 1600-1900
+}
+
+// ── Frasi AI da evitare assolutamente ─────────────────────────────────────────
+const AI_PHRASE_BLACKLIST = [
+  // Opener clichés
+  'In today\'s world', 'In today\'s fast-paced', 'In the modern world',
+  'When it comes to', 'If you\'re looking for', 'Are you looking for',
+  'Whether you\'re a', 'Look no further',
+  // Filler transitions
+  'It\'s worth noting', 'It is worth noting', 'It\'s important to note',
+  'It is important to note', 'It\'s important to remember',
+  'Needless to say', 'Without further ado', 'That being said',
+  'With that said', 'Having said that', 'At the end of the day',
+  'In the grand scheme', 'All things considered',
+  // Closer clichés
+  'In conclusion', 'To conclude', 'To summarize', 'In summary',
+  'As we\'ve seen', 'As we have seen', 'As mentioned above',
+  'As discussed above', 'As outlined above',
+  // AI vocabulary
+  'Delve into', 'Delve deeper', 'Dive deep', 'Dive into',
+  'Navigating the', 'Navigating this', 'Unpack', 'Unlock the',
+  'Leverage', 'Utilize', 'Comprehensive guide', 'Ultimate guide',
+  'Game-changer', 'Game changer', 'Transformative', 'Revolutionary',
+  'Cutting-edge', 'State-of-the-art', 'Robust', 'Streamline',
+  'Synergy', 'Holistic approach', 'Paradigm shift',
+  // Hedging AI phrases
+  'It\'s crucial to', 'It is crucial to', 'It\'s essential to',
+  'It is essential to', 'Ensure that you', 'Make sure to',
+  'Take the time to', 'Don\'t hesitate to', 'Feel free to',
+].join('", "');
+
 // ── Main prompt builder ───────────────────────────────────────────────────────
 export function buildArticlePrompt(keyword, niche, options = {}) {
   const cfg = NICHE_PROMPT_CONFIGS[niche.slug] || DEFAULT_NICHE_CONFIG;
-  const wordCount = options.targetWordCount || cfg.wordCount;
+  const wordCount = options.targetWordCount || getVariedWordCount(cfg.wordCount);
 
   return `You are ${cfg.persona}, writing for a ${niche.name} publication.
 
@@ -298,8 +335,8 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
 }
 
 ABSOLUTE RULES:
-- No filler openers: never start with "In today's world", "When it comes to", "If you're looking for"
-- No filler closers: never use "In conclusion", "As we've seen", "It's important to note"
+- BANNED PHRASES — never use any of these: "${AI_PHRASE_BLACKLIST}"
+- Write like a human expert, not an AI assistant — use contractions, direct opinions, specific numbers
 - Use keyword naturally — max 3-4 times total
 - FAQ: 4-6 questions people genuinely search, with direct answers
 - Citations: 1-2 REAL sources only — government agencies, major institutions, established industry bodies. Real URLs. Never invent a source.

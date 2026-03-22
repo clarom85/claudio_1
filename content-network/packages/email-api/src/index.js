@@ -14,7 +14,7 @@ const PORT = process.env.EMAIL_API_PORT || 3001;
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// ── Assicura tabella ────────────────────────────────────────────
+// ── Assicura tabelle ────────────────────────────────────────────
 async function ensureTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS email_subscribers (
@@ -23,6 +23,15 @@ async function ensureTable() {
       site TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(email, site)
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS article_feedback (
+      id SERIAL PRIMARY KEY,
+      slug TEXT NOT NULL,
+      site TEXT NOT NULL,
+      vote TEXT NOT NULL CHECK (vote IN ('yes','no')),
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 }
@@ -46,6 +55,23 @@ app.post('/api/subscribe', async (req, res) => {
   } catch (err) {
     console.error('Subscribe error:', err.message);
     res.status(500).json({ ok: false, error: 'Server error' });
+  }
+});
+
+// ── POST /api/feedback ──────────────────────────────────────────
+app.post('/api/feedback', async (req, res) => {
+  const { slug, vote, site } = req.body || {};
+  if (!slug || !['yes', 'no'].includes(vote)) {
+    return res.status(400).json({ ok: false, error: 'Invalid payload' });
+  }
+  try {
+    await sql`
+      INSERT INTO article_feedback (slug, site, vote)
+      VALUES (${slug}, ${site || 'unknown'}, ${vote})
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false });
   }
 });
 
