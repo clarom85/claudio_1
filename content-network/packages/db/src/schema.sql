@@ -92,8 +92,27 @@ CREATE TABLE IF NOT EXISTS site_metrics (
 ALTER TABLE keywords ADD COLUMN IF NOT EXISTS cluster_slug TEXT;
 ALTER TABLE keywords ADD COLUMN IF NOT EXISTS is_pillar BOOLEAN DEFAULT FALSE;
 
+-- Ranking tracker (punto 6)
+CREATE TABLE IF NOT EXISTS rankings (
+  id          SERIAL PRIMARY KEY,
+  site_id     INTEGER REFERENCES sites(id),
+  article_id  INTEGER REFERENCES articles(id),
+  keyword     TEXT NOT NULL,
+  position    INTEGER,
+  url         TEXT,
+  checked_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- A/B template testing (punto 4)
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS ab_variant TEXT;
+
+-- GSC submission tracking (punto 5)
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS gsc_submitted_at TIMESTAMPTZ;
+
 -- Indici per performance
 CREATE INDEX IF NOT EXISTS idx_keywords_niche_unused ON keywords(niche_id, used) WHERE used = FALSE;
 CREATE INDEX IF NOT EXISTS idx_articles_site ON articles(site_id, status);
 CREATE INDEX IF NOT EXISTS idx_queue_scheduled ON publish_queue(scheduled_for, status) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS idx_sites_status ON sites(status);
+CREATE INDEX IF NOT EXISTS idx_rankings_site_article ON rankings(site_id, article_id, checked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rankings_position ON rankings(site_id, position) WHERE position IS NOT NULL;

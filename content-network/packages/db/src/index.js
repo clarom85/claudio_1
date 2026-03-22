@@ -138,3 +138,50 @@ export async function updateQueueItem(id, status, error = null) {
     WHERE id = ${id}
   `;
 }
+
+// ── GSC submission ───────────────────────────────────────────
+export async function markArticlesGscSubmitted(articleIds) {
+  if (!articleIds.length) return;
+  await sql`
+    UPDATE articles SET gsc_submitted_at = NOW()
+    WHERE id = ANY(${articleIds}::int[])
+  `;
+}
+
+export async function getUnsubmittedArticles(siteId) {
+  return sql`
+    SELECT id, slug, published_at, status
+    FROM articles
+    WHERE site_id = ${siteId}
+      AND status = 'published'
+      AND gsc_submitted_at IS NULL
+    ORDER BY published_at DESC
+    LIMIT 50
+  `;
+}
+
+// ── Rankings ─────────────────────────────────────────────────
+export async function getLatestRankings(siteId) {
+  return sql`
+    SELECT DISTINCT ON (article_id)
+      article_id, keyword, position, checked_at
+    FROM rankings
+    WHERE site_id = ${siteId}
+    ORDER BY article_id, checked_at DESC
+  `;
+}
+
+// ── A/B template ─────────────────────────────────────────────
+export async function getTemplatePerformance() {
+  return sql`
+    SELECT s.template, s.ab_variant,
+      COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'published') as articles_published,
+      ROUND(AVG(r.position) FILTER (WHERE r.position IS NOT NULL), 1) as avg_ranking
+    FROM sites s
+    LEFT JOIN articles a ON a.site_id = s.id
+    LEFT JOIN rankings r ON r.site_id = s.id
+    WHERE s.status = 'live'
+    GROUP BY s.template, s.ab_variant
+    ORDER BY avg_ranking ASC NULLS LAST
+  `;
+}

@@ -54,7 +54,18 @@ async function run() {
 
   const weekNumber = getWeekNumber();
   const [{ count }] = await sql`SELECT COUNT(*) as count FROM sites WHERE week_number = ${weekNumber}`;
-  const template = getTemplateForWeek(weekNumber, parseInt(count));
+
+  // A/B template: se --template specificato usa quello, altrimenti assegna round-robin
+  // con leggera randomizzazione per distribuzione uniforme tra tutti i template
+  const templateArg = args.find(a => a.startsWith('--template='))?.split('=')[1]
+    || args[args.indexOf('--template') + 1];
+  const template = templateArg && TEMPLATES.includes(templateArg)
+    ? templateArg
+    : getTemplateForWeek(weekNumber, parseInt(count));
+
+  // ab_variant = 'A' se template corrisponde a quello di default per la nicchia, 'B' altrimenti
+  const abVariant = template === niche.template ? 'A' : 'B';
+
   const author = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
   console.log(`\n🚀 Site Spawner (VPS)`);
@@ -69,6 +80,10 @@ async function run() {
     cfProjectName: domain.replace(/\./g, '-'),
     template, weekNumber
   });
+
+  // Salva ab_variant
+  await sql`UPDATE sites SET ab_variant = ${abVariant} WHERE id = ${site.id}`;
+  console.log(`A/B Variant: ${abVariant} (template: ${template} vs niche default: ${niche.template})`);
 
   const siteConfig = {
     id: site.id, domain,

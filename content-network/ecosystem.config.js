@@ -28,6 +28,19 @@ export default {
       error_file: '/var/log/content-network/email-api-error.log',
       out_file: '/var/log/content-network/email-api-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss'
+    },
+    {
+      name: 'health-check',
+      script: 'packages/vps/src/health-check.js',
+      cron_restart: '*/15 * * * *',  // ogni 15 minuti
+      watch: false,
+      autorestart: false,            // cron job
+      env: {
+        NODE_ENV: 'production'
+      },
+      error_file: '/var/log/content-network/health-check-error.log',
+      out_file: '/var/log/content-network/health-check-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
     }
   ]
 };

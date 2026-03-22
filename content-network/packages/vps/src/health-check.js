@@ -14,7 +14,9 @@
 import 'dotenv/config';
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
 import { getSitesByStatus, sql } from '@content-network/db';
+import { alertCritical, alertWarning } from './alert.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 const SKIP_HTTP = process.env.SKIP_HTTP === '1';
@@ -215,12 +217,35 @@ async function run() {
     console.log('');
   }
 
+  // ── Disk usage check ──────────────────────────────────────────────────
+  try {
+    const dfOut = execSync("df -h / | tail -1 | awk '{print $5}'", { encoding: 'utf-8' }).trim();
+    const pct = parseInt(dfOut);
+    if (pct >= 90) {
+      console.log(`${RED}⚠  Disk usage CRITICAL: ${dfOut}${RESET}`);
+      await alertCritical('Disk usage critical', `VPS disk at ${dfOut} — immediate action required`);
+    } else if (pct >= 80) {
+      console.log(`${YELLOW}⚠  Disk usage warning: ${dfOut}${RESET}`);
+      await alertWarning('Disk usage high', `VPS disk at ${dfOut}`);
+    } else {
+      console.log(`${GREEN}✓ Disk usage: ${dfOut}${RESET}`);
+    }
+  } catch (e) { /* non bloccante */ }
+
   // ── Summary ───────────────────────────────────────────────────────────
-  console.log(`${BOLD}Summary${RESET}: ${summary.total} sites checked`);
+  console.log(`\n${BOLD}Summary${RESET}: ${summary.total} sites checked`);
   console.log(`  ${GREEN}Healthy:  ${summary.healthy}${RESET}`);
   if (summary.warnings) console.log(`  ${YELLOW}Warnings: ${summary.warnings}${RESET}`);
   if (summary.errors)   console.log(`  ${RED}Errors:   ${summary.errors}${RESET}`);
   console.log('');
+
+  // Alert Telegram se ci sono errori
+  if (summary.errors > 0) {
+    await alertCritical(
+      `${summary.errors} site(s) with errors`,
+      `Health check found issues. Run health-check manually for details.`
+    );
+  }
 
   process.exit(summary.errors > 0 ? 1 : 0);
 }

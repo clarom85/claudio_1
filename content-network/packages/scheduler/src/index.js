@@ -12,10 +12,15 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import {
   getDueItems, updateQueueItem, updateArticleStatus,
-  getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql
+  getSitesByStatus, getUnusedKeywords, getArticlesBySite, sql,
+  markArticlesGscSubmitted, getUnsubmittedArticles, getLatestRankings, getTemplatePerformance
 } from '@content-network/db';
 import { generateSitemap, writeSiteFile, generateRssFeed, pingSitemap, generateAdsTxt } from '@content-network/vps';
 import { purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
+import { submitSiteNewArticles } from '@content-network/vps/src/gsc.js';
+import { trackSiteRankings, getLowRankingArticles } from '@content-network/vps/src/ranking-tracker.js';
+import { runLinkGraphAnalysis } from '@content-network/vps/src/link-graph.js';
+import { alertCritical, alertWarning, alertReport } from '@content-network/vps/src/alert.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { getDailyArticleLimit, logScheduleInfo } from '@content-network/content-engine/src/publishing-schedule.js';
 import { injectInternalLinks } from '@content-network/content-engine/src/link-injector.js';
@@ -49,6 +54,31 @@ async function run() {
 
   // 4. Aggiorna homepage + sitemap dei siti con nuovi articoli
   await rebuildAffectedSites(stats);
+
+  // 5. GSC auto-submit degli articoli non ancora sottomessi (ogni giorno alle 02:xx)
+  if (now.getHours() === 2) {
+    await submitNewArticlesToGSC();
+  }
+
+  // 6. Ranking tracker (ogni domenica alle 04:xx)
+  if (now.getHours() === 4 && now.getDay() === 0) {
+    await runWeeklyRankingCheck(stats);
+  }
+
+  // 7. Smart content refresh basato su ranking (ogni domenica alle 05:xx)
+  if (now.getHours() === 5 && now.getDay() === 0) {
+    await smartContentRefresh(stats);
+  }
+
+  // 8. Link graph analysis (ogni domenica alle 06:xx)
+  if (now.getHours() === 6 && now.getDay() === 0) {
+    await runWeeklyLinkGraphAnalysis();
+  }
+
+  // Report domenicale completo (ogni domenica alle 07:xx)
+  if (now.getHours() === 7 && now.getDay() === 0) {
+    await sendWeeklyReport(stats);
+  }
 
   console.log(`\n📊 Done — published: ${stats.published}, failed: ${stats.failed}, rebuilt: ${stats.rebuilt}`);
   process.exit(0);
@@ -569,6 +599,223 @@ async function generateTagPages(domain, articlesData, siteConfig) {
   }
 
   console.log(`  🏷️  Generated ${tags.length} tag pages`);
+}
+
+// ── 5. GSC auto-submit ────────────────────────────────────────────────────────
+async function submitNewArticlesToGSC() {
+  console.log('\n🔍 GSC: submitting new articles...');
+  const liveSites = await getSitesByStatus('live');
+
+  for (const site of liveSites) {
+    try {
+      const unsubmitted = await getUnsubmittedArticles(site.id);
+      if (!unsubmitted.length) continue;
+
+      const articles = await getArticlesBySite(site.id, 300);
+      const result = await submitSiteNewArticles(site.domain, articles);
+
+      if (result.submitted > 0) {
+        const submittedIds = unsubmitted.slice(0, result.submitted).map(a => a.id);
+        await markArticlesGscSubmitted(submittedIds);
+        console.log(`  ✅ ${site.domain}: ${result.submitted} URLs submitted to GSC`);
+      }
+    } catch (e) {
+      console.warn(`  ⚠️  GSC error for ${site.domain}: ${e.message}`);
+    }
+  }
+}
+
+// ── 6. Weekly ranking check ───────────────────────────────────────────────────
+async function runWeeklyRankingCheck(stats) {
+  console.log('\n📈 Weekly ranking check...');
+  const liveSites = await getSitesByStatus('live');
+
+  if (!liveSites.length) { console.log('  No live sites'); return; }
+
+  let totalRanked = 0;
+  for (const site of liveSites) {
+    try {
+      const result = await trackSiteRankings(site);
+      totalRanked += result.ranked;
+    } catch (e) {
+      console.warn(`  ⚠️  Ranking check failed for ${site.domain}: ${e.message}`);
+    }
+  }
+  stats.ranked = totalRanked;
+}
+
+// ── 7. Smart content refresh (AI rewrite per articoli con ranking basso) ──────
+async function smartContentRefresh(stats) {
+  console.log('\n🧠 Smart content refresh (low-ranking articles)...');
+
+  const liveSites = await getSitesByStatus('live');
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+  if (!ANTHROPIC_API_KEY) {
+    console.log('  No ANTHROPIC_API_KEY — skipping smart refresh');
+    return;
+  }
+
+  for (const site of liveSites) {
+    try {
+      // Articoli in posizione 21-50 (abbastanza vicini ma non ancora in page 1/2)
+      const candidates = await getLowRankingArticles(site.id, 20, 3);
+      if (!candidates.length) {
+        console.log(`  ${site.domain}: no low-ranking candidates`);
+        continue;
+      }
+
+      console.log(`  ${site.domain}: ${candidates.length} articles to refresh`);
+
+      for (const article of candidates) {
+        try {
+          const rewritten = await rewriteArticleWithClaude(article, site, ANTHROPIC_API_KEY);
+          if (!rewritten) continue;
+
+          // Aggiorna DB
+          await sql`
+            UPDATE articles
+            SET content = ${rewritten.content},
+                title = ${rewritten.title || article.title},
+                meta_description = ${rewritten.metaDescription || article.meta_description},
+                updated_at = NOW()
+            WHERE id = ${article.article_id}
+          `;
+
+          // Aggiorna file HTML su disco
+          const [siteRow] = await sql`SELECT template FROM sites WHERE id = ${site.id}`;
+          await writeRefreshedArticlePage(article, rewritten, site, siteRow.template);
+
+          stats.refreshed = (stats.refreshed || 0) + 1;
+          console.log(`  ✅ Refreshed: ${article.slug} (was pos ${article.position})`);
+
+          // Pausa tra richieste API
+          await new Promise(r => setTimeout(r, 3000));
+        } catch (e) {
+          console.warn(`  ⚠️  Rewrite failed for ${article.slug}: ${e.message}`);
+        }
+      }
+    } catch (e) {
+      console.warn(`  ⚠️  Smart refresh error for ${site.domain}: ${e.message}`);
+    }
+  }
+}
+
+async function rewriteArticleWithClaude(article, site, apiKey) {
+  const prompt = `You are an expert SEO content writer. Rewrite the following article to improve its Google ranking for the keyword "${article.keyword}".
+
+Current position: ${article.position} (goal: top 10)
+
+RULES:
+- Keep the same HTML structure and formatting
+- Make content more comprehensive (add more depth, examples, data)
+- Improve the intro (first 2 paragraphs are crucial for engagement)
+- Ensure the target keyword appears naturally in H1, first paragraph, and 2-3 subheadings
+- Add a FAQ section at the end if not present
+- Keep word count similar or slightly longer
+- Do NOT change the slug or URL structure
+
+Return JSON: {"title": "...", "metaDescription": "...", "content": "full HTML content"}
+
+CURRENT ARTICLE:
+Title: ${article.title}
+Meta: ${article.meta_description}
+
+${article.content?.slice(0, 8000)}`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!res.ok) throw new Error(`Claude API error: ${res.status}`);
+  const data = await res.json();
+  const text = data.content?.[0]?.text || '';
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON in Claude response');
+  return JSON.parse(jsonMatch[0]);
+}
+
+async function writeRefreshedArticlePage(article, rewritten, site, template) {
+  const { renderArticlePage } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
+  const [siteData] = await sql`SELECT * FROM sites WHERE domain = ${site.domain}`;
+  const siteConfig = await buildSiteConfig(siteData, site.niche_slug || '');
+
+  const related = await sql`
+    SELECT slug, title FROM articles
+    WHERE site_id = ${siteData.id} AND status = 'published' AND slug != ${article.slug}
+    ORDER BY RANDOM() LIMIT 5
+  `;
+
+  const cat = classifyArticle(siteConfig.nicheSlug, article.keyword || '', rewritten.title || article.title);
+  const articleData = {
+    slug: article.slug,
+    title: rewritten.title || article.title,
+    metaDescription: rewritten.metaDescription || article.meta_description,
+    excerpt: (rewritten.metaDescription || article.meta_description || '').slice(0, 120) + '...',
+    content: rewritten.content,
+    schemas: [],
+    category: cat.name,
+    categorySlug: cat.slug,
+    date: new Date().toISOString(),
+  };
+
+  const html = renderArticlePage(articleData, siteConfig, related.map(r => ({ slug: r.slug, title: r.title })));
+  const dir = join(WWW_ROOT, site.domain, article.slug);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+}
+
+// ── 8. Link graph analysis ────────────────────────────────────────────────────
+async function runWeeklyLinkGraphAnalysis() {
+  console.log('\n🕸️  Weekly link graph analysis...');
+  const liveSites = await getSitesByStatus('live');
+  if (!liveSites.length) { console.log('  No live sites'); return; }
+
+  const reports = await runLinkGraphAnalysis(liveSites);
+
+  // Alert se ci sono problemi strutturali gravi
+  const sitesWithIssues = reports.filter(r => !r.skipped && r.orphanCount > 5);
+  if (sitesWithIssues.length > 0) {
+    const details = sitesWithIssues
+      .map(r => `• ${r.site}: ${r.orphanCount} orphan articles`)
+      .join('\n');
+    await alertWarning('Link graph issues detected', details);
+  }
+}
+
+// ── Weekly report ─────────────────────────────────────────────────────────────
+async function sendWeeklyReport(stats) {
+  try {
+    const liveSites = await getSitesByStatus('live');
+    const totalArticles = await sql`SELECT COUNT(*) as count FROM articles WHERE status = 'published'`;
+    const performance = await getTemplatePerformance();
+
+    const templateLines = performance
+      .map(p => `  ${p.template}${p.ab_variant ? ` (${p.ab_variant})` : ''}: ${p.articles_published} articles, avg rank: ${p.avg_ranking ?? 'N/A'}`)
+      .join('\n');
+
+    await alertReport({
+      'Live sites': liveSites.length,
+      'Total articles': totalArticles[0]?.count || 0,
+      'Published this run': stats.published || 0,
+      'Refreshed': stats.refreshed || 0,
+      'Ranked': stats.ranked || 0,
+      'Template performance': '\n' + templateLines
+    });
+  } catch (e) {
+    console.warn(`Weekly report error: ${e.message}`);
+  }
 }
 
 run().catch(err => { console.error('Scheduler error:', err); process.exit(1); });

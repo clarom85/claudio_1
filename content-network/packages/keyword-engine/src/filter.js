@@ -64,7 +64,33 @@ export function filterKeywords(keywords) {
   });
 }
 
-export function deduplicateAcrossSites(keywords, existingKeywords) {
-  const existing = new Set(existingKeywords.map(k => k.toLowerCase().trim()));
-  return keywords.filter(k => !existing.has(k.keyword.toLowerCase().trim()));
+/**
+ * Similarità Jaccard tra due stringhe di testo.
+ * Score 0.0 (nessuna parola in comune) → 1.0 (identici).
+ */
+function jaccardSimilarity(a, b) {
+  const setA = new Set(a.split(/\s+/));
+  const setB = new Set(b.split(/\s+/));
+  const intersection = [...setA].filter(w => setB.has(w)).length;
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 0 : intersection / union;
+}
+
+/**
+ * Rimuove keywords troppo simili a quelle già nel DB.
+ * Jaccard threshold 0.75 = 75% parole in comune → scartata.
+ * Previene cannibalizzazione SEO tra articoli quasi identici.
+ */
+export function deduplicateAcrossSites(keywords, existingKeywords, threshold = 0.75) {
+  const existingNorm = existingKeywords.map(k => k.toLowerCase().trim());
+  const existingSet = new Set(existingNorm);
+
+  return keywords.filter(k => {
+    const kw = k.keyword.toLowerCase().trim();
+    if (existingSet.has(kw)) return false;
+    for (const ex of existingNorm) {
+      if (jaccardSimilarity(kw, ex) >= threshold) return false;
+    }
+    return true;
+  });
 }
