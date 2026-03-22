@@ -26,6 +26,8 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'} />
+  <meta name="theme-color" content="#c0392b" />
+  <meta property="og:locale" content="en_US" />
   {gscVerification && <meta name="google-site-verification" content={gscVerification} />}
 
   <title>{title} | {siteName}</title>
@@ -59,12 +61,7 @@ const canonicalUrl = slug ? `${siteUrl}/${slug}/` : siteUrl;
     "@type": "WebSite",
     "@id": `${siteUrl}/#website`,
     "name": siteName,
-    "url": siteUrl,
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": { "@type": "EntryPoint", "urlTemplate": `${siteUrl}/search?q={search_term_string}` },
-      "query-input": "required name=search_term_string"
-    }
+    "url": siteUrl
   })} />
 
   <!-- JSON-LD Schemas -->

@@ -81,6 +81,23 @@ export function buildHowToSchema({ title, description, steps, totalTime }) {
   };
 }
 
+export function buildOrganizationSchema({ siteName, siteUrl }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    name: siteName,
+    url: siteUrl,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${siteUrl}/logo.png`,
+      width: 200,
+      height: 60
+    },
+    sameAs: []
+  };
+}
+
 export function buildBreadcrumbSchema(items, siteUrl) {
   return {
     '@context': 'https://schema.org',

@@ -104,7 +104,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     <div class="article-meta">
       <div class="article-author" itemprop="author" itemscope itemtype="https://schema.org/Person">
         <a href="/author/${author.avatar}" style="flex-shrink:0; display:block;">
-          <img src="/authors/${author.avatar}.jpg" alt="${author.name}" class="author-avatar" loading="lazy"
+          <img src="/authors/${author.avatar}.jpg" alt="${author.name}" class="author-avatar" loading="lazy" decoding="async"
             width="48" height="48" onerror="this.src='/authors/${author.avatar}.webp'" />
         </a>
         <div class="author-info">
@@ -216,7 +216,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
           <img src="/authors/${author.avatar}.jpg" alt="${escapeHtml(author.name)}"
             width="80" height="80"
             style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #eee;"
-            loading="lazy"
+            loading="lazy" decoding="async"
             onerror="this.src='/authors/${author.avatar}.webp'" />
         </a>
         <div>

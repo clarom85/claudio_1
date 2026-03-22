@@ -174,6 +174,8 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="${robots}"/>
+<meta name="theme-color" content="#c0392b"/>
+<meta property="og:locale" content="en_US"/>
 ${gscVerification ? `<meta name="google-site-verification" content="${gscVerification}"/>` : ''}
 <title>${esc(title)} | ${esc(siteName)}</title>
 <meta name="description" content="${esc(description)}"/>
@@ -363,11 +365,20 @@ ${header(site)}
 </main>
 ${footer(site)}`;
 
+  const orgSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${site.url}/#organization`,
+    name: site.name,
+    url: site.url,
+    logo: { '@type': 'ImageObject', url: `${site.url}/logo.png`, width: 200, height: 60 }
+  };
   return renderBase({
     title: `${site.name} — Expert Guides & How-To Articles`,
     description: `${site.name}: trusted source for expert guides, practical advice, and in-depth how-to articles.`,
     siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId,
-    ogImage: hero ? `${site.url}/images/${hero.slug}.jpg` : ''
+    ogImage: hero ? `${site.url}/images/${hero.slug}.jpg` : '',
+    schemas: [orgSchema]
   });
 }
 
