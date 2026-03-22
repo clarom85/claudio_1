@@ -125,12 +125,31 @@ DISQUS_SHORTNAME=       # opzionale — commenti su articoli
 ```
 
 #### Stato VPS (aggiornato 2026-03-22)
-- VPS aggiornato a commit `070c3ed` (in sync con GitHub)
-- DB: 20 nicchie, migration tags completata, 49 articoli, 1421 keywords
-- PM2: `content-scheduler` online (cron orario), `email-api` online (porta 3001)
-- Bug fix: `paginationHtml` era misplaced in `renderArticlePage` su tutti e 5 i template — fixato
+- VPS aggiornato a commit `bdcc8d0` (in sync con GitHub)
+- DB: 20 nicchie, migration tags + rankings + ab_variant + gsc_submitted_at completata
+- PM2: `content-scheduler` (cron orario), `email-api` (porta 3001), `health-check` (cron ogni 15min)
+
+#### Automazione implementata
+- **Keyword dedup Jaccard** — `keyword-engine/src/filter.js` (threshold 75%)
+- **Email alerts** — `vps/src/alert.js` (Resend API o SMTP); env: `RESEND_API_KEY`, `ALERT_EMAIL_TO`
+- **Health-check** — ogni 15min, disk check, alert su errori
+- **A/B template** — `sites.ab_variant` (A=default nicchia, B=altro); `--template` flag su site-spawner
+- **GSC Indexing API** — `vps/src/gsc.js`; env: `GSC_SERVICE_ACCOUNT_JSON`; daily alle 02:xx
+- **Ranking tracker** — `vps/src/ranking-tracker.js`; env: `SERPAPI_KEY`; domenica 04:xx
+- **Smart refresh** — Claude riscrive articoli in pos 21-50; domenica 05:xx
+- **Link graph** — `vps/src/link-graph.js`; PageRank + orphan detection; domenica 06:xx
+- **Weekly email report** — domenica 07:xx
+
+#### Env vars da configurare sul VPS
+```
+RESEND_API_KEY=          # alert email (resend.com — gratuito 3000/mese)
+ALERT_EMAIL_FROM=        # es. alerts@tuodominio.com
+ALERT_EMAIL_TO=          # tua email
+SERPAPI_KEY=             # ranking tracker (serpapi.com — 100 free/mese)
+GSC_SERVICE_ACCOUNT_JSON=/opt/content-network/gsc-service-account.json
+```
 
 #### Prossimi step
 - Acquistare dominio reale → site-spawner crea zona CF automaticamente
+- Configurare env vars alert/ranking/GSC sul VPS
 - Applicare a Google AdSense (inserire ADSENSE_ID in `.env`)
-- Dopo spawn primo sito: verificare category pages con paginazione funzionino
