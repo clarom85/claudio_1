@@ -1,51 +1,38 @@
 /**
- * People Also Ask — AlsoAsked API (primary) + Google scraper fallback
+ * People Also Ask — SerpAPI (primary) + Google scraper fallback
  *
- * AlsoAsked API: https://alsoasked.com
- * - $9/month for 500 searches
- * - Returns structured question trees (3 levels deep)
- * - Much more reliable than scraping Google
+ * SerpAPI restituisce `related_questions` nelle SERP organiche,
+ * quindi riusiamo la stessa API key già usata dal ranking tracker.
+ * Zero costo aggiuntivo rispetto al piano SerpAPI già attivo.
  *
- * Env: ALSOASKED_API_KEY — if absent, falls back to Google scraping
+ * Env: SERPAPI_KEY — se assente, usa scraping Google come fallback
  */
 
-const ALSOASKED_API_KEY = process.env.ALSOASKED_API_KEY;
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// ── AlsoAsked API ─────────────────────────────────────────────
-async function fetchAlsoAsked(query, language = 'en', region = 'us') {
-  const res = await fetch('https://alsoaskedapi.com/v1/search', {
-    method: 'POST',
-    headers: {
-      'X-Api-Key': ALSOASKED_API_KEY,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ queries: [query], language, region, depth: 2, fresh: false }),
-    signal: AbortSignal.timeout(15000)
+// ── SerpAPI ───────────────────────────────────────────────────
+async function fetchPAAviaSerpApi(query, language = 'en', region = 'us') {
+  const params = new URLSearchParams({
+    engine: 'google',
+    q: query,
+    api_key: SERPAPI_KEY,
+    hl: language,
+    gl: region,
+    num: '10'
+  });
+
+  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+    signal: AbortSignal.timeout(10000)
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`AlsoAsked API error ${res.status}: ${err}`);
+    throw new Error(`SerpAPI error ${res.status}: ${err}`);
   }
 
   const data = await res.json();
-  const questions = new Set();
-
-  // Walk the question tree (up to depth 2)
-  function walk(nodes) {
-    if (!Array.isArray(nodes)) return;
-    for (const node of nodes) {
-      if (node.question) questions.add(node.question);
-      if (node.results) walk(node.results);
-    }
-  }
-
-  for (const result of (data.results || [])) {
-    walk(result.results || []);
-  }
-
-  return [...questions];
+  return (data.related_questions || []).map(q => q.question).filter(Boolean);
 }
 
 // ── Google scraper fallback ───────────────────────────────────
@@ -94,7 +81,7 @@ async function fetchPAAFromGoogle(keyword) {
 
 /**
  * Get PAA questions for a list of keywords.
- * Uses AlsoAsked API if ALSOASKED_API_KEY is set, otherwise scrapes Google.
+ * Uses SerpAPI if SERPAPI_KEY is set, otherwise scrapes Google.
  *
  * @param {string[]} keywords
  * @param {object} opts
@@ -105,24 +92,24 @@ async function fetchPAAFromGoogle(keyword) {
 export async function getPAAKeywords(keywords, { language = 'en', region = 'us' } = {}) {
   const allPAA = new Set();
 
-  if (ALSOASKED_API_KEY) {
-    // AlsoAsked: query all seed keywords directly (question trees are rich)
-    // Use at most 15 keywords to stay within monthly quota
-    const sample = keywords.slice(0, 15);
-    console.log(`  [PAA] AlsoAsked API — querying ${sample.length} keywords`);
+  if (SERPAPI_KEY) {
+    // SerpAPI: ogni chiamata include related_questions senza costo extra
+    // Limitiamo a 10 seed per non bruciare quota (100 ricerche/mese free)
+    const sample = keywords.slice(0, 10);
+    console.log(`  [PAA] SerpAPI — querying ${sample.length} keywords`);
 
     for (const kw of sample) {
       try {
-        const questions = await fetchAlsoAsked(kw, language, region);
+        const questions = await fetchPAAviaSerpApi(kw, language, region);
         questions.forEach(q => allPAA.add(q));
-        await sleep(500); // AlsoAsked rate limit: generous, but be polite
+        await sleep(300);
       } catch (e) {
-        console.warn(`  [PAA] AlsoAsked failed for "${kw}": ${e.message}`);
+        console.warn(`  [PAA] SerpAPI failed for "${kw}": ${e.message}`);
       }
     }
   } else {
-    // Fallback: scrape Google (fragile, use sparingly)
-    console.log('  [PAA] No ALSOASKED_API_KEY — falling back to Google scraping');
+    // Fallback: scrape Google (fragile, usa sparingly)
+    console.log('  [PAA] No SERPAPI_KEY — falling back to Google scraping');
     const sample = keywords.filter((_, i) => i % 5 === 0).slice(0, 20);
 
     for (const kw of sample) {
