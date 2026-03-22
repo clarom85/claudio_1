@@ -71,14 +71,34 @@ export async function bulkInsertKeywords(keywords) {
 }
 
 export async function getUnusedKeywords(nicheId, limit = 60) {
-  // Pillars prima — garantisce che ogni cluster abbia la pagina principale
-  // prima di generare i satelliti. Dentro ogni gruppo, ordine casuale.
+  // Pillars prima, poi ordine per search_volume (keyword più cercate in cima).
+  // Le keyword non ancora scorate (search_volume = 0) vanno in coda.
   return sql`
     SELECT * FROM keywords
     WHERE niche_id = ${nicheId} AND used = FALSE
-    ORDER BY is_pillar DESC NULLS LAST, RANDOM()
+    ORDER BY is_pillar DESC NULLS LAST, search_volume DESC NULLS LAST, RANDOM()
     LIMIT ${limit}
   `;
+}
+
+export async function bulkUpdateKeywordVolumes(updates) {
+  // updates: [{keyword, nicheId, searchVolume, cpc, difficulty}]
+  if (!updates.length) return;
+  const chunkSize = 200;
+  for (let i = 0; i < updates.length; i += chunkSize) {
+    const chunk = updates.slice(i, i + chunkSize);
+    for (const u of chunk) {
+      await sql`
+        UPDATE keywords
+        SET search_volume = ${u.searchVolume},
+            cpc           = ${u.cpc},
+            difficulty    = ${u.difficulty},
+            volume_scored = TRUE
+        WHERE niche_id = ${u.nicheId}
+          AND LOWER(keyword) = LOWER(${u.keyword})
+      `;
+    }
+  }
 }
 
 export async function markKeywordUsed(keywordId) {

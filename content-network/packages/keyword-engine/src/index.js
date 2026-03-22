@@ -17,7 +17,8 @@ import { expandWithEntities } from './entities.js';
 import { scrapeCompetitorHeadings } from './competitor-scraper.js';
 import { filterKeywords, deduplicateAcrossSites } from './filter.js';
 import { clusterKeywords, logClusterStats } from './cluster.js';
-import { getNicheBySlug, bulkInsertKeywords, getExpansionSeeds, sql } from '@content-network/db';
+import { getNicheBySlug, bulkInsertKeywords, bulkUpdateKeywordVolumes, getExpansionSeeds, sql } from '@content-network/db';
+import { fetchSearchVolumes } from './volume-scorer.js';
 
 async function run() {
   const args = process.argv.slice(2);
@@ -159,6 +160,24 @@ async function run() {
       isPillar: cluster.isPillar || false,
     };
   }));
+
+  // Volume scoring (DataForSEO) — solo se credenziali presenti
+  console.log('\n📊 Search volume scoring...');
+  const volumeMap = await fetchSearchVolumes(deduped.map(k => k.keyword), {
+    language: niche.language,
+    country: niche.country.toLowerCase()
+  });
+
+  if (volumeMap.size > 0) {
+    const volumeUpdates = deduped
+      .filter(k => volumeMap.has(k.keyword.toLowerCase()))
+      .map(k => {
+        const v = volumeMap.get(k.keyword.toLowerCase());
+        return { keyword: k.keyword, nicheId: niche.id, ...v };
+      });
+    await bulkUpdateKeywordVolumes(volumeUpdates);
+    console.log(`   → ${volumeUpdates.length} keywords scored`);
+  }
 
   // Summary
   const intentCounts = deduped.reduce((acc, k) => {

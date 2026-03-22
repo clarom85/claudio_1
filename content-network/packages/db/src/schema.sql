@@ -92,6 +92,13 @@ CREATE TABLE IF NOT EXISTS site_metrics (
 ALTER TABLE keywords ADD COLUMN IF NOT EXISTS cluster_slug TEXT;
 ALTER TABLE keywords ADD COLUMN IF NOT EXISTS is_pillar BOOLEAN DEFAULT FALSE;
 
+-- DataForSEO volume scoring
+ALTER TABLE keywords ADD COLUMN IF NOT EXISTS cpc NUMERIC(8,2) DEFAULT NULL;
+ALTER TABLE keywords ADD COLUMN IF NOT EXISTS volume_scored BOOLEAN DEFAULT FALSE;
+
+-- Indice per prioritizzare keyword con alto volume
+CREATE INDEX IF NOT EXISTS idx_keywords_volume ON keywords(niche_id, search_volume DESC) WHERE used = FALSE;
+
 -- Ranking tracker (punto 6)
 CREATE TABLE IF NOT EXISTS rankings (
   id          SERIAL PRIMARY KEY,
