@@ -21,6 +21,7 @@ import { submitSiteNewArticles } from '@content-network/vps/src/gsc.js';
 import { trackSiteRankings, getLowRankingArticles } from '@content-network/vps/src/ranking-tracker.js';
 import { runLinkGraphAnalysis } from '@content-network/vps/src/link-graph.js';
 import { alertCritical, alertWarning, alertReport } from '@content-network/vps/src/alert.js';
+import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { getDailyArticleLimit, logScheduleInfo } from '@content-network/content-engine/src/publishing-schedule.js';
 import { injectInternalLinks } from '@content-network/content-engine/src/link-injector.js';
@@ -78,6 +79,11 @@ async function run() {
   // Report domenicale completo (ogni domenica alle 07:xx)
   if (now.getHours() === 7 && now.getDay() === 0) {
     await sendWeeklyReport(stats);
+  }
+
+  // Backup settimanale DB + WWW (ogni domenica alle 08:xx)
+  if (now.getHours() === 8 && now.getDay() === 0) {
+    await runBackup();
   }
 
   console.log(`\n📊 Done — published: ${stats.published}, failed: ${stats.failed}, rebuilt: ${stats.rebuilt}`);
