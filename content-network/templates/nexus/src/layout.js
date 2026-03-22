@@ -144,8 +144,8 @@ function header(site){return`
 <div class="hdr-bar"></div>
 <header>
   <div class="hdr-main"><div class="wrap">
-    <a href="/" class="logo"><div class="logo-icon">N</div><div class="logo-text"><span>${esc(site.name)}</span></div></a>
-    <div class="hdr-ad ad">Advertisement</div>
+    <a href="/" class="logo"><div class="logo-icon">${esc((site.name||'N')[0].toUpperCase())}</div><div class="logo-text"><span>${esc(site.name)}</span></div></a>
+    <div class="hdr-ad ad" style="min-height:90px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
   </div></div>
   <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
 </header>`}

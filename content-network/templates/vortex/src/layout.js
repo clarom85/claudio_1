@@ -150,8 +150,8 @@ ${COOKIE_BANNER_HTML}
 function header(site){return`
 <header>
   <div class="hdr-main"><div class="wrap">
-    <a href="/" class="logo"><span class="logo-v">V</span><span class="logo-text">${esc(site.name.toUpperCase())}</span></a>
-    <div class="hdr-ad ad">Advertisement</div>
+    <a href="/" class="logo"><span class="logo-v">${esc((site.name||'V')[0].toUpperCase())}</span><span class="logo-text">${esc(site.name.toUpperCase())}</span></a>
+    <div class="hdr-ad ad" style="min-height:90px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
     <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
   </div></div>
 </header>`}
