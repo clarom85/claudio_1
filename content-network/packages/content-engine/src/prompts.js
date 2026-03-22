@@ -284,6 +284,7 @@ const AI_PHRASE_BLACKLIST = [
 export function buildArticlePrompt(keyword, niche, options = {}) {
   const cfg = NICHE_PROMPT_CONFIGS[niche.slug] || DEFAULT_NICHE_CONFIG;
   const wordCount = options.targetWordCount || getVariedWordCount(cfg.wordCount);
+  const liveDataBlock = options.liveDataBlock || '';
 
   return `You are ${cfg.persona}, writing for a ${niche.name} publication.
 
@@ -300,7 +301,7 @@ ${cfg.requiredElements}
 
 WHAT TO AVOID:
 ${cfg.avoidances}
-
+${liveDataBlock}
 WORD COUNT: ${wordCount}–${wordCount + 300} words
 
 OUTPUT FORMAT (return valid JSON only, no markdown wrapper):

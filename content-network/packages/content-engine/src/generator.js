@@ -6,6 +6,7 @@ import { buildArticlePrompt } from './prompts.js';
 import { buildArticleHTML } from './html-builder.js';
 import { AUTHOR_PERSONAS } from './prompts.js';
 import { fetchArticleImage } from './image-fetcher.js';
+import { fetchLiveData, formatLiveDataBlock } from './data-fetcher.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -21,7 +22,14 @@ async function throttle() {
 }
 
 export async function generateArticle(keyword, niche, site, retries = 3, sitePublicDir = null) {
-  const prompt = buildArticlePrompt(keyword, niche);
+  // Fetch live data for this niche (cached 24h, fails silently if no API key)
+  const liveDataPoints = await fetchLiveData(niche.slug);
+  const liveDataBlock = formatLiveDataBlock(liveDataPoints);
+  if (liveDataPoints.length) {
+    console.log(`  [data] Injecting ${liveDataPoints.length} live data points for ${niche.slug}`);
+  }
+
+  const prompt = buildArticlePrompt(keyword, niche, { liveDataBlock });
   const author = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
   for (let attempt = 1; attempt <= retries; attempt++) {
