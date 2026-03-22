@@ -24,7 +24,7 @@ const AD_UNIT_INLINE = adUnit('inline');
 const AD_UNIT_SIDEBAR = adUnit('sidebar');
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword }) {
-  const { title, metaDescription, intro, sections, faq, conclusion, authorNote, tags, citations } = articleData;
+  const { title, metaDescription, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations } = articleData;
 
   const datePublished = new Date().toISOString();
   const dateFormatted = new Date(datePublished).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -167,6 +167,13 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       ${AD_UNIT_INLINE}
 
       ${sectionsHTML}
+
+      ${expertTip ? `
+      <div class="expert-tip-box" style="margin:28px 0;padding:20px 24px;background:#fff8e1;border-left:4px solid #f39c12;border-radius:4px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f39c12;margin-bottom:8px;">Expert Tip</div>
+        <p style="font-size:15px;line-height:1.75;color:#333;margin:0;">${escapeHtml(expertTip)}</p>
+        <div style="font-size:13px;color:#888;margin-top:10px;">— ${escapeHtml(author.name)}, ${escapeHtml(author.title)}</div>
+      </div>` : ''}
 
       <div class="article-author-note">
         <blockquote class="author-experience">

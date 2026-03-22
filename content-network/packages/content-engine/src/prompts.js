@@ -320,7 +320,8 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
     { "question": "question people actually search?", "answer": "direct answer (2-3 sentences, no hedging)" }
   ],
   "conclusion": "1-2 paragraphs — actionable takeaway, not a summary of what was already said",
-  "authorNote": "1 sentence in first person from direct experience — specific, not generic",
+  "authorNote": "2-3 sentences in first person from direct professional experience — specific anecdote or observation that ONLY someone with real hands-on experience would know. Reference a real situation, client type, or pattern seen repeatedly. Not generic. Example style: 'I've seen this mistake on nearly every job where the homeowner went with the lowest bid — and it always costs more to fix than doing it right the first time.'",
+  "expertTip": "1 concise tip (1-2 sentences) that represents insider knowledge — something a professional would tell a friend but that most articles miss. Prefixed naturally with the author's perspective.",
   "keyTakeaways": ["specific takeaway 1", "specific takeaway 2", "specific takeaway 3"],
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "category": "best-fit category for this article (options: ${cfg.categoryHint})",
@@ -333,6 +334,12 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
     }
   ]
 }
+
+E-E-A-T LANGUAGE REQUIREMENTS (Google's quality signals — every article must demonstrate all four):
+- EXPERIENCE: Weave 1-2 first-person experience markers naturally into section content — not just in authorNote. Use phrases anchored to specific situations: "Every time I've seen this go wrong, it's because...", "The most common thing I notice on inspections is...", "Clients who come to me after trying X always say..." — make it feel like advice from someone who has done this, not read about it.
+- EXPERTISE: Use domain-correct terminology without over-explaining it. Reference industry standards, professional bodies, or benchmarks where relevant (e.g., "per OSHA guidelines", "what the DSM-5 criteria specify", "according to NEC code"). Show you know the exceptions and edge cases, not just the general rule.
+- AUTHORITATIVENESS: Make 1-2 claims that are clearly grounded in a cited source (government agency, academic study, established industry body). The author's credentials should be implicit in the specificity of the content — not stated, but obvious.
+- TRUST: Be explicit when something is uncertain or varies by situation ("this depends on X, and here's how to know which applies to you"). Acknowledge trade-offs honestly. Tell the reader when they need a professional instead of pretending the article replaces one.
 
 ABSOLUTE RULES:
 - BANNED PHRASES — never use any of these: "${AI_PHRASE_BLACKLIST}"
