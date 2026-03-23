@@ -218,9 +218,13 @@ export function renderHomePage(articles,site){
     <div>${side.map(a=>`<article class="card" style="margin-bottom:12px"><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title" style="font-size:15px"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>
   </div>`:'';
   const gridHtml=latest.length?`<section><h2 class="section-title"><span>Latest Articles</span></h2><div class="art-grid">${latest.map(a=>`<article class="card"><div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3><p class="card-excerpt">${esc(a.excerpt)}</p></div></article>`).join('')}</div></section>`:'';
-  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${heroHtml}${adUnit('leaderboard')}${gridHtml}</div></main>${footer(site)}`;
+  const h1Html=`<h1 class="section-title" style="margin-top:0">${esc(site.tagline||site.name)}</h1>`;
+  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${h1Html}${heroHtml}${adUnit('leaderboard')}${gridHtml}</div></main>${footer(site)}`;
   const orgSchema={'@context':'https://schema.org','@type':'Organization','@id':`${site.url}/#organization`,name:site.name,url:site.url,logo:{'@type':'ImageObject',url:`${site.url}/logo.png`,width:200,height:60}};
-  return renderBase({title:`${site.name} — Expert Technical Guides`,description:`${site.name}: expert-driven guides and solutions.`,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ogImage:hero?`${site.url}/images/${hero.slug}.jpg`:'',schemas:[orgSchema]});
+  const webSiteSchema={'@context':'https://schema.org','@type':'WebSite','@id':`${site.url}/#website`,url:site.url,name:site.name,description:site.tagline||site.name,potentialAction:{'@type':'SearchAction',target:{'@type':'EntryPoint',urlTemplate:`${site.url}/?s={search_term_string}`},'query-input':'required name=search_term_string'}};
+  const heroImg=hero?(hero.image||`/images/${hero.slug}.jpg`):'';
+  const metaDesc=site.tagline?`${site.tagline}. Trusted guides, real data, expert advice.`:`${site.name}: expert-driven guides and solutions.`;
+  return renderBase({title:`${site.name} — Expert Technical Guides`,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ogImage:heroImg?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema],lcpImage:heroImg?`${site.url}${heroImg}`:''});
 }
 
 export function renderCategoryPage(articles,category,site,page=1,totalPages=1){

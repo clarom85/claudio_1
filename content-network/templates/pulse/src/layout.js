@@ -349,11 +349,13 @@ export function renderHomePage(articles, site) {
       </div>
     </section>` : '<p style="text-align:center;padding:48px;color:#999">Articles coming soon...</p>';
 
+  const h1Html = `<h1 class="section-title" style="margin-top:0">${esc(site.tagline || site.name)}</h1>`;
   const body = `
 ${header(site)}
 <main class="site-main">
   <div class="wrap">
     ${adUnit('leaderboard')}
+    ${h1Html}
     ${heroHtml}
     ${adUnit('leaderboard')}
     ${gridHtml}
@@ -362,19 +364,25 @@ ${header(site)}
 ${footer(site)}`;
 
   const orgSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    '@id': `${site.url}/#organization`,
-    name: site.name,
-    url: site.url,
+    '@context': 'https://schema.org', '@type': 'Organization',
+    '@id': `${site.url}/#organization`, name: site.name, url: site.url,
     logo: { '@type': 'ImageObject', url: `${site.url}/logo.png`, width: 200, height: 60 }
   };
+  const webSiteSchema = {
+    '@context': 'https://schema.org', '@type': 'WebSite',
+    '@id': `${site.url}/#website`, url: site.url, name: site.name,
+    description: site.tagline || site.name,
+    potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: `${site.url}/?s={search_term_string}` }, 'query-input': 'required name=search_term_string' }
+  };
+  const heroImg = hero ? (hero.image || `/images/${hero.slug}.jpg`) : '';
+  const metaDesc = site.tagline ? `${site.tagline}. Trusted guides, real data, expert advice.` : `${site.name}: trusted source for expert guides, practical advice, and in-depth how-to articles.`;
   return renderBase({
     title: `${site.name} — Expert Guides & How-To Articles`,
-    description: `${site.name}: trusted source for expert guides, practical advice, and in-depth how-to articles.`,
+    description: metaDesc,
     siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId,
-    ogImage: hero ? `${site.url}/images/${hero.slug}.jpg` : '',
-    schemas: [orgSchema]
+    ogImage: heroImg ? `${site.url}${heroImg}` : '',
+    schemas: [orgSchema, webSiteSchema],
+    lcpImage: heroImg ? `${site.url}${heroImg}` : ''
   });
 }
 
