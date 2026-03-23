@@ -38,7 +38,7 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
 
       const message = await client.messages.create({
         model: 'claude-haiku-4-5-20251001', // Haiku: veloce + economico per bulk content
-        max_tokens: 4096,
+        max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }]
       });
 
@@ -47,10 +47,22 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       // Parse JSON response
       let articleData;
       try {
-        // Estrai JSON anche se c'è testo prima/dopo
         const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('No JSON found in response');
-        articleData = JSON.parse(jsonMatch[0]);
+        let jsonStr = jsonMatch[0];
+        try {
+          articleData = JSON.parse(jsonStr);
+        } catch (parseErr) {
+          console.warn(`  JSON parse failed (attempt ${attempt}):`, parseErr.message);
+          const repaired = repairTruncatedJSON(jsonStr);
+          try {
+            articleData = JSON.parse(repaired);
+            console.warn(`  JSON repaired OK`);
+          } catch {
+            if (attempt === retries) throw parseErr;
+            continue;
+          }
+        }
       } catch (parseErr) {
         console.warn(`  JSON parse failed (attempt ${attempt}):`, parseErr.message);
         if (attempt === retries) throw parseErr;
@@ -103,6 +115,31 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       await new Promise(r => setTimeout(r, 2000 * attempt));
     }
   }
+}
+
+function repairTruncatedJSON(str) {
+  // Remove trailing incomplete comma
+  str = str.replace(/,\s*$/, '');
+  // Close any open string that was truncated
+  const quoteCount = (str.match(/(?<!\\)"/g) || []).length;
+  if (quoteCount % 2 !== 0) str += '"';
+  // Count and close open brackets/braces
+  let braces = 0, brackets = 0, inString = false, i = 0;
+  while (i < str.length) {
+    const ch = str[i];
+    if (ch === '\\' && inString) { i += 2; continue; }
+    if (ch === '"') { inString = !inString; i++; continue; }
+    if (!inString) {
+      if (ch === '{') braces++;
+      else if (ch === '}') braces--;
+      else if (ch === '[') brackets++;
+      else if (ch === ']') brackets--;
+    }
+    i++;
+  }
+  while (brackets > 0) { str += ']'; brackets--; }
+  while (braces > 0) { str += '}'; braces--; }
+  return str;
 }
 
 function slugify(str) {

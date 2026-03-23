@@ -40,7 +40,16 @@ async function run() {
   console.log(`WWW_ROOT: ${WWW_ROOT}`);
   console.log(`Time: ${new Date().toISOString()}\n`);
 
-  const liveSites = await getSitesByStatus('live');
+  let liveSites;
+  try {
+    liveSites = await getSitesByStatus('live');
+  } catch (e) {
+    if (e.code === '42P01') {
+      console.log('No sites table yet — no live sites to check.');
+      process.exit(0);
+    }
+    throw e;
+  }
   const sites = filterDomain
     ? liveSites.filter(s => s.domain === filterDomain)
     : liveSites;
