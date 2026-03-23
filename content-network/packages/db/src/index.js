@@ -70,12 +70,32 @@ export async function bulkInsertKeywords(keywords) {
   return inserted;
 }
 
+// Massimo articoli per cluster (1 pillar + N satellite per topic).
+// Le keyword geo (con nome stato USA) sono escluse dal limite — ogni stato è un articolo unico.
+const MAX_PER_CLUSTER = 3;
+
+const GEO_PATTERN = /\b(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)\b/i;
+
 export async function getUnusedKeywords(nicheId, limit = 60) {
-  // Pillars prima, poi ordine per search_volume (keyword più cercate in cima).
-  // Le keyword non ancora scorate (search_volume = 0) vanno in coda.
+  // Usa ROW_NUMBER() per limitare max MAX_PER_CLUSTER keyword per cluster_slug.
+  // Le keyword geo (nome stato nella keyword) ricevono partition_key = keyword stessa → nessun limite.
+  // Le keyword senza cluster ricevono partition_key = keyword stessa → trattate singolarmente.
   return sql`
-    SELECT * FROM keywords
-    WHERE niche_id = ${nicheId} AND used = FALSE
+    WITH ranked AS (
+      SELECT *,
+        ROW_NUMBER() OVER (
+          PARTITION BY CASE
+            WHEN cluster_slug IS NULL THEN keyword
+            WHEN keyword ~* ${GEO_PATTERN.source} THEN keyword
+            ELSE cluster_slug
+          END
+          ORDER BY is_pillar DESC NULLS LAST, search_volume DESC NULLS LAST, RANDOM()
+        ) AS rn
+      FROM keywords
+      WHERE niche_id = ${nicheId} AND used = FALSE
+    )
+    SELECT * FROM ranked
+    WHERE rn <= ${MAX_PER_CLUSTER}
     ORDER BY is_pillar DESC NULLS LAST, search_volume DESC NULLS LAST, RANDOM()
     LIMIT ${limit}
   `;

@@ -15,6 +15,15 @@
 
 import { classifyArticle } from '@content-network/content-engine/src/categories.js';
 
+const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
+const GEO_RE = new RegExp(`\\b(${US_STATES.join('|')})\\b`, 'i');
+
+function geoSlug(keyword, baseSlug) {
+  const match = keyword.match(GEO_RE);
+  if (!match) return null;
+  return `${baseSlug}-${match[1].toLowerCase().replace(/\s+/g, '-')}`;
+}
+
 // Qualificatori che rendono una keyword "satellite" (troppo specifica per essere pillar)
 const SATELLITE_SIGNALS = [
   /^how (much|to|long|often|do|does|can|should)/i,
@@ -42,9 +51,11 @@ export function clusterKeywords(keywords, nicheSlug, seedKeywords = []) {
   const seedSet = new Set(seedKeywords.map(s => s.toLowerCase().trim()));
 
   // Step 1: Classifica ogni keyword nella sua categoria
+  // Le keyword geo ottengono un cluster dedicato (topic-stato) per evitare conflitti col limite per cluster.
   const classified = keywords.map(kw => {
     const cat = classifyArticle(nicheSlug, kw, kw);
-    return { keyword: kw, clusterSlug: cat.slug };
+    const geo = geoSlug(kw, cat.slug);
+    return { keyword: kw, clusterSlug: geo || cat.slug };
   });
 
   // Step 2: Per ogni cluster, trova il pillar
