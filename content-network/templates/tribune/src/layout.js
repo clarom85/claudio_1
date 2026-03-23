@@ -119,7 +119,7 @@ function header(site){return`
 <header>
   <div class="hdr-main">
     <div class="wrap">
-      <a href="/" class="logo">The <span>${esc(site.name.replace('The ',''))}</span> Tribune</a>
+      <a href="/" class="logo"><span>${esc(site.name.replace('The ',''))}</span></a>
       <div class="tagline">Trusted • Accurate • In-Depth</div>
       <div class="hdr-rule"></div>
     </div>
