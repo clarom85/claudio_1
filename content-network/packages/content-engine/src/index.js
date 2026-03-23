@@ -59,8 +59,9 @@ async function run() {
   let failed = 0;
   const generatedArticles = [];
 
-  // Determina la public dir del sito per le immagini (opzionale)
-  const sitePublicDir = process.env.SITE_PUBLIC_DIR || null;
+  // Determina la public dir del sito per le immagini
+  const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
+  const sitePublicDir = process.env.SITE_PUBLIC_DIR || (site.domain ? `${WWW_ROOT}/${site.domain}` : null);
 
   for (const kw of keywords) {
     try {
