@@ -215,7 +215,7 @@ ${adsenseId ? `<script async src="https://pagead2.googlesyndication.com/pagead/j
 ${ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : ''}
 ${ezoicId ? `<script src="//www.ezojs.com/ezoic/sa.min.js" async></script>` : ''}
 ${lcpImage ? `<link rel="preload" as="image" href="${lcpImage}" fetchpriority="high"/>` : ''}
-<link rel="icon" href="/favicon.ico"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" href="/favicon.ico"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>

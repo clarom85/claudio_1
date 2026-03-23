@@ -5,19 +5,21 @@
 
 import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema, buildHowToSchema } from './schema.js';
 
-// Ad unit helper — Ezoic placeholders if EZOIC_SITE_ID is set, else AdSense <ins>
-// Ezoic IDs: 102 = in-article, 103 = in-article-2, 104 = sidebar (configure in Ezoic dashboard)
+// Ad unit helper — returns '' when no ad network configured (avoids CLS flash)
 function adUnit(type) {
   const ezoicId = process.env.EZOIC_SITE_ID || '';
+  const adsenseId = process.env.ADSENSE_ID || '';
   if (ezoicId) {
     const ids = { inline: 102, inline2: 103, sidebar: 104 };
     const minH = type === 'sidebar' ? 250 : 280;
     return `<div id="ezoic-pub-ad-placeholder-${ids[type] || 102}" style="min-height:${minH}px"></div>`;
   }
+  // No ad network configured — return empty to avoid layout flash
+  if (!adsenseId) return '';
   if (type === 'sidebar') {
-    return `<div class="ad ad-sidebar" style="min-height:250px"><ins class="adsbygoogle" style="display:block" data-ad-format="rectangle"></ins></div>`;
+    return `<div class="ad ad-sidebar" style="min-height:250px"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="rectangle"></ins></div>`;
   }
-  return `<div class="ad ad-inline" style="min-height:280px"><ins class="adsbygoogle" style="display:block;text-align:center" data-ad-format="fluid" data-ad-layout="in-article"></ins></div>`;
+  return `<div class="ad ad-inline" style="min-height:280px"><ins class="adsbygoogle" style="display:block;text-align:center" data-ad-client="${adsenseId}" data-ad-format="fluid" data-ad-layout="in-article"></ins></div>`;
 }
 
 const AD_UNIT_INLINE = adUnit('inline');
@@ -128,9 +130,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       </time>
       <span class="article-reading-time" style="font-size:13px;color:#888;">${readingTime} min read</span>
     </div>
-    <div class="ad ad-leader" style="min-height:90px" data-ad-slot="top-leaderboard">
-      <ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins>
-    </div>
+    ${(process.env.ADSENSE_ID||process.env.EZOIC_SITE_ID)?adUnit('inline'):''}
   </header>
 
   ${articleData.image ? `

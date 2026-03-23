@@ -109,7 +109,8 @@ async function run() {
     const { CSS } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
     writeSiteFile(domain, 'assets/style.css', CSS);
 
-    // 4. Immagine placeholder + og:image default
+    // 4. Favicon SVG bicolore + og:image default
+    writeFaviconSVG(domain, siteConfig.name, template);
     writePlaceholderImage(domain, siteConfig.name);
 
     // 5. robots.txt + ads.txt
@@ -808,6 +809,41 @@ function generateToolFile(domain, toolConfig, siteConfig) {
   const toolDir = join(WWW_ROOT, domain, 'tools', toolConfig.slug);
   mkdirSync(toolDir, { recursive: true });
   writeFileSync(join(toolDir, 'index.html'), html, 'utf-8');
+}
+
+function writeFaviconSVG(domain, siteName = '', template = 'tribune') {
+  // Colori primario/secondario per ogni template
+  const FAVICON_COLORS = {
+    tribune: ['#1a5c3a', '#c9a84c'],
+    pulse:   ['#c0392b', '#1a1a2e'],
+    nexus:   ['#7c3aed', '#06b6d4'],
+    echo:    ['#c4622d', '#5a7a5a'],
+    vortex:  ['#f97316', '#0d9488'],
+  };
+  const [bg, bg2] = FAVICON_COLORS[template] || ['#1a1a2e', '#c0392b'];
+
+  // Iniziali: prima lettera di ogni parola se nome multi-parola, altrimenti 2 chars
+  const words = siteName.trim().split(/\s+/);
+  const initials = words.length >= 2
+    ? (words[0][0] + words[1][0]).toUpperCase()
+    : siteName.slice(0, 2).toUpperCase();
+
+  const fontSize = initials.length > 1 ? 44 : 56;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs><clipPath id="c"><rect width="100" height="100" rx="18"/></clipPath></defs>
+  <rect width="100" height="100" rx="18" fill="${bg}"/>
+  <rect y="58" width="100" height="42" fill="${bg2}" clip-path="url(#c)"/>
+  <text x="50" y="56" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}"
+        font-weight="900" fill="white" letter-spacing="-1">${initials}</text>
+</svg>`;
+
+  writeFileSync(join(WWW_ROOT, domain, 'favicon.svg'), svg, 'utf-8');
+  // favicon.ico minimalista (browser fallback) — redirect a SVG via meta se non esiste ICO
+  if (!existsSync(join(WWW_ROOT, domain, 'favicon.ico'))) {
+    writeFileSync(join(WWW_ROOT, domain, 'favicon.ico'), '', 'utf-8');
+  }
+  console.log(`  Favicon: /favicon.svg (${initials}, ${bg}/${bg2})`);
 }
 
 function writePlaceholderImage(domain, siteName = '') {
