@@ -77,25 +77,38 @@ const MAX_PER_CLUSTER = 3;
 const GEO_PATTERN = /\b(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)\b/i;
 
 export async function getUnusedKeywords(nicheId, limit = 60) {
-  // Usa ROW_NUMBER() per limitare max MAX_PER_CLUSTER keyword per cluster_slug.
-  // Le keyword geo (nome stato nella keyword) ricevono partition_key = keyword stessa → nessun limite.
-  // Le keyword senza cluster ricevono partition_key = keyword stessa → trattate singolarmente.
+  // Limita max MAX_PER_CLUSTER articoli per cluster considerando sia unused che già pubblicati.
+  // "already_published" conta gli articoli già esistenti per ogni cluster_slug.
+  // Le geo-keyword (nome stato US nella keyword) sono esenti dal limite → cluster proprio.
+  // Le keyword senza cluster sono trattate individualmente.
   return sql`
-    WITH ranked AS (
-      SELECT *,
+    WITH published_per_cluster AS (
+      SELECT k.cluster_slug, COUNT(*) AS already_published
+      FROM keywords k
+      JOIN articles a ON a.keyword_id = k.id
+      WHERE k.niche_id = ${nicheId}
+        AND k.cluster_slug IS NOT NULL
+        AND k.keyword !~* ${GEO_PATTERN.source}
+        AND a.status IN ('published', 'draft')
+      GROUP BY k.cluster_slug
+    ),
+    ranked AS (
+      SELECT k.*,
+        COALESCE(p.already_published, 0) AS already_published,
         ROW_NUMBER() OVER (
           PARTITION BY CASE
-            WHEN cluster_slug IS NULL THEN keyword
-            WHEN keyword ~* ${GEO_PATTERN.source} THEN keyword
-            ELSE cluster_slug
+            WHEN k.cluster_slug IS NULL THEN k.keyword
+            WHEN k.keyword ~* ${GEO_PATTERN.source} THEN k.keyword
+            ELSE k.cluster_slug
           END
-          ORDER BY is_pillar DESC NULLS LAST, search_volume DESC NULLS LAST, RANDOM()
+          ORDER BY k.is_pillar DESC NULLS LAST, k.search_volume DESC NULLS LAST, RANDOM()
         ) AS rn
-      FROM keywords
-      WHERE niche_id = ${nicheId} AND used = FALSE
+      FROM keywords k
+      LEFT JOIN published_per_cluster p ON p.cluster_slug = k.cluster_slug
+      WHERE k.niche_id = ${nicheId} AND k.used = FALSE
     )
     SELECT * FROM ranked
-    WHERE rn <= ${MAX_PER_CLUSTER}
+    WHERE (rn + already_published) <= ${MAX_PER_CLUSTER}
     ORDER BY is_pillar DESC NULLS LAST, search_volume DESC NULLS LAST, RANDOM()
     LIMIT ${limit}
   `;
