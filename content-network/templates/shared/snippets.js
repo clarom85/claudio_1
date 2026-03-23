@@ -109,7 +109,7 @@ export const NATIVE_ADS_CSS = `
 /* Native Ads */
 .native-ads{margin:32px 0;padding:20px;background:#f8f8f8;border:1px solid #e8e8e8;border-radius:4px}
 .native-ads-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:12px;display:block}
-.native-ads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.native-ads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;min-height:220px}
 .native-card{background:#fff;border:1px solid #e8e8e8;border-radius:4px;overflow:hidden;cursor:pointer;transition:box-shadow .2s}
 .native-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .native-card-img{width:100%;aspect-ratio:16/9;background:#e8e8e8;object-fit:cover}

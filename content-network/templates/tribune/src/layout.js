@@ -103,7 +103,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .site-footer{background:var(--dark);color:rgba(255,255,255,.75);padding:36px 0 16px;margin-top:56px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:28px;margin-bottom:24px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}}
-.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:18px;margin-bottom:10px}
+.footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:18px;margin-bottom:10px}
 .footer-col h4{color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
 .footer-col ul{list-style:none}
 .footer-col li{margin-bottom:6px}

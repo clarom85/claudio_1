@@ -280,14 +280,96 @@ async function generateStaticPages(domain, siteConfig, template) {
       description: `Privacy policy for ${domain}`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:8px">Privacy Policy</h1>
-        <p style="color:#999;margin-bottom:24px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">This Privacy Policy describes how ${domain} collects, uses, and shares information when you use our website.</p>
-        <h2 style="font-size:20px;margin:24px 0 10px">Information We Collect</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We collect information automatically through Google Analytics and advertising data through Google AdSense.</p>
-        <h2 style="font-size:20px;margin:24px 0 10px">Advertising</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We use Google AdSense. Google may use cookies to serve ads based on prior visits. Opt out at <a href="https://www.google.com/settings/ads">google.com/settings/ads</a>.</p>
-        <h2 style="font-size:20px;margin:24px 0 10px">Contact</h2>
-        <p style="font-size:16px;line-height:1.8">Privacy questions: privacy@${domain}</p>
+        <p style="color:#999;margin-bottom:32px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+
+        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">This Privacy Policy explains how ${siteName} ("we", "us", or "our"), operated through ${domain}, collects, uses, discloses, and safeguards your information when you visit our website. Please read this policy carefully. If you disagree with its terms, please discontinue use of the site.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">1. Information We Collect</h2>
+        <h3 style="font-size:18px;margin:20px 0 8px">1.1 Information Collected Automatically</h3>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">When you visit ${domain}, our servers and third-party analytics tools automatically collect certain information, including:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px">IP address (anonymized where required by law)</li>
+          <li style="margin-bottom:8px">Browser type and version</li>
+          <li style="margin-bottom:8px">Operating system</li>
+          <li style="margin-bottom:8px">Pages visited and time spent on each page</li>
+          <li style="margin-bottom:8px">Referring URLs</li>
+          <li style="margin-bottom:8px">Date and time of your visit</li>
+          <li style="margin-bottom:8px">Device type (desktop, mobile, tablet)</li>
+        </ul>
+        <h3 style="font-size:18px;margin:20px 0 8px">1.2 Information You Provide Voluntarily</h3>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We may collect personal information you voluntarily provide, such as:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px">Email address (if you subscribe to our newsletter)</li>
+          <li style="margin-bottom:8px">Name and message (if you contact us via email or contact form)</li>
+          <li style="margin-bottom:8px">Feedback and ratings you submit on our articles</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">2. How We Use Your Information</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We use the information we collect for the following purposes:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px">To operate and maintain our website</li>
+          <li style="margin-bottom:8px">To analyze usage patterns and improve our content</li>
+          <li style="margin-bottom:8px">To send newsletters and editorial updates (only if you subscribed)</li>
+          <li style="margin-bottom:8px">To respond to your inquiries and support requests</li>
+          <li style="margin-bottom:8px">To serve relevant advertising through Google AdSense and similar networks</li>
+          <li style="margin-bottom:8px">To comply with legal obligations</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">3. Cookies and Tracking Technologies</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We use cookies and similar tracking technologies to track activity on our website. Cookies are small data files stored on your device. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.</p>
+        <h3 style="font-size:18px;margin:20px 0 8px">Types of Cookies We Use</h3>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px"><strong>Essential cookies:</strong> Required for the website to function properly</li>
+          <li style="margin-bottom:8px"><strong>Analytics cookies:</strong> Used by Google Analytics to collect anonymous usage data</li>
+          <li style="margin-bottom:8px"><strong>Advertising cookies:</strong> Used by Google AdSense to serve personalized ads based on your interests</li>
+          <li style="margin-bottom:8px"><strong>Preference cookies:</strong> Remember your cookie consent choice</li>
+        </ul>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We only load advertising cookies after you have given your consent via our cookie banner. You may withdraw consent at any time by clearing your browser's local storage.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">4. Google Analytics</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We use Google Analytics 4 to understand how visitors interact with our website. Google Analytics collects data anonymously and reports website trends without identifying individual visitors. IP anonymization is enabled. You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" style="color:#c0392b">Google Analytics Opt-out Browser Add-on</a>.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">5. Advertising</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We use Google AdSense to display advertisements. Google may use cookies to serve ads based on your prior visits to our website or other websites. You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" style="color:#c0392b">Google Ad Settings</a> or <a href="https://www.aboutads.info/choices/" style="color:#c0392b">aboutads.info</a>.</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We may also participate in affiliate marketing programs. When you click on affiliate links on our website, we may earn a commission at no additional cost to you. This does not influence our editorial content.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">6. Third-Party Services</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Our website may contain links to third-party websites. We are not responsible for the privacy practices or content of those sites. We encourage you to review the privacy policies of any third-party sites you visit.</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:8px">Third-party services we use include:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px">Google Analytics — <a href="https://policies.google.com/privacy" style="color:#c0392b">Google Privacy Policy</a></li>
+          <li style="margin-bottom:8px">Google AdSense — <a href="https://policies.google.com/technologies/ads" style="color:#c0392b">Google Advertising Policies</a></li>
+          <li style="margin-bottom:8px">Cloudflare — for website security and performance</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">7. Data Retention</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We retain personal data only for as long as necessary to fulfill the purposes described in this policy or as required by law. Analytics data is retained for 14 months in Google Analytics. Email subscriber data is retained until you unsubscribe.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">8. Your Rights (GDPR / CCPA)</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Depending on your location, you may have the following rights regarding your personal data:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px"><strong>Right to access:</strong> Request a copy of the personal data we hold about you</li>
+          <li style="margin-bottom:8px"><strong>Right to rectification:</strong> Request correction of inaccurate data</li>
+          <li style="margin-bottom:8px"><strong>Right to erasure:</strong> Request deletion of your personal data</li>
+          <li style="margin-bottom:8px"><strong>Right to restrict processing:</strong> Request that we limit how we use your data</li>
+          <li style="margin-bottom:8px"><strong>Right to data portability:</strong> Request a copy of your data in a portable format</li>
+          <li style="margin-bottom:8px"><strong>Right to object:</strong> Object to processing of your data for direct marketing</li>
+          <li style="margin-bottom:8px"><strong>Right to opt-out of sale (CCPA):</strong> We do not sell personal information</li>
+        </ul>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">To exercise any of these rights, contact us at <a href="mailto:privacy@${domain}" style="color:#c0392b">privacy@${domain}</a>. We will respond within 30 days.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">9. Children's Privacy</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Our website is not directed to children under the age of 13. We do not knowingly collect personal information from children. If you believe we have inadvertently collected information from a child, please contact us immediately.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">10. Security</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We implement appropriate technical and organizational security measures to protect your information. Our website uses HTTPS encryption and is protected by Cloudflare. However, no method of transmission over the Internet is 100% secure.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">11. Changes to This Policy</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated "Last updated" date. Your continued use of the website after changes are posted constitutes your acceptance of those changes.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">12. Contact Us</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:8px">If you have questions about this Privacy Policy or your personal data, contact us:</p>
+        <p style="font-size:16px;line-height:1.8">📧 <a href="mailto:privacy@${domain}" style="color:#c0392b">privacy@${domain}</a></p>
       </div>`
     },
     'terms/index.html': {
@@ -296,10 +378,62 @@ async function generateStaticPages(domain, siteConfig, template) {
       description: `Terms of service for ${domain}`,
       body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:8px">Terms of Service</h1>
-        <p style="color:#999;margin-bottom:24px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">By accessing ${domain}, you agree to these terms. Content is for informational purposes only.</p>
-        <h2 style="font-size:20px;margin:24px 0 10px">Disclaimer</h2>
-        <p style="font-size:16px;line-height:1.8">Information on this site does not constitute professional advice. Always consult qualified professionals for specific situations.</p>
+        <p style="color:#999;margin-bottom:32px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+
+        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">These Terms of Service ("Terms") govern your access to and use of ${domain} (the "Site"), operated by ${siteName}. By accessing or using the Site, you agree to be bound by these Terms. If you do not agree, please do not use the Site.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">1. Acceptance of Terms</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">By accessing ${domain}, you confirm that you are at least 13 years of age, have read and understood these Terms, and agree to be bound by them. We reserve the right to modify these Terms at any time. Continued use of the Site after changes constitutes acceptance of the updated Terms.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">2. Use of the Site</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">You may use the Site for lawful purposes only. You agree not to:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px">Use the Site in any way that violates applicable laws or regulations</li>
+          <li style="margin-bottom:8px">Scrape, crawl, or harvest content from the Site in bulk without written permission</li>
+          <li style="margin-bottom:8px">Reproduce, republish, or redistribute our content without attribution and a link back to the original</li>
+          <li style="margin-bottom:8px">Attempt to gain unauthorized access to any part of the Site or its servers</li>
+          <li style="margin-bottom:8px">Transmit malware, viruses, or any harmful code</li>
+          <li style="margin-bottom:8px">Use automated tools to interact with the Site in a way that disrupts normal operation</li>
+        </ul>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">3. Intellectual Property</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">All content on ${domain}, including but not limited to text, images, graphics, logos, and editorial content, is the property of ${siteName} and is protected by applicable copyright, trademark, and intellectual property laws.</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">You may share individual articles for non-commercial purposes provided you clearly attribute ${siteName} and include a hyperlink to the original article. Commercial reproduction or republication without express written permission is prohibited.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">4. Disclaimer of Warranties</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The content on ${domain} is provided for general informational purposes only. While we strive to ensure accuracy and timeliness, we make no representations or warranties of any kind, express or implied, about:</p>
+        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+          <li style="margin-bottom:8px">The completeness, accuracy, or reliability of any content</li>
+          <li style="margin-bottom:8px">The fitness of any content for a particular purpose</li>
+          <li style="margin-bottom:8px">The availability or uninterrupted access to the Site</li>
+          <li style="margin-bottom:8px">That the Site is free from viruses or other harmful components</li>
+        </ul>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px"><strong>Nothing on this Site constitutes professional advice</strong> — including legal, financial, medical, or construction advice. Always consult a qualified professional before making decisions based on information found on this Site.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">5. Limitation of Liability</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">To the fullest extent permitted by law, ${siteName} shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the Site or its content, even if we have been advised of the possibility of such damages.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">6. Third-Party Links</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The Site may contain links to third-party websites. These links are provided for your convenience only. We have no control over the content of those sites and accept no responsibility for them or for any loss or damage that may arise from your use of them.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">7. Advertising and Affiliate Relationships</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The Site displays advertising served by Google AdSense and may participate in affiliate marketing programs. When you click on affiliate links, we may earn a commission at no additional cost to you. Advertising relationships do not influence our editorial content or recommendations.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">8. Email Newsletter</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">If you subscribe to our email newsletter, you agree to receive periodic editorial content from us. You may unsubscribe at any time by clicking the unsubscribe link in any email. We will not share your email address with third parties for marketing purposes.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">9. Privacy</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Your use of the Site is also governed by our <a href="/privacy/" style="color:#c0392b">Privacy Policy</a>, which is incorporated into these Terms by reference.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">10. Indemnification</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">You agree to indemnify and hold harmless ${siteName}, its editors, contributors, and affiliates from any claim, liability, damage, or expense (including reasonable legal fees) arising from your use of the Site or violation of these Terms.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">11. Governing Law</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">These Terms shall be governed by and construed in accordance with applicable law. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the competent courts.</p>
+
+        <h2 style="font-size:22px;margin:32px 0 12px">12. Contact Us</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:8px">Questions about these Terms? Contact us:</p>
+        <p style="font-size:16px;line-height:1.8">📧 <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
       </div>`
     },
     'disclaimer/index.html': {
