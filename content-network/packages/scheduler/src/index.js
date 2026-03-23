@@ -137,7 +137,7 @@ async function writeArticlePage(article, siteConfig, template) {
 
   // Recupera articoli correlati (stessa nicchia, diverso slug)
   const related = await sql`
-    SELECT a.slug, a.title, a.meta_description FROM articles a
+    SELECT a.slug, a.title, a.meta_description, a.image FROM articles a
     JOIN sites s ON a.site_id = s.id
     WHERE s.domain = ${siteConfig.domain}
       AND a.status = 'published'
@@ -161,7 +161,7 @@ async function writeArticlePage(article, siteConfig, template) {
   };
 
   const html = renderArticlePage(articleData, siteConfig, related.map(r => ({
-    slug: r.slug, title: r.title
+    slug: r.slug, title: r.title, image: r.image || null
   })));
 
   const dir = join(WWW_ROOT, siteConfig.domain, article.slug);
@@ -208,7 +208,8 @@ async function rebuildAffectedSites(stats) {
           categorySlug: cat.slug,
           author: siteConfig.authorName,
           date: a.published_at || a.created_at,
-          tags: a.tags || []
+          tags: a.tags || [],
+          image: a.image || null
         };
       });
 

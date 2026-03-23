@@ -233,7 +233,7 @@ export function renderArticlePage(article, site, relatedArticles = []) {
 
   const relatedHtml = relatedArticles.slice(0, 5).map(r => `
     <div class="related-item">
-      <img class="related-img" src="/images/${r.slug}.webp" alt="${esc(r.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/>
+      <img class="related-img" src="${r.image||'/images/'+r.slug+'.jpg'}" alt="${esc(r.title)}" loading="lazy" onerror="this.style.display='none'"/>
       <a class="related-title" href="/${r.slug}/">${esc(r.title)}</a>
     </div>`).join('');
 
@@ -311,7 +311,7 @@ export function renderHomePage(articles, site) {
   const heroHtml = hero ? `
     <section class="hero-grid">
       <article class="card">
-        <div class="card-img"><img src="/images/${hero.slug}.webp" alt="${esc(hero.title)}" loading="eager" onerror="this.src='/images/placeholder.webp'"/></div>
+        <div class="card-img"><img src="${hero.image||'/images/'+hero.slug+'.jpg'}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div>
         <div class="card-body">
           <div class="card-cat">${esc(hero.category || 'Featured')}</div>
           <h2 class="card-title" style="font-size:28px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2>
@@ -321,7 +321,7 @@ export function renderHomePage(articles, site) {
       </article>
       <div>${featured.map(a => `
         <div class="compact-card">
-          <img class="compact-img" src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/>
+          <img class="compact-img" src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/>
           <div>
             <div class="card-cat" style="font-size:10px">${esc(a.category || 'Guide')}</div>
             <a href="/${a.slug}/" style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;line-height:1.3;display:block">${esc(a.title)}</a>
@@ -336,7 +336,7 @@ export function renderHomePage(articles, site) {
       <div class="art-grid">
         ${latest.map(a => `
           <article class="card">
-            <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
+            <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div>
             <div class="card-body">
               <div class="card-cat">${esc(a.category || 'Guide')}</div>
               <h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3>
@@ -393,7 +393,7 @@ ${footer(site)}`;
 export function renderCategoryPage(articles, category, site, page = 1, totalPages = 1) {
   const gridHtml = articles.map(a => `
     <article class="card">
-      <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
+      <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div>
       <div class="card-body">
         <div class="card-cat">${esc(category.name)}</div>
         <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>
@@ -454,7 +454,7 @@ ${footer(site)}`;
 export function renderTagPage(tag, articles, site) {
   const listHtml = articles.slice(0, 40).map(a => `
     <article class="card">
-      <div class="card-img"><img src="/images/${a.slug}.webp" alt="${esc(a.title)}" loading="lazy" onerror="this.src='/images/placeholder.webp'"/></div>
+      <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div>
       <div class="card-body">
         <div class="card-cat">${esc(a.category || '')}</div>
         <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>
