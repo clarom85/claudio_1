@@ -12,7 +12,7 @@ export const CSS = `
   --ff-head:'Playfair Display',Georgia,serif;--ff-body:'Source Serif 4',Georgia,serif;
   --max:1160px;--shadow:0 1px 4px rgba(0,0,0,.12)
 }
-html{font-size:16px;scroll-behavior:smooth}
+html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable}
 body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-height:1.7}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 16px}
 
