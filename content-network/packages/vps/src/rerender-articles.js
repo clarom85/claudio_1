@@ -11,7 +11,7 @@ import { classifyArticle } from '@content-network/content-engine/src/categories.
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
-const TEMPLATES_DIR = new URL('../../../../templates', import.meta.url).pathname;
+const TEMPLATES_DIR = new URL('../../../templates', import.meta.url).pathname;
 
 async function run() {
   const args = process.argv.slice(2);
