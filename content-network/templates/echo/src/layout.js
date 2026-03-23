@@ -13,7 +13,7 @@ export const CSS=`
   --ff-head:'Cormorant Garamond','Garamond',Georgia,serif;
   --ff-body:'Lato',system-ui,sans-serif;--max:1100px
 }
-html{font-size:16px;scroll-behavior:smooth}
+html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable}
 body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-height:1.7}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
 
@@ -122,7 +122,7 @@ function adUnit(type){
   const fmt={leaderboard:'leaderboard',inline:'fluid',sidebar:'rectangle',footer:'leaderboard'};
   return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-format="${fmt[type]}"></ins></div>`;}
 
-function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl=''}){
+export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
   const robots=noindex?'noindex, follow':'index, follow, max-image-preview:large';

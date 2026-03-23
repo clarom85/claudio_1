@@ -12,7 +12,7 @@ export const CSS = `
   --ff-head:'Merriweather',Georgia,serif;--ff-body:'Open Sans',system-ui,sans-serif;
   --max:1200px;--shadow:0 2px 8px rgba(0,0,0,.1);--r:4px
 }
-html{font-size:16px;scroll-behavior:smooth}
+html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable}
 body{font-family:var(--ff-body);background:var(--bg);color:#1a1a1a;line-height:1.6}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 16px}
 a{color:inherit}
@@ -140,7 +140,7 @@ img{max-width:100%;height:auto;display:block}
 .site-footer{background:var(--navy);color:rgba(255,255,255,.8);padding:40px 0 20px;margin-top:48px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-bottom:32px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}}
-.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:20px;margin-bottom:10px}
+.footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:20px;margin-bottom:10px}
 .footer-about p{font-size:14px;line-height:1.7}
 .footer-col h4{color:#fff;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
 .footer-col ul{list-style:none}
