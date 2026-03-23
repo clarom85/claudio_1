@@ -145,7 +145,7 @@ fetch('/api/articles.json').then(function(r){ return r.json(); }).then(function(
   var shuffled = arts.sort(function(){ return Math.random()-.5; }).slice(0,4);
   grid.innerHTML = shuffled.map(function(a){
     return '<div class="native-card" onclick="location.href=\'/'+a.slug+'/\'">'
-      + '<img class="native-card-img" src="/images/'+a.slug+'.webp" loading="lazy" onerror="this.src=\'/images/placeholder.webp\'" alt="'+a.title+'">'
+      + '<img class="native-card-img" src="'+(a.image||('/images/'+a.slug+'.jpg'))+'" loading="lazy" onerror="this.style.display=\'none\'" alt="'+a.title+'">'
       + '<div class="native-card-body"><div class="native-card-title">'+a.title+'</div>'
       + '<div class="native-card-src">Related</div></div></div>';
   }).join('');

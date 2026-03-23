@@ -349,7 +349,9 @@ ABSOLUTE RULES:
 - FAQ: 4-6 questions people genuinely search, with direct answers
 - Citations: 1-2 REAL sources only — government agencies, major institutions, established industry bodies. Real URLs. Never invent a source.
 - Every section must add new information — zero repetition across sections
-- Write in American English`;
+- Write in American English
+- HTML TABLES REQUIRED: whenever you include a cost breakdown, comparison, or data with rows and columns — you MUST use a real HTML <table> with <thead>/<tbody>/<tr>/<th>/<td> tags. Never write tabular data as plain text or bullet lists. Use class="cost-table" on every <table>. Example: <table class="cost-table"><thead><tr><th>Item</th><th>Low</th><th>High</th></tr></thead><tbody><tr><td>Labor</td><td>$5,000</td><td>$12,000</td></tr></tbody></table>
+- HTML LISTS: use <ul class="art-list"> for feature lists, checklist items, and key points. Use plain <ul> only for generic enumerations`;
 }
 
 export function buildHowToPrompt(keyword, niche) {

@@ -56,8 +56,17 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .art-section{margin:28px 0}
 .art-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--dark);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--green)}
 .art-section p{margin-bottom:16px;font-size:16.5px;line-height:1.8}
-.art-list{padding-left:22px;margin:12px 0}
-.art-list li{margin-bottom:10px;line-height:1.7;font-size:16px}
+.art-list{list-style:none;padding-left:0;margin:16px 0}
+.art-list li{margin-bottom:10px;line-height:1.7;font-size:16px;padding:10px 14px 10px 42px;background:var(--light);border-left:3px solid var(--green);position:relative;border-radius:2px}
+.art-list li::before{content:"✓";position:absolute;left:14px;color:var(--green);font-weight:700}
+.art-section ul:not(.art-list){padding-left:22px;margin:12px 0}
+.art-section ul:not(.art-list) li{margin-bottom:8px;line-height:1.7;font-size:16px}
+.cost-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:15px}
+.cost-table th{background:var(--green);color:#fff;padding:10px 14px;text-align:left;font-family:var(--ff-head);font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+.cost-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.cost-table tr:nth-child(even) td{background:var(--light)}
+.cost-table tr:hover td{background:#f0ede8}
+.cost-table td:last-child{font-weight:600;color:var(--green);white-space:nowrap}
 .pull-quote{border-left:5px solid var(--gold);padding:16px 24px;margin:28px 0;background:#fdfaf4;font-family:var(--ff-head);font-size:20px;font-style:italic;line-height:1.5;color:var(--dark)}
 .faq-wrap{background:var(--light);border:1px solid var(--border);padding:24px;margin:28px 0}
 .faq-wrap>h2{font-family:var(--ff-head);font-size:20px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--dark)}
@@ -70,6 +79,11 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
 .tag{background:var(--light);border:1px solid var(--border);padding:4px 12px;font-size:12px;text-decoration:none;color:var(--dark)}
 .tag:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Article hero image */
+.art-hero{width:100%;max-height:480px;object-fit:cover;display:block;margin:20px 0;border-radius:2px}
+.art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border)}
 
 /* Sidebar */
 .sidebar-box{background:var(--white);padding:20px;border:1px solid var(--border);margin-bottom:20px;border-top:4px solid var(--green)}
@@ -192,9 +206,13 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <div class="art-kicker"><a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'Expert Guide')}</a></div>
       <h1 class="art-title">${esc(article.title)}</h1>
       <div class="art-deck">${esc(article.metaDescription)}</div>
-      <div class="art-byline"><span>By <strong>${esc(site.authorName)}</strong></span><span>${esc(site.authorTitle)}</span><time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
+      <div class="art-author-row">
+        <img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" onerror="this.style.display='none'"/>
+        <div class="art-byline"><span>By <strong>${esc(site.authorName)}</strong></span><span>${esc(site.authorTitle)}</span><time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
+      </div>
       ${adUnit('leaderboard')}
     </header>
+    ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" width="1200" height="480"/>`:''}
     <div class="art-layout">
       <div class="art-body">${article.content}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>
