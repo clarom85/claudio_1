@@ -68,7 +68,11 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .cost-table tr:hover td{background:#f0ede8}
 .cost-table td:last-child{font-weight:600;color:var(--green);white-space:nowrap}
 .pull-quote{border-left:5px solid var(--gold);padding:16px 24px;margin:28px 0;background:#fdfaf4;font-family:var(--ff-head);font-size:20px;font-style:italic;line-height:1.5;color:var(--dark)}
-.faq-wrap{background:var(--light);border:1px solid var(--border);padding:24px;margin:28px 0}
+.faq-wrap{background:var(--light);border:1px solid var(--border);padding:24px;margin-top:40px;padding-top:32px;border-top:3px solid var(--green)}
+.art-section p,.article-section p{margin-bottom:18px;font-size:16.5px;line-height:1.85}
+.art-section p strong,.article-section p strong{color:var(--dark)}
+.article-section{margin:28px 0}
+.article-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--dark);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--green)}
 .faq-wrap>h2{font-family:var(--ff-head);font-size:20px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--dark)}
 .faq-item{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
 .faq-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
@@ -138,7 +142,7 @@ function header(site){return`
       <div class="hdr-rule"></div>
     </div>
   </div>
-  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
+  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#c9a84c;font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
 </header>`}
 
 function footer(site){return`

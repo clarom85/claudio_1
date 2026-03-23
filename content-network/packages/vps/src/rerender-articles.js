@@ -66,6 +66,12 @@ async function run() {
   };
 
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  let toolSlug = null;
+  try {
+    const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
+    toolSlug = TOOL_CONFIGS[site.niche_slug]?.slug || null;
+  } catch {}
+
   const siteConfig = {
     id: site.id,
     domain: site.domain,
@@ -79,7 +85,8 @@ async function run() {
     adsenseId: process.env.ADSENSE_ID || '',
     nicheSlug: site.niche_slug,
     tagline: NICHE_TAGLINES[site.niche_slug] || `Expert guides on ${siteName}`,
-    categories
+    categories,
+    toolSlug
   };
 
   // Carica articoli correlati per ogni articolo (cached in memoria)

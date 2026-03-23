@@ -36,10 +36,10 @@ export async function generateAuthors(nicheSlug, destDirOrOpts) {
   // 2. Scarica avatar da Pexels
   let avatarPath = null;
   if (PEXELS_KEY && destDir) {
-    // VPS: salva direttamente in {destDir}/authors/
-    // Astro: salva in {destDir}/public/authors/
-    const photoDestDir = isVps ? destDir : join(destDir, 'public');
-    avatarPath = await fetchAuthorPhoto(persona, photoDestDir);
+    // Salva in {destDir}/images/author-{avatar}.jpg
+    // Per VPS: destDir = /var/www/domain → /var/www/domain/images/
+    // Per Astro: passare il public dir come destDir
+    avatarPath = await fetchAuthorPhoto(persona, destDir);
   }
 
   const author = {
@@ -101,21 +101,24 @@ Return only the biography text, no introductory sentence like "Here is the biogr
  */
 async function fetchAuthorPhoto(persona, destDir) {
   const gender = inferGender(persona.name);
+  // Query specifiche per ritratti frontali con viso — evita busti/torsi/figure intere
   const queries = [
-    `professional ${gender.pexelsGender} portrait headshot`,
-    `${gender.pexelsGender} business professional portrait`,
-    `${gender.pexelsGender} professional headshot`
+    `${gender.pexelsGender} face close up professional smiling`,
+    `${gender.pexelsGender} professional headshot face portrait`,
+    `${gender.pexelsGender} business portrait face closeup`
   ];
 
-  const authorsDir = join(destDir, 'public', 'authors');
-  if (!existsSync(authorsDir)) mkdirSync(authorsDir, { recursive: true });
+  // VPS: destDir = /var/www/domain → salva in /var/www/domain/images/
+  const imagesDir = join(destDir, 'images');
+  if (!existsSync(imagesDir)) mkdirSync(imagesDir, { recursive: true });
 
-  const destPath = join(authorsDir, `${persona.avatar}.jpg`);
+  const filename = `author-${persona.avatar}.jpg`;
+  const destPath = join(imagesDir, filename);
 
   for (const query of queries) {
     try {
       const res = await fetch(
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=10&orientation=square`,
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&orientation=square`,
         { headers: { Authorization: PEXELS_KEY } }
       );
 
@@ -123,16 +126,16 @@ async function fetchAuthorPhoto(persona, destDir) {
       const data = await res.json();
       if (!data.photos?.length) continue;
 
-      // Scegli una foto casuale tra le prime 10 (evita sempre la stessa)
-      const photo = data.photos[Math.floor(Math.random() * Math.min(data.photos.length, 8))];
-      const imgUrl = photo.src.medium; // ~350px — perfetto per avatar
+      // Scegli una foto casuale tra le prime 12
+      const photo = data.photos[Math.floor(Math.random() * Math.min(data.photos.length, 12))];
+      const imgUrl = photo.src.medium; // ~350px — perfetto per avatar circolare
 
       const imgRes = await fetch(imgUrl);
       if (!imgRes.ok) continue;
 
       await pipeline(imgRes.body, createWriteStream(destPath));
-      console.log(`  📸 Avatar saved: /authors/${persona.avatar}.jpg (Pexels #${photo.id})`);
-      return `/authors/${persona.avatar}.jpg`;
+      console.log(`  Photo saved: /images/${filename} (Pexels #${photo.id})`);
+      return `/images/${filename}`;
 
     } catch (err) {
       console.warn(`  [avatar] Query "${query}" failed: ${err.message}`);

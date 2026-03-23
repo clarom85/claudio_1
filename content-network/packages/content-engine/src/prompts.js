@@ -351,7 +351,9 @@ ABSOLUTE RULES:
 - Every section must add new information — zero repetition across sections
 - Write in American English
 - HTML TABLES REQUIRED: whenever you include a cost breakdown, comparison, or data with rows and columns — you MUST use a real HTML <table> with <thead>/<tbody>/<tr>/<th>/<td> tags. Never write tabular data as plain text or bullet lists. Use class="cost-table" on every <table>. Example: <table class="cost-table"><thead><tr><th>Item</th><th>Low</th><th>High</th></tr></thead><tbody><tr><td>Labor</td><td>$5,000</td><td>$12,000</td></tr></tbody></table>
-- HTML LISTS: use <ul class="art-list"> for feature lists, checklist items, and key points. Use plain <ul> only for generic enumerations`;
+- HTML LISTS: use <ul class="art-list"> for feature lists, checklist items, and key points. Use plain <ul> only for generic enumerations
+- BOLD TEXT: wrap key terms, important numbers, and critical warnings in <strong> tags. Use bold 3-6 times per section to help readers scan. Example: "The average cost is <strong>$4,200–$8,500</strong> depending on material."
+- PARAGRAPH SPACING: write paragraphs of 2-4 sentences max. Leave a blank line between paragraphs in your output`;
 }
 
 export function buildHowToPrompt(keyword, niche) {

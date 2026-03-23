@@ -78,7 +78,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
     let listHTML = '';
     if (section.hasList && section.listItems?.length) {
-      listHTML = `<ul class="article-list">${section.listItems.map(item => `<li>${item}</li>`).join('')}</ul>`;
+      listHTML = `<ul class="art-list">${section.listItems.map(item => `<li>${item}</li>`).join('')}</ul>`;
     }
 
     sectionsHTML += `
@@ -112,9 +112,9 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     <h1 class="article-title" itemprop="headline">${escapeHtml(title)}</h1>
     <div class="article-meta">
       <div class="article-author" itemprop="author" itemscope itemtype="https://schema.org/Person">
-        <a href="/author/${author.avatar}" style="flex-shrink:0; display:block;">
-          <img src="/authors/${author.avatar}.jpg" alt="${author.name}" class="author-avatar" loading="lazy" decoding="async"
-            width="48" height="48" onerror="this.src='/authors/${author.avatar}.webp'" />
+        <a href="/author/${author.avatar}/" style="flex-shrink:0; display:block;">
+          <img src="/images/author-${author.avatar}.jpg" alt="${author.name}" class="author-avatar" loading="lazy" decoding="async"
+            width="48" height="48" style="width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:top;" onerror="this.style.display='none'" />
         </a>
         <div class="author-info">
           <a href="/author/${author.avatar}" style="text-decoration:none; color:inherit;" itemprop="url">
@@ -182,7 +182,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         </blockquote>
       </div>
 
-      <section class="article-faq" itemscope itemtype="https://schema.org/FAQPage">
+      <section class="article-faq faq-wrap" itemscope itemtype="https://schema.org/FAQPage" style="margin-top:40px;padding-top:32px;border-top:2px solid #e0e0e0;">
         <h2>Frequently Asked Questions</h2>
         ${faqHTML}
       </section>
@@ -227,11 +227,11 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       <!-- About the Author box — E-E-A-T signal -->
       <div class="author-bio-box" style="display:flex;gap:20px;align-items:flex-start;background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:24px;margin:32px 0;" itemscope itemtype="https://schema.org/Person">
         <a href="/author/${author.avatar}/" style="flex-shrink:0;display:block;">
-          <img src="/authors/${author.avatar}.jpg" alt="${escapeHtml(author.name)}"
+          <img src="/images/author-${author.avatar}.jpg" alt="${escapeHtml(author.name)}"
             width="80" height="80"
-            style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #eee;"
+            style="width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #eee;"
             loading="lazy" decoding="async"
-            onerror="this.src='/authors/${author.avatar}.webp'" />
+            onerror="this.style.display='none'" />
         </a>
         <div>
           <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin:0 0 4px;">Written by</p>

@@ -581,6 +581,13 @@ async function buildSiteConfig(site, nicheSlug) {
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const tagline = NICHE_TAGLINES[nicheSlug] || `Expert guides and in-depth articles on ${siteName}`;
 
+  // Tool slug per il calcolatore interattivo
+  let toolSlug = null;
+  try {
+    const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
+    toolSlug = TOOL_CONFIGS[nicheSlug]?.slug || null;
+  } catch {}
+
   return {
     id: site.id,
     domain: site.domain,
@@ -594,7 +601,8 @@ async function buildSiteConfig(site, nicheSlug) {
     adsenseId: process.env.ADSENSE_ID || '',
     nicheSlug,
     tagline,
-    categories
+    categories,
+    toolSlug
   };
 }
 

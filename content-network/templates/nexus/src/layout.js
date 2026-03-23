@@ -61,9 +61,9 @@ a{color:inherit}
 .art-section{margin:28px 0}
 .art-section h2{font-size:20px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--cyan)}
 .art-section p{margin-bottom:14px;font-size:16px;line-height:1.75;color:#d0d0e8}
-.art-list{padding-left:20px;margin:12px 0}
-.art-list li{margin-bottom:8px;line-height:1.65;font-size:15px;color:#d0d0e8}
-.art-list li::marker{color:var(--cyan)}
+.art-list{list-style:none;padding-left:0;margin:16px 0}
+.art-list li{margin-bottom:8px;line-height:1.65;font-size:15px;color:#d0d0e8;padding:8px 12px 8px 36px;background:var(--surface2);border-left:3px solid var(--cyan);position:relative;border-radius:var(--r)}
+.art-list li::before{content:"›";position:absolute;left:12px;color:var(--cyan);font-weight:700;font-size:18px;line-height:1.4}
 .code-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:16px;font-family:var(--ff-mono);font-size:14px;margin:16px 0;overflow-x:auto}
 .faq-wrap{background:var(--bg);border:1px solid var(--border);padding:24px;border-radius:var(--r);margin:28px 0}
 .faq-wrap>h2{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--cyan)}
@@ -117,6 +117,23 @@ a{color:inherit}
 .footer-col a{color:var(--muted);text-decoration:none;font-size:13px}
 .footer-col a:hover{color:var(--white)}
 .footer-bottom{border-top:1px solid var(--border);padding-top:14px;text-align:center;font-size:12px;color:var(--muted)}
+/* Article hero + author avatar + cost table */
+.art-hero{width:100%;max-height:480px;object-fit:cover;display:block;margin:20px 0;border-radius:var(--r)}
+.art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--border)}
+.cost-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:15px}
+.cost-table th{background:var(--purple);color:#fff;padding:10px 14px;text-align:left;font-family:var(--ff-mono);font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+.cost-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:#d0d0e8}
+.cost-table tr:nth-child(even) td{background:var(--surface2)}
+.cost-table tr:hover td{background:#26263a}
+.cost-table td:last-child{font-weight:600;color:var(--cyan);white-space:nowrap}
+/* FAQ divider */
+.faq-wrap,.article-faq{margin-top:40px;padding-top:32px;border-top:2px solid var(--border)}
+/* Paragraph spacing + article-section compat */
+.art-section p,.article-section p,.art-body p{margin-bottom:18px;font-size:16px;line-height:1.85;color:#d0d0e8}
+.art-section p strong,.article-section p strong{color:var(--white)}
+.article-section{margin:28px 0}
+.article-section h2{font-size:20px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--cyan)}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function adUnit(type){
@@ -169,7 +186,7 @@ function header(site){return`
     <a href="/" class="logo"><div class="logo-icon">${esc((site.name||'N')[0].toUpperCase())}</div><div class="logo-text"><span>${esc(site.name)}</span></div></a>
     ${adUnit('leaderboard')}
   </div></div>
-  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
+  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--cyan);font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
 </header>`}
 
 function footer(site){return`
@@ -190,11 +207,12 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <div class="art-kicker">// <a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'expert-guide')}</a></div>
       <h1 class="art-title">${esc(article.title)}</h1>
       <div class="art-meta">
-        <div class="author-chip"><div class="author-dot"></div><div><span class="author-name">${esc(site.authorName)}</span><br/><span class="author-title">${esc(site.authorTitle)}</span></div></div>
+        <div class="author-chip"><img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" onerror="this.style.display='none'"/><div><span class="author-name">${esc(site.authorName)}</span><br/><span class="author-title">${esc(site.authorTitle)}</span></div></div>
         <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</time>
       </div>
       ${adUnit('leaderboard')}
     </header>
+    ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" width="1200" height="480"/>`:''}
     <div class="art-layout">
       <div class="art-body">${article.content}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>

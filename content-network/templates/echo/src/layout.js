@@ -56,9 +56,9 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .art-section{margin:28px 0}
 .art-section h2{font-family:var(--ff-head);font-size:26px;font-weight:400;color:var(--warm);margin-bottom:14px;letter-spacing:1px}
 .art-section p{margin-bottom:16px;font-size:16px;line-height:1.85}
-.art-list{padding-left:20px;margin:12px 0}
-.art-list li{margin-bottom:10px;line-height:1.8;font-size:16px}
-.art-list li::marker{color:var(--terra)}
+.art-list{list-style:none;padding-left:0;margin:16px 0}
+.art-list li{margin-bottom:10px;line-height:1.8;font-size:16px;padding:10px 14px 10px 40px;background:var(--light);border-left:3px solid var(--terra);position:relative}
+.art-list li::before{content:"✦";position:absolute;left:12px;color:var(--terra);font-size:14px;line-height:1.8}
 .pull-quote{border:none;border-top:2px solid var(--terra);border-bottom:2px solid var(--terra);padding:20px 0;margin:32px 0;text-align:center;font-family:var(--ff-head);font-size:24px;font-style:italic;color:var(--warm);line-height:1.5}
 .faq-wrap{background:var(--cream);border:1px solid var(--border);padding:28px;margin:28px 0}
 .faq-wrap>h2{font-family:var(--ff-head);font-size:24px;font-weight:400;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border)}
@@ -112,6 +112,23 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .footer-col a{color:rgba(255,255,255,.65);text-decoration:none;font-size:13px}
 .footer-col a:hover{color:#fff}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:16px;text-align:center;font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+/* Article hero + author avatar + cost table */
+.art-hero{width:100%;max-height:480px;object-fit:cover;display:block;margin:20px 0}
+.art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px;justify-content:center}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--border)}
+.cost-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:15px}
+.cost-table th{background:var(--terra);color:#fff;padding:10px 14px;text-align:left;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+.cost-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.cost-table tr:nth-child(even) td{background:var(--light)}
+.cost-table tr:hover td{background:var(--cream)}
+.cost-table td:last-child{font-weight:700;color:var(--terra);white-space:nowrap}
+/* FAQ divider */
+.faq-wrap,.article-faq{margin-top:40px;padding-top:32px;border-top:2px solid var(--border)}
+/* Paragraph spacing + article-section compat */
+.art-section p,.article-section p,.art-body p{margin-bottom:18px;font-size:16px;line-height:1.9}
+.art-section p strong,.article-section p strong{color:var(--warm);font-weight:700}
+.article-section{margin:28px 0}
+.article-section h2{font-family:var(--ff-head);font-size:26px;font-weight:400;color:var(--warm);margin-bottom:14px;letter-spacing:1px}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function adUnit(type){
@@ -164,7 +181,7 @@ function header(site){return`
     <a href="/" class="logo"><span class="logo-name">${esc(site.name)}</span><span class="logo-sub">Living · Wellness · Inspiration</span></a>
     ${adUnit('leaderboard')}
   </div></div>
-  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}</ul></nav>
+  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--terra);font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
 </header>`}
 
 function footer(site){return`
@@ -185,9 +202,10 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <span class="art-category"><a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'Lifestyle')}</a></span>
       <h1 class="art-title">${esc(article.title)}</h1>
       <p class="art-deck">${esc(article.metaDescription)}</p>
-      <div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
+      <div class="art-author-row"><img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" onerror="this.style.display='none'"/><div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div></div>
       ${adUnit('leaderboard')}
     </header>
+    ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" width="1200" height="480"/>`:''}
     <div class="art-layout">
       <div class="art-body">${article.content}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>
