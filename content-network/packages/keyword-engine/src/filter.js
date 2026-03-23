@@ -76,9 +76,10 @@ export function filterKeywords(keywords) {
  * Similarità Jaccard tra due stringhe di testo.
  * Score 0.0 (nessuna parola in comune) → 1.0 (identici).
  */
+function stem(w) { return w.replace(/(?<=\w{3})(ing|tion|ment|ness|ful|less|er|es|s)$/i, ''); }
 function jaccardSimilarity(a, b) {
-  const setA = new Set(a.split(/\s+/));
-  const setB = new Set(b.split(/\s+/));
+  const setA = new Set(a.split(/\s+/).map(stem));
+  const setB = new Set(b.split(/\s+/).map(stem));
   const intersection = [...setA].filter(w => setB.has(w)).length;
   const union = new Set([...setA, ...setB]).size;
   return union === 0 ? 0 : intersection / union;
@@ -89,7 +90,7 @@ function jaccardSimilarity(a, b) {
  * Jaccard threshold 0.75 = 75% parole in comune → scartata.
  * Previene cannibalizzazione SEO tra articoli quasi identici.
  */
-export function deduplicateAcrossSites(keywords, existingKeywords, threshold = 0.75) {
+export function deduplicateAcrossSites(keywords, existingKeywords, threshold = 0.65) {
   const existingNorm = existingKeywords.map(k => k.toLowerCase().trim());
   const existingSet = new Set(existingNorm);
 
