@@ -137,7 +137,6 @@ async function run() {
   }
 
   console.log(`\n✅ Corrette ${fixed}/${duplicates.length} immagini duplicate`);
-  await sql.end();
 }
 
 run().catch(err => { console.error(err); process.exit(1); });
