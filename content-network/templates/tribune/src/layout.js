@@ -91,7 +91,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .art-hero{width:100%;max-height:480px;object-fit:cover;display:block;margin:20px 0;border-radius:2px}
 @media(max-width:600px){.art-hero{max-height:220px}}
 .art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px}
-.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border)}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--border)}
 
 /* Sidebar */
 .sidebar-box{background:var(--white);padding:20px;border:1px solid var(--border);margin-bottom:20px;border-top:4px solid var(--green)}
@@ -216,7 +216,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <h1 class="art-title">${esc(article.title)}</h1>
       <div class="art-deck">${esc(article.metaDescription)}</div>
       <div class="art-author-row">
-        <img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/>
+        <img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="44" height="44" onerror="this.style.display='none'"/>
         <div class="art-byline"><span>By <strong>${esc(site.authorName)}</strong></span><span>${esc(site.authorTitle)}</span><time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
       </div>
       ${adUnit('leaderboard')}
