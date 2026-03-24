@@ -57,7 +57,7 @@ async function regenerateHomepage(site) {
 
   const articles = await sql`
     SELECT a.slug, a.title, a.meta_description, a.content, a.schema_markup,
-           a.tags, a.image, a.published_at, a.created_at, a.keyword
+           a.tags, a.image, a.published_at, a.created_at
     FROM articles a
     WHERE a.site_id = ${site.id} AND a.status = 'published'
     ORDER BY a.published_at DESC NULLS LAST
@@ -67,7 +67,7 @@ async function regenerateHomepage(site) {
   const siteConfig = await buildSiteConfig(site, nicheSlug);
 
   const articlesData = articles.map(a => {
-    const cat = classifyArticle(nicheSlug, a.keyword || '', a.title);
+    const cat = classifyArticle(nicheSlug, a.slug || '', a.title);
     return {
       slug: a.slug,
       title: a.title,
