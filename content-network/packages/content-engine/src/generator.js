@@ -92,7 +92,10 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       // Fetch image from Pexels if a public directory is provided
       let image = null;
       if (sitePublicDir) {
-        image = await fetchArticleImage(keyword, slug, sitePublicDir);
+        image = await fetchArticleImage(keyword, slug, sitePublicDir, {
+          nicheSlug: niche.slug,
+          title: articleData.title || '',
+        });
       }
 
       return {
