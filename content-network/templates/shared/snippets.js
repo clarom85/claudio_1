@@ -144,10 +144,19 @@ fetch('/api/articles.json').then(function(r){ return r.json(); }).then(function(
   if(!grid || !arts.length) return;
   var shuffled = arts.sort(function(){ return Math.random()-.5; }).slice(0,4);
   grid.innerHTML = shuffled.map(function(a){
-    return '<div class="native-card" onclick="location.href=\'/'+a.slug+'/\'">'
-      + '<img class="native-card-img" src="'+(a.image||('/images/'+a.slug+'.jpg'))+'" loading="lazy" onerror="this.style.display=\'none\'" alt="'+a.title+'">'
-      + '<div class="native-card-body"><div class="native-card-title">'+a.title+'</div>'
+    var href = '/' + a.slug + '/';
+    var src = a.image || ('/images/' + a.slug + '.jpg');
+    return '<div class="native-card" data-href="' + href + '">'
+      + '<img class="native-card-img" src="' + src + '" loading="lazy" decoding="async" width="200" height="113" alt="' + a.title + '">'
+      + '<div class="native-card-body"><div class="native-card-title">' + a.title + '</div>'
       + '<div class="native-card-src">Related</div></div></div>';
   }).join('');
+  grid.addEventListener('click', function(e) {
+    var card = e.target.closest('[data-href]');
+    if (card) location.href = card.getAttribute('data-href');
+  });
+  grid.querySelectorAll('img').forEach(function(img) {
+    img.addEventListener('error', function() { this.style.display = 'none'; });
+  });
 }).catch(function(){});
 `;
