@@ -62,9 +62,10 @@ server {
         if ($request_method = OPTIONS) { return 204; }
     }
 
-    # Clean URLs
+    # HTML pages — cache at Cloudflare edge for 1 hour, revalidate after
     location / {
         try_files $uri $uri/ $uri/index.html =404;
+        add_header Cache-Control "public, max-age=3600, stale-while-revalidate=86400";
     }
 
     # Images — serve WebP to supporting browsers (map $webp_suffix in /etc/nginx/conf.d/webp.conf)
