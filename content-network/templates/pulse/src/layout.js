@@ -305,6 +305,7 @@ ${header(site)}
         ${adUnit('sidebar')}
         ${relatedHtml ? `<div class="sidebar-box"><h3>Related Articles</h3>${relatedHtml}</div>` : ''}
         ${adUnit('sidebar')}
+        ${site.toolSlug?`<div style='background:#c0392b;padding:20px;margin-bottom:20px;border-radius:4px;text-align:center'><strong style='color:#fff;font-size:15px;display:block;margin-bottom:8px'>Free Cost Calculator</strong><p style='color:rgba(255,255,255,.85);font-size:13px;margin:0 0 14px;line-height:1.5'>Get an instant estimate for your project in 60 seconds.</p><a href='/tools/${site.toolSlug}/' style='display:block;background:#f8f8f8;color:#c0392b;padding:11px 16px;border-radius:3px;font-weight:700;font-size:14px;text-decoration:none'>Calculate My Cost →</a></div>`:''}
         <div class="sidebar-newsletter">
           <h3>Get Expert Tips Weekly</h3>
           <form class="nl-form" onsubmit="return false">

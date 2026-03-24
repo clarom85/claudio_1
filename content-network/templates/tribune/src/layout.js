@@ -224,6 +224,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <aside>
         ${adUnit('sidebar')}
         ${relatedHtml?`<div class="sidebar-box"><h3>Related</h3>${relatedHtml}</div>`:''}
+        ${site.toolSlug?`<div style='background:#1a5c3a;padding:20px;margin-bottom:20px;border-radius:4px;text-align:center'><strong style='color:#fff;font-size:15px;display:block;margin-bottom:8px'>Free Cost Calculator</strong><p style='color:rgba(255,255,255,.85);font-size:13px;margin:0 0 14px;line-height:1.5'>Get an instant estimate for your project in 60 seconds.</p><a href='/tools/${site.toolSlug}/' style='display:block;background:#c9a84c;color:#1a1a2e;padding:11px 16px;border-radius:3px;font-weight:700;font-size:14px;text-decoration:none'>Calculate My Cost →</a></div>`:''}
         <div class="nl-box"><h3>Weekly Expert Tips</h3><form class="nl-form newsletter-form"><input type="email" placeholder="your@email.com"/><button type="submit">Subscribe</button></form></div>
         ${adUnit('sidebar')}
       </aside>
