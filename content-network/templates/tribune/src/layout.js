@@ -90,7 +90,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 /* Article hero image */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0;border-radius:2px}
 .art-author-row{display:flex;align-items:center;gap:10px;margin-top:10px}
-.art-author-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--border)}
+.art-author-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center;flex-shrink:0;border:2px solid var(--border)}
 
 /* Sidebar */
 .sidebar-box{background:var(--white);padding:20px;border:1px solid var(--border);margin-bottom:20px;border-top:4px solid var(--green)}

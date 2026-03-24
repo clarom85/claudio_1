@@ -118,7 +118,7 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 /* Article hero + author avatar + cost table */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0}
 .art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px;justify-content:center}
-.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--border)}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:center;flex-shrink:0;border:2px solid var(--border)}
 .cost-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:15px}
 .cost-table th{background:var(--terra);color:#fff;padding:10px 14px;text-align:left;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
 .cost-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}

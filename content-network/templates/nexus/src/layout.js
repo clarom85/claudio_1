@@ -123,7 +123,7 @@ a{color:inherit}
 /* Article hero + author avatar + cost table */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0;border-radius:var(--r)}
 .art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px}
-.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--border)}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:center;flex-shrink:0;border:2px solid var(--border)}
 .cost-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:15px}
 .cost-table th{background:var(--purple);color:#fff;padding:10px 14px;text-align:left;font-family:var(--ff-mono);font-size:13px;letter-spacing:.5px;text-transform:uppercase}
 .cost-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:#d0d0e8}

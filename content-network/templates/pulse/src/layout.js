@@ -59,7 +59,7 @@ img{max-width:100%;height:auto;display:block}
 .art-title{font-family:var(--ff-head);font-size:clamp(26px,4vw,40px);font-weight:900;line-height:1.2;color:var(--navy);margin-bottom:16px}
 .art-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .author{display:flex;align-items:center;gap:10px}
-.author-img{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;background:var(--bg)}
+.author-img{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:center;background:var(--bg)}
 .author-name{display:block;font-weight:600;font-size:14px;color:var(--navy)}
 .author-title{display:block;font-size:12px;color:var(--muted)}
 .art-date{font-size:13px;color:var(--muted)}

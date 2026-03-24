@@ -39,7 +39,7 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 /* Article hero */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0;border-radius:8px}
 .art-author-row{display:flex;align-items:center;gap:12px;margin-top:10px}
-.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid rgba(255,255,255,.15)}
+.art-author-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:center;flex-shrink:0;border:2px solid rgba(255,255,255,.15)}
 .art-kicker{font-family:var(--ff-head);font-size:12px;letter-spacing:3px;color:var(--orange);margin-bottom:10px;display:block}
 .art-title{font-family:var(--ff-head);font-size:clamp(32px,5vw,54px);letter-spacing:2px;line-height:1.05;color:var(--white);text-shadow:0 2px 8px rgba(0,0,0,.5)}
 
