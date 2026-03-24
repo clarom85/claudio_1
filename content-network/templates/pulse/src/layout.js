@@ -71,6 +71,7 @@ img{max-width:100%;height:auto;display:block}
 
 /* Article content */
 .art-body{background:#fff;padding:24px;border-radius:var(--r);box-shadow:var(--shadow)}
+.art-body .article-header{display:none}.art-body .article-hero-image{display:none}.art-body .article-sidebar{display:none}
 .intro{font-size:18px;line-height:1.7;color:var(--navy);font-weight:500;border-left:4px solid var(--red);padding-left:16px;margin:16px 0 24px}
 .art-section{margin:28px 0}
 .art-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--red)}
@@ -251,7 +252,7 @@ export function renderArticlePage(article, site, relatedArticles = []) {
 
   const relatedHtml = relatedArticles.slice(0, 5).map(r => `
     <div class="related-item">
-      <img class="related-img" src="${r.image||'/images/'+r.slug+'.jpg'}" alt="${esc(r.title)}" loading="lazy" onerror="this.style.display='none'"/>
+      <img class="related-img" src="${r.image||'/images/'+r.slug+'.jpg'}" alt="${esc(r.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/>
       <a class="related-title" href="/${r.slug}/">${esc(r.title)}</a>
     </div>`).join('');
 
@@ -264,7 +265,7 @@ ${header(site)}
       <h1 class="art-title">${esc(title)}</h1>
       <div class="art-meta">
         <div class="author">
-          <img class="author-img" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" onerror="this.style.display='none'"/>
+          <img class="author-img" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/>
           <div>
             <span class="author-name">${esc(site.authorName)}</span>
             <span class="author-title">${esc(site.authorTitle)}</span>
@@ -274,7 +275,7 @@ ${header(site)}
       </div>
       ${adUnit('leaderboard')}
     </header>
-    ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(title)}" loading="eager" fetchpriority="high" width="1200" height="480"/>`:``}
+    ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:``}
 
     <div class="art-layout">
       <div class="art-body">
@@ -319,7 +320,7 @@ ${footer(site)}`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/` });
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : '' });
 }
 
 export function renderHomePage(articles, site) {
@@ -340,7 +341,7 @@ export function renderHomePage(articles, site) {
       </article>
       <div>${featured.map(a => `
         <div class="compact-card">
-          <img class="compact-img" src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/>
+          <img class="compact-img" src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/>
           <div>
             <div class="card-cat" style="font-size:10px">${esc(a.category || 'Guide')}</div>
             <a href="/${a.slug}/" style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;line-height:1.3;display:block">${esc(a.title)}</a>
@@ -355,7 +356,7 @@ export function renderHomePage(articles, site) {
       <div class="art-grid">
         ${latest.map(a => `
           <article class="card">
-            <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div>
+            <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/></div>
             <div class="card-body">
               <div class="card-cat">${esc(a.category || 'Guide')}</div>
               <h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3>
@@ -420,7 +421,7 @@ ${footer(site)}`;
 export function renderCategoryPage(articles, category, site, page = 1, totalPages = 1) {
   const gridHtml = articles.map(a => `
     <article class="card">
-      <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div>
+      <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/></div>
       <div class="card-body">
         <div class="card-cat">${esc(category.name)}</div>
         <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>
@@ -481,7 +482,7 @@ ${footer(site)}`;
 export function renderTagPage(tag, articles, site) {
   const listHtml = articles.slice(0, 40).map(a => `
     <article class="card">
-      <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'"/></div>
+      <div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/></div>
       <div class="card-body">
         <div class="card-cat">${esc(a.category || '')}</div>
         <h2 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h2>

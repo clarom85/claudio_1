@@ -24,7 +24,7 @@ export function buildArticleSchema({ title, description, slug, author, siteName,
       jobTitle: author.title,
       description: author.bio,
       url: `${siteUrl}/author/${author.avatar}`,
-      image: `${siteUrl}/authors/${author.avatar}.jpg`
+      image: `${siteUrl}/images/author-${author.avatar}.jpg`
     },
     publisher: {
       '@type': 'Organization',
