@@ -536,75 +536,65 @@ async function generateStaticPages(domain, siteConfig, template) {
     'editorial-process/index.html': {
       title: 'Our Editorial Review Process',
       noindex: false,
-      description: `How every article on ${siteName} is researched, written, reviewed, and kept up to date.`,
-      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
-        <h1 style="font-size:32px;margin-bottom:8px">Our Editorial Review Process</h1>
-        <p style="color:#999;margin-bottom:28px">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
-
-        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">
-          Every article published on ${siteName} follows a structured, multi-step process from
-          initial research to publication and ongoing maintenance. Here is exactly how that works.
-        </p>
-
-        <h2 style="font-size:22px;margin:28px 0 12px">Step 1 — Topic Selection</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Topics are selected based on reader demand, gaps in existing coverage, and the ability of
-          our experts to add genuine value. We prioritize questions that real people ask but
-          existing content answers poorly — with vague generalizations, outdated data, or no
-          actionable guidance.
-        </p>
-
-        <h2 style="font-size:22px;margin:28px 0 12px">Step 2 — Expert Assignment</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Each topic is assigned to the contributor best qualified to cover it based on their
-          professional background, credentials, and direct experience. Our contributors are
-          required to disclose any conflicts of interest before beginning an assignment.
-        </p>
-
-        <h2 style="font-size:22px;margin:28px 0 12px">Step 3 — Research & Drafting</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Contributors research the topic using primary sources: government data, peer-reviewed
-          studies, official agency guidelines, and direct professional experience.
-          All factual claims must be supported by a cited source. Contributors document their
-          sources before drafting begins.
-        </p>
-
-        <h2 style="font-size:22px;margin:28px 0 12px">Step 4 — Editorial Review</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Every draft goes through editorial review before publication. Editors check for:
-        </p>
-        <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px;">
-          <li style="margin-bottom:8px;">Factual accuracy — every claim is verified against its cited source</li>
-          <li style="margin-bottom:8px;">Source quality — sources must meet our credibility standards</li>
-          <li style="margin-bottom:8px;">Completeness — does the article actually answer the reader's question?</li>
-          <li style="margin-bottom:8px;">Clarity — is the writing accessible to a general reader without sacrificing accuracy?</li>
-          <li style="margin-bottom:8px;">Bias — does the article present multiple perspectives where relevant?</li>
+      description: `How every article on ${siteName} is researched, written, fact-checked, and kept up to date.`,
+      body: `<div style="max-width:820px;margin:48px auto;padding:0 20px;color:#1a1a1a">
+        <div style="border-left:4px solid #c0392b;padding-left:20px;margin-bottom:36px">
+          <h1 style="font-size:36px;font-weight:700;line-height:1.2;margin-bottom:8px">Our Editorial Review Process</h1>
+          <p style="color:#666;font-size:14px;margin:0">Last updated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})} &middot; By the ${siteName} Editorial Team</p>
+        </div>
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:24px 28px;margin-bottom:40px">
+          <p style="font-size:17px;line-height:1.85;margin:0;font-style:italic;color:#333">
+            Every article published on ${siteName} goes through a structured, six-step process designed to ensure accuracy, depth, and genuine usefulness for readers. We do not publish to fill space — we publish only when we have something accurate and actionable to say.
+          </p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:48px">
+          <div style="text-align:center;padding:20px;background:#fff;border:1px solid #e8e8e8;border-radius:6px">
+            <div style="font-size:32px;font-weight:900;color:#c0392b;margin-bottom:4px">100%</div>
+            <div style="font-size:13px;color:#666">Expert-reviewed</div>
+          </div>
+          <div style="text-align:center;padding:20px;background:#fff;border:1px solid #e8e8e8;border-radius:6px">
+            <div style="font-size:32px;font-weight:900;color:#c0392b;margin-bottom:4px">90-day</div>
+            <div style="font-size:13px;color:#666">Update cycle</div>
+          </div>
+          <div style="text-align:center;padding:20px;background:#fff;border:1px solid #e8e8e8;border-radius:6px">
+            <div style="font-size:32px;font-weight:900;color:#c0392b;margin-bottom:4px">Primary</div>
+            <div style="font-size:13px;color:#666">Sources only</div>
+          </div>
+        </div>
+        <h2 style="font-size:24px;font-weight:700;margin:40px 0 16px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Step 1 — Topic Selection</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Topics are selected based on three criteria: demonstrated reader demand (via search data and reader questions), gaps in existing coverage quality, and the ability of our specialists to add measurable value. We specifically prioritize questions that real people ask but existing content answers poorly — with vague generalizations, outdated statistics, or no actionable guidance.</p>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">If the best answer to a question already exists on the internet and we cannot meaningfully improve on it, we do not publish.</p>
+        <h2 style="font-size:24px;font-weight:700;margin:40px 0 16px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Step 2 — Expert Assignment</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Each topic is assigned to the contributor whose professional background most directly qualifies them to cover it. We do not assign general-topic writers to specialized subjects. Contributors are required to disclose any financial interest, sponsorship, or relationship that could influence their coverage before assignment begins.</p>
+        <h2 style="font-size:24px;font-weight:700;margin:40px 0 16px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Step 3 — Research &amp; Primary Sources</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">All factual claims must be sourced to a primary or high-quality secondary source before drafting begins. Acceptable primary sources include government databases, peer-reviewed research, official industry standards, and direct professional experience documented with specifics.</p>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We do not accept other aggregator websites, AI-generated content, or unsourced blog posts as sources. If a claim cannot be sourced, it is not published.</p>
+        <h2 style="font-size:24px;font-weight:700;margin:40px 0 16px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Step 4 — Editorial Review</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Every draft goes through a multi-point editorial review. Editors verify:</p>
+        <ul style="font-size:16px;line-height:1.85;margin-bottom:20px;padding-left:28px">
+          <li style="margin-bottom:10px"><strong>Factual accuracy</strong> — every claim verified against its cited source</li>
+          <li style="margin-bottom:10px"><strong>Source quality</strong> — credibility standards met, publication date checked for currency</li>
+          <li style="margin-bottom:10px"><strong>Completeness</strong> — does the article directly answer the reader's question?</li>
+          <li style="margin-bottom:10px"><strong>Clarity</strong> — accessible to a general reader without sacrificing accuracy</li>
+          <li style="margin-bottom:10px"><strong>Conflicts of interest</strong> — all commercial relationships disclosed</li>
+          <li style="margin-bottom:10px"><strong>Actionability</strong> — does the reader leave with something useful?</li>
         </ul>
-
-        <h2 style="font-size:22px;margin:28px 0 12px">Step 5 — Publication</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Articles are published with a clear byline, publication date, and last-reviewed date.
-          All sources are cited at the bottom of the article. Affiliate links, if present,
-          are disclosed. The article is indexed in our sitemap and submitted to search engines.
-        </p>
-
-        <h2 style="font-size:22px;margin:28px 0 12px">Step 6 — Ongoing Maintenance</h2>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
-          Published articles are reviewed on a 90-day cycle — or sooner if a significant
-          development in the topic area occurs (regulation changes, new research, updated pricing).
-          Articles that cannot be updated to remain accurate are removed from the site.
-          Reader feedback submitted through the "Was this helpful?" widget and email is reviewed
-          and factored into content updates.
-        </p>
-
-        <p style="font-size:14px;color:#999;border-top:1px solid #eee;padding-top:20px;">
-          <a href="/editorial-guidelines/" style="color:#c0392b;">Editorial Guidelines</a> ·
-          <a href="/about/" style="color:#c0392b;">About Us</a> ·
-          Questions: <a href="mailto:editor@${domain}" style="color:#c0392b;">editor@${domain}</a>
-        </p>
+        <h2 style="font-size:24px;font-weight:700;margin:40px 0 16px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Step 5 — Publication Standards</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Published articles include a clear byline with the contributor's credentials, publication date, and last-reviewed date. All affiliate relationships or sponsored content are disclosed at the top of the article. We maintain strict separation between editorial content and commercial content.</p>
+        <h2 style="font-size:24px;font-weight:700;margin:40px 0 16px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Step 6 — Ongoing Maintenance</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Every published article is on a 90-day review cycle. When significant changes occur — a regulatory update, new research, major market shift — we update sooner. Articles that cannot be updated to remain accurate are unpublished rather than left live with outdated information.</p>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Reader feedback submitted through our "Was this helpful?" widget is reviewed weekly and informs content updates and new topics.</p>
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:24px 28px;margin-top:48px">
+          <h3 style="font-size:18px;font-weight:700;margin-bottom:12px">Questions about our process?</h3>
+          <p style="font-size:15px;line-height:1.7;margin-bottom:12px;color:#444">If you see something that does not look right, or have a question about a specific article's sourcing, contact our editorial team.</p>
+          <p style="font-size:14px;color:#666;margin:0">
+            <a href="/about/" style="color:#c0392b">About Us</a> &middot;
+            <a href="/contact/" style="color:#c0392b">Contact</a> &middot;
+            Email: <a href="mailto:editor@${domain}" style="color:#c0392b">editor@${domain}</a>
+          </p>
+        </div>
       </div>`
-    }
-  };
+    }  };
 
   for (const [path, page] of Object.entries(pages)) {
     const dir = join(WWW_ROOT, domain, path.replace('/index.html', ''));

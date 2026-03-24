@@ -25,7 +25,36 @@ function adUnit(type) {
 const AD_UNIT_INLINE = adUnit('inline');
 const AD_UNIT_SIDEBAR = adUnit('sidebar');
 
-export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword }) {
+/**
+ * Inject contextual internal links into article section content.
+ * Matches titles/keywords of other articles and wraps first occurrence in <a>.
+ */
+function injectInternalLinks(html, relatedArticles, currentSlug) {
+  if (!relatedArticles?.length) return html;
+  let result = html;
+  let linksAdded = 0;
+  for (const art of relatedArticles) {
+    if (linksAdded >= 4) break;  // max 4 internal links per section block
+    if (art.slug === currentSlug) continue;
+    // Match on first 4+ word segment of title (case-insensitive)
+    const words = (art.title || '').split(' ').filter(w => w.length > 3);
+    if (words.length < 2) continue;
+    // Try matching 3-word phrases from title
+    for (let i = 0; i <= words.length - 2; i++) {
+      const phrase = words.slice(i, i + 3).join(' ');
+      if (phrase.length < 8) continue;
+      const regex = new RegExp('(?<!["'>/])(' + phrase.replace(/[.*+?^${}()|[\]\]/g, '\$&') + ')(?![^<]*>)(?!</a>)', 'i');
+      if (regex.test(result)) {
+        result = result.replace(regex, `<a href="/${art.slug}/" style="color:inherit;text-decoration:underline;text-decoration-color:rgba(0,0,0,.25)">$1</a>`);
+        linksAdded++;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [] }) {
   const { title, metaDescription, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations } = articleData;
 
   const datePublished = new Date().toISOString();
@@ -84,9 +113,9 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     }
 
     sectionsHTML += `
-    <section class="article-section">
-      <h2 id="${slugify(section.h2)}">${escapeHtml(section.h2)}</h2>
-      ${section.content.split('\n\n').map(p => `<p>${p}</p>`).join('')}
+    <section class="article-section" style="margin-bottom:36px">
+      <h2 id="${slugify(section.h2)}" style="margin-top:36px">${escapeHtml(section.h2)}</h2>
+      ${injectInternalLinks(section.content, relatedArticles, slug).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join('')}
       ${listHTML}
     </section>
     ${adAfter}`;
@@ -290,11 +319,12 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         <div id="related-articles" data-keyword="${escapeHtml(keyword)}"></div>
       </div>
       ${AD_UNIT_SIDEBAR}
-      <div class="sidebar-newsletter">
-        <h3>Get Expert Tips Weekly</h3>
+      <div class="nl-box" style="margin-top:8px">
+        <h3 style="margin-bottom:4px">Get Expert Tips Weekly</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,.8);margin-bottom:12px;line-height:1.5">Join 12,000+ homeowners who get our cost guides every week.</p>
         <form class="nl-form newsletter-form">
-          <input type="email" placeholder="your@email.com" />
-          <button type="submit">Subscribe Free</button>
+          <input type="email" placeholder="your@email.com" style="width:100%;padding:11px 14px;border:none;border-radius:3px;margin-bottom:10px;font-size:14px;box-sizing:border-box"/>
+          <button type="submit" style="width:100%;padding:12px;font-weight:700;font-size:15px;border:none;border-radius:3px;cursor:pointer;letter-spacing:.5px">Get Free Tips →</button>
         </form>
       </div>
       ${AD_UNIT_SIDEBAR}

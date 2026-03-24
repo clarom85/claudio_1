@@ -21,7 +21,7 @@ async function throttle() {
   lastCall = Date.now();
 }
 
-export async function generateArticle(keyword, niche, site, retries = 3, sitePublicDir = null) {
+export async function generateArticle(keyword, niche, site, retries = 3, sitePublicDir = null, existingArticles = []) {
   // Fetch live data for this niche (cached 24h, fails silently if no API key)
   const liveDataPoints = await fetchLiveData(niche.slug);
   const liveDataBlock = formatLiveDataBlock(liveDataPoints);
@@ -85,7 +85,8 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         siteName: site.domain.replace(/\..+$/, '').replace(/-/g, ' '),
         siteUrl: `https://${site.domain}`,
         slug,
-        keyword
+        keyword,
+        relatedArticles: existingArticles
       });
 
       // Fetch image from Pexels if a public directory is provided

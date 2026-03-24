@@ -103,9 +103,9 @@ async function fetchAuthorPhoto(persona, destDir) {
   const gender = inferGender(persona.name);
   // Query specifiche per ritratti frontali con viso — evita busti/torsi/figure intere
   const queries = [
-    `${gender.pexelsGender} face close up professional smiling`,
-    `${gender.pexelsGender} professional headshot face portrait`,
-    `${gender.pexelsGender} business portrait face closeup`
+    `${gender.pexelsGender} face portrait close up looking at camera`,
+    `${gender.pexelsGender} headshot face only professional neutral background`,
+    `${gender.pexelsGender} portrait face forward close up studio`
   ];
 
   // VPS: destDir = /var/www/domain → salva in /var/www/domain/images/
@@ -118,7 +118,7 @@ async function fetchAuthorPhoto(persona, destDir) {
   for (const query of queries) {
     try {
       const res = await fetch(
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&orientation=square`,
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=20&orientation=portrait`,
         { headers: { Authorization: PEXELS_KEY } }
       );
 
