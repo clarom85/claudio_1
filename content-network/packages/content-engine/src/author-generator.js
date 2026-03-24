@@ -150,11 +150,20 @@ async function fetchAuthorPhoto(persona, destDir) {
  * Inferisce genere dal nome per rendere pronomi e query Pexels corretti.
  */
 function inferGender(name) {
-  const firstName = name.split(' ')[0].toLowerCase();
-  const femaleNames = ['sarah', 'emma', 'emily', 'jessica', 'jennifer', 'lisa', 'maria', 'anna',
-    'laura', 'linda', 'mary', 'patricia', 'barbara', 'susan', 'karen', 'dr. sarah'];
+  // Strip titles before extracting first name (Dr., Coach, Prof., Mr., Ms., Mrs.)
+  const stripped = name.replace(/^(dr\.|coach|prof\.|mr\.|ms\.|mrs\.)\s+/i, '');
+  const firstName = stripped.split(' ')[0].toLowerCase();
 
-  const isFemale = femaleNames.some(n => firstName.includes(n));
+  const femaleNames = [
+    'sarah', 'emma', 'emily', 'jessica', 'jennifer', 'lisa', 'maria', 'anna',
+    'laura', 'linda', 'mary', 'patricia', 'barbara', 'susan', 'karen',
+    'amanda', 'rachel', 'nancy', 'dana', 'taylor', 'ashley', 'morgan',
+    'stephanie', 'nicole', 'megan', 'elizabeth', 'rebecca', 'kelly',
+    'melissa', 'hannah', 'grace', 'victoria', 'olivia', 'sophia', 'angela',
+    'sandra', 'dorothy', 'donna', 'carol', 'ruth', 'sharon', 'michelle',
+  ];
+
+  const isFemale = femaleNames.includes(firstName);
   return {
     pronoun: isFemale ? 'her' : 'his',
     pexelsGender: isFemale ? 'woman' : 'man'
