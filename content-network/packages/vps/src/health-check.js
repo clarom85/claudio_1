@@ -80,7 +80,7 @@ async function run() {
     // ── 2. File critici (assenza = errore) ───────────────────────────────
     const criticalFiles = [
       ['index.html',         'Homepage'],
-      ['assets/style.css',   'CSS'],
+      ['assets/style.v2.css',   'CSS'],
       ['sitemap.xml',        'Sitemap'],
       ['robots.txt',         'robots.txt'],
       ['api/articles.json',  'API articles'],
@@ -174,7 +174,7 @@ async function run() {
     }
 
     // ── 6. CSS non vuoto ──────────────────────────────────────────────────
-    const cssPath = join(siteDir, 'assets/style.css');
+    const cssPath = join(siteDir, 'assets/style.v2.css');
     if (existsSync(cssPath)) {
       const cssSize = statSync(cssPath).size;
       if (cssSize < 1000) {

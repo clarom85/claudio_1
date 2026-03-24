@@ -226,7 +226,7 @@ ${lcpImage ? `<link rel="preload" as="image" href="${lcpImage}" fetchpriority="h
 <link rel="preconnect" href="https://www.googletagmanager.com"/>
 <link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap"/>
-<link rel="stylesheet" href="/assets/style.css"/>
+<link rel="stylesheet" href="/assets/style.v2.css"/>
 </head>
 <body>
 ${body}

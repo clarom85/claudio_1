@@ -107,7 +107,7 @@ async function run() {
     // 3. CSS dal template
     console.log(`🎨 Writing CSS (template: ${template})...`);
     const { CSS } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
-    writeSiteFile(domain, 'assets/style.css', CSS);
+    writeSiteFile(domain, 'assets/style.v2.css', CSS);
 
     // 4. Favicon SVG bicolore + og:image default
     writeFaviconSVG(domain, siteConfig.name, template);
@@ -882,7 +882,7 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
 <link rel="preconnect" href="https://www.googletagmanager.com"/>
 <link rel="dns-prefetch" href="https://www.google-analytics.com"/>
-<link rel="stylesheet" href="/assets/style.css"/>
+<link rel="stylesheet" href="/assets/style.v2.css"/>
 ${ga4Script}
 </head><body>
 <header style="background:#1a1a2e;padding:14px 20px">

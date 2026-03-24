@@ -37,7 +37,7 @@ async function run() {
       const { CSS } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
       const assetsDir = join(WWW_ROOT, site.domain, 'assets');
       mkdirSync(assetsDir, { recursive: true });
-      writeFileSync(join(assetsDir, 'style.css'), CSS, 'utf-8');
+      writeFileSync(join(assetsDir, 'style.v2.css'), CSS, 'utf-8');
       console.log(`  OK  ${site.domain} (${site.template})`);
       ok++;
     } catch (err) {

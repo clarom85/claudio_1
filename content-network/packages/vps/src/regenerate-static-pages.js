@@ -41,7 +41,7 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="preconnect" href="https://www.googletagmanager.com"/>
 <link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-<link rel="stylesheet" href="/assets/style.css"/>
+<link rel="stylesheet" href="/assets/style.v2.css"/>
 ${ga4Script}
 </head><body>
 <header style="background:#1a1a2e;padding:14px 20px">

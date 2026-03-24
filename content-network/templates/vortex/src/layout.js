@@ -180,7 +180,7 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://pagead2.googlesyndication.com"/><link rel="preconnect" href="https://www.googletagmanager.com"/><link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700&display=swap"/>
-<link rel="stylesheet" href="/assets/style.css"/>
+<link rel="stylesheet" href="/assets/style.v2.css"/>
 </head><body>${body}
 ${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}</script></body></html>`}
 
