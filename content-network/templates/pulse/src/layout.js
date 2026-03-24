@@ -177,13 +177,13 @@ img{max-width:100%;height:auto;display:block}
 .article-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--navy);margin-top:36px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--red)}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '', lcpImage = '' }) {
+export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '', lcpImage = '', ga4MeasurementId = '' }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
   ).join('\n');
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
-  const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
+  const ga4Id = ga4MeasurementId || process.env.GA4_MEASUREMENT_ID || '';
   const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
   const ezoicId = process.env.EZOIC_SITE_ID || '';
   const effectiveOgImage = ogImage || (siteUrl ? `${siteUrl}/images/og-default.jpg` : '');
@@ -324,7 +324,7 @@ ${footer(site)}`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : '' });
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '', ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : '' });
 }
 
 export function renderHomePage(articles, site) {
@@ -401,7 +401,7 @@ ${footer(site)}`;
   return renderBase({
     title: `${site.name} — Expert Guides & How-To Articles`,
     description: metaDesc,
-    siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId,
+    siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: heroImg ? `${site.url}${heroImg}` : '',
     schemas: [orgSchema, webSiteSchema],
     lcpImage: heroImg ? `${site.url}${heroImg}` : ''
@@ -419,7 +419,7 @@ ${header(site)}
   </div>
 </main>
 ${footer(site)}`;
-  return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body, noindex: true });
+  return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body, noindex: true, ga4MeasurementId: site.ga4MeasurementId || '' });
 }
 
 export function renderCategoryPage(articles, category, site, page = 1, totalPages = 1) {
@@ -477,7 +477,7 @@ ${footer(site)}`;
     description: `Browse ${articles.length} expert articles about ${category.name} on ${site.name}. Practical guides, cost estimates, and how-to advice.`,
     slug: page > 1 ? `category/${category.slug}/page/${page}` : `category/${category.slug}`,
     siteName: site.name, siteUrl: site.url,
-    schemas: pageSchemas, body, adsenseId: site.adsenseId,
+    schemas: pageSchemas, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : '',
     prevUrl, nextUrl
   });
@@ -522,7 +522,7 @@ ${footer(site)}`;
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
     slug: `tag/${tag.slug}`,
     siteName: site.name, siteUrl: site.url,
-    schemas: [itemListSchema], body, adsenseId: site.adsenseId,
+    schemas: [itemListSchema], body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
   });
 }

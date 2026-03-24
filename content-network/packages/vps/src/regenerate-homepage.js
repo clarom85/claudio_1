@@ -46,6 +46,7 @@ async function buildSiteConfig(site, nicheSlug) {
     authorBio: author?.bio || '',
     categories,
     adsenseId: process.env.ADSENSE_ID || '',
+    ga4MeasurementId: site.ga4_measurement_id || '',
     ezoicId: process.env.EZOIC_SITE_ID || '',
     toolSlug,
   };

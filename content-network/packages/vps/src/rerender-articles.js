@@ -83,6 +83,7 @@ async function run() {
     authorBio: author.bio,
     authorAvatar: author.avatar,
     adsenseId: process.env.ADSENSE_ID || '',
+    ga4MeasurementId: site.ga4_measurement_id || '',
     nicheSlug: site.niche_slug,
     tagline: NICHE_TAGLINES[site.niche_slug] || `Expert guides on ${siteName}`,
     categories,

@@ -599,6 +599,7 @@ async function buildSiteConfig(site, nicheSlug) {
     authorBio: author.bio,
     authorAvatar: author.avatar,
     adsenseId: process.env.ADSENSE_ID || '',
+    ga4MeasurementId: site.ga4_measurement_id || '',
     nicheSlug,
     tagline,
     categories,
