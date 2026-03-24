@@ -29,29 +29,75 @@ const AD_UNIT_SIDEBAR = adUnit('sidebar');
  * Inject contextual internal links into article section content.
  * Matches titles/keywords of other articles and wraps first occurrence in <a>.
  */
-function injectInternalLinks(html, relatedArticles, currentSlug) {
-  if (!relatedArticles?.length) return html;
-  let result = html;
+/**
+ * Crea un iniettore di link interni con stato condiviso per tutto l'articolo.
+ * Garantisce max `maxLinks` link totali indipendentemente dal numero di sezioni.
+ */
+function createLinkInjector(relatedArticles, currentSlug, maxLinks = 3) {
   let linksAdded = 0;
-  for (const art of relatedArticles) {
-    if (linksAdded >= 4) break;  // max 4 internal links per section block
-    if (art.slug === currentSlug) continue;
-    // Match on first 4+ word segment of title (case-insensitive)
-    const words = (art.title || '').split(' ').filter(w => w.length > 3);
-    if (words.length < 2) continue;
-    // Try matching 3-word phrases from title
-    for (let i = 0; i <= words.length - 2; i++) {
-      const phrase = words.slice(i, i + 3).join(' ');
-      if (phrase.length < 8) continue;
-      const regex = new RegExp('(?<!["'>/])(' + phrase.replace(/[.*+?^${}()|[\]\]/g, '\$&') + ')(?![^<]*>)(?!</a>)', 'i');
-      if (regex.test(result)) {
-        result = result.replace(regex, `<a href="/${art.slug}/" style="color:inherit;text-decoration:underline;text-decoration-color:rgba(0,0,0,.25)">$1</a>`);
-        linksAdded++;
-        break;
+  const usedSlugs = new Set();
+  // Shuffle una volta per articolo: sezioni diverse linkano articoli diversi
+  const targets = [...(relatedArticles || [])]
+    .filter(a => a.slug !== currentSlug)
+    .sort(() => Math.random() - 0.5);
+
+  return function injectLinks(html) {
+    if (!html || linksAdded >= maxLinks) return html;
+    let result = html;
+
+    for (const art of targets) {
+      if (linksAdded >= maxLinks) break;
+      if (usedSlugs.has(art.slug)) continue;
+
+      const words = (art.title || '').split(' ').filter(w => w.length > 3);
+      if (words.length < 2) continue;
+
+      for (let i = 0; i <= words.length - 2; i++) {
+        const phrase = words.slice(i, i + 3).join(' ');
+        if (phrase.length < 10) continue;
+
+        const linked = injectLinkInTextNode(result, phrase, art.slug);
+        if (linked !== result) {
+          result = linked;
+          usedSlugs.add(art.slug);
+          linksAdded++;
+          break; // una frase per target, poi prossimo articolo
+        }
       }
     }
-  }
-  return result;
+    return result;
+  };
+}
+
+/**
+ * Inietta un link nella prima occorrenza di `phrase` in un testo HTML,
+ * operando solo su nodi testo (non dentro tag o <a> esistenti).
+ */
+function injectLinkInTextNode(html, phrase, slug) {
+  const parts = html.split(/(<[^>]+>)/);
+  let injected = false;
+  let insideAnchor = false;
+
+  return parts.map(part => {
+    if (injected) return part;
+    if (part.startsWith('<')) {
+      if (/^<a[\s>]/i.test(part))  insideAnchor = true;
+      if (/^<\/a>/i.test(part))    insideAnchor = false;
+      return part;
+    }
+    if (insideAnchor) return part;
+
+    const regex = new RegExp(`(${escapeRegexChars(phrase)})`, 'i');
+    if (regex.test(part)) {
+      injected = true;
+      return part.replace(regex, `<a href="/${slug}/" style="color:inherit;text-decoration:underline;text-decoration-color:rgba(0,0,0,.25)">$1</a>`);
+    }
+    return part;
+  }).join('');
+}
+
+function escapeRegexChars(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [] }) {
@@ -103,6 +149,9 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
   // Max 2 inline ads inside sections: only after section index 1 and 3 (2nd and 4th)
   // Use different Ezoic placeholder IDs (102 vs 103) to avoid duplicate IDs on page
+  // linkInjector ha stato condiviso tra tutte le sezioni → max 3 link totali per articolo
+  const linkInjector = createLinkInjector(relatedArticles, slug, 3);
+
   let sectionsHTML = '';
   sections.forEach((section, i) => {
     const adAfter = i === 1 ? adUnit('inline') : i === 3 ? adUnit('inline2') : '';
@@ -115,7 +164,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     sectionsHTML += `
     <section class="article-section" style="margin-bottom:36px">
       <h2 id="${slugify(section.h2)}" style="margin-top:36px">${escapeHtml(section.h2)}</h2>
-      ${injectInternalLinks(section.content, relatedArticles, slug).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join('')}
+      ${linkInjector(section.content).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join('')}
       ${listHTML}
     </section>
     ${adAfter}`;
