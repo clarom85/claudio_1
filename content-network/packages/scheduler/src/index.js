@@ -91,6 +91,13 @@ async function run() {
 }
 
 async function publishDueArticles(stats) {
+  // Recovery: articoli bloccati in 'processing' da > 10 minuti → rimetti in pending
+  await sql`
+    UPDATE publish_queue SET status = 'pending'
+    WHERE status = 'processing'
+      AND updated_at < NOW() - INTERVAL '10 minutes'
+  `;
+
   // Pubblica max articoli per questa ora (finestra 15 ore / ~2 per ora in warm-up)
   const BATCH_PER_HOUR = Math.ceil(MAX_ARTICLES_PER_DAY / 15);
   const due = await getDueItems(BATCH_PER_HOUR);
@@ -117,7 +124,7 @@ async function publishDueArticles(stats) {
       // Genera HTML articolo
       await writeArticlePage(article, siteConfig, site.template);
 
-      // Aggiorna stato DB
+      // Aggiorna stato DB — entrambi devono riuscire prima di marcare done
       await updateArticleStatus(item.article_id, 'published');
       await sql`UPDATE sites SET articles_count = articles_count + 1 WHERE id = ${item.site_id}`;
       await updateQueueItem(item.id, 'done');

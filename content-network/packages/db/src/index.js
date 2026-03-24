@@ -199,7 +199,9 @@ export async function getDueItems(limit = 10) {
     FROM publish_queue q
     JOIN articles a ON q.article_id = a.id
     JOIN sites s ON q.site_id = s.id
-    WHERE q.status = 'pending' AND q.scheduled_for <= NOW()
+    WHERE q.status = 'pending'
+      AND q.scheduled_for <= NOW()
+      AND s.status = 'live'
     ORDER BY q.scheduled_for ASC
     LIMIT ${limit}
   `;
