@@ -22,7 +22,7 @@ import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js'
 import { generateAuthors } from '@content-network/content-engine/src/author-generator.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { TOOL_CONFIGS } from '@content-network/content-engine/src/tools/tool-configs.js';
-import { generateToolPage } from '@content-network/content-engine/src/tools/tool-generator.js';
+import { generateToolPage, generateToolBody } from '@content-network/content-engine/src/tools/tool-generator.js';
 import { getAllCategoryIntros } from '@content-network/content-engine/src/category-intros.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -142,7 +142,7 @@ async function run() {
     if (toolConfig) {
       console.log(`🔧 Generating interactive tool: ${toolConfig.title}...`);
       try {
-        generateToolFile(domain, toolConfig, siteConfig);
+        await generateToolFile(domain, toolConfig, siteConfig);
         console.log(`  ✅ Tool: /tools/${toolConfig.slug}/`);
       } catch (err) {
         console.warn(`  ⚠️  Tool generation failed (non-blocking): ${err.message}`);
@@ -779,7 +779,7 @@ function generateCategoryPage(domain, category, introData, siteConfig) {
   writeFileSync(join(dir, 'index.html'), html, 'utf-8');
 }
 
-function generateToolFile(domain, toolConfig, siteConfig) {
+async function generateToolFile(domain, toolConfig, siteConfig) {
   const TEMPLATE_COLORS = {
     pulse:   '#c0392b',
     tribune: '#1a3a6b',
@@ -789,11 +789,33 @@ function generateToolFile(domain, toolConfig, siteConfig) {
   };
   const color = TEMPLATE_COLORS[siteConfig.template] || '#c0392b';
 
-  const html = generateToolPage(toolConfig, {
-    name:  siteConfig.name,
-    url:   siteConfig.url,
+  const { renderBase, renderHeader, renderFooter } = await import(
+    `../../../templates/${siteConfig.template}/src/layout.js`
+  );
+
+  const toolSite = {
+    name:             siteConfig.name,
+    url:              siteConfig.url,
+    template:         siteConfig.template,
+    adsenseId:        siteConfig.adsenseId || '',
+    ga4MeasurementId: siteConfig.ga4MeasurementId || '',
+    categories:       siteConfig.categories || [],
     color,
-    niche: siteConfig.nicheSlug,
+    niche:            siteConfig.nicheSlug,
+  };
+
+  const mainContent = generateToolBody(toolConfig, toolSite);
+  const body = renderHeader(toolSite) + mainContent + renderFooter(toolSite);
+
+  const html = renderBase({
+    title:            `${toolConfig.title} | ${siteConfig.name}`,
+    description:      toolConfig.seoDescription || toolConfig.description,
+    slug:             `tools/${toolConfig.slug}`,
+    siteName:         siteConfig.name,
+    siteUrl:          siteConfig.url,
+    body,
+    adsenseId:        siteConfig.adsenseId || '',
+    ga4MeasurementId: siteConfig.ga4MeasurementId || '',
   });
 
   const toolDir = join(WWW_ROOT, domain, 'tools', toolConfig.slug);

@@ -259,7 +259,7 @@ export function renderArticlePage(article, site, relatedArticles = []) {
     </div>`).join('');
 
   const body = `
-${header(site)}
+${renderHeader(site)}
 <main class="site-main">
   <div class="wrap">
     <header class="art-hdr">
@@ -319,7 +319,7 @@ ${header(site)}
     </div>
   </div>
 </main>
-${footer(site)}`;
+${renderFooter(site)}`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
@@ -372,7 +372,7 @@ export function renderHomePage(articles, site) {
 
   const h1Html = `<h1 class="section-title" style="margin-top:0">${esc(site.tagline || site.name)}</h1>`;
   const body = `
-${header(site)}
+${renderHeader(site)}
 <main class="site-main">
   <div class="wrap">
     ${adUnit('leaderboard')}
@@ -382,7 +382,7 @@ ${header(site)}
     ${gridHtml}
   </div>
 </main>
-${footer(site)}`;
+${renderFooter(site)}`;
 
   const orgSchema = {
     '@context': 'https://schema.org', '@type': 'Organization',
@@ -409,7 +409,7 @@ ${footer(site)}`;
 
 export function render404Page(site) {
   const body = `
-${header(site)}
+${renderHeader(site)}
 <main class="site-main">
   <div class="wrap" style="text-align:center;padding:80px 20px">
     <h1 style="font-family:'Merriweather',serif;font-size:48px;color:#c0392b;margin-bottom:16px">404</h1>
@@ -417,7 +417,7 @@ ${header(site)}
     <a href="/" style="background:#c0392b;color:#fff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:600">← Back to Home</a>
   </div>
 </main>
-${footer(site)}`;
+${renderFooter(site)}`;
   return renderBase({ title: 'Page Not Found', description: 'Page not found', siteName: site.name, siteUrl: site.url, body, noindex: true, ga4MeasurementId: site.ga4MeasurementId || '' });
 }
 
@@ -455,7 +455,7 @@ export function renderCategoryPage(articles, category, site, page = 1, totalPage
   const paginationHtml = totalPages > 1 ? `<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${page > 1 ? `<a href="${page === 2 ? `/category/${category.slug}/` : `/category/${category.slug}/page/${page - 1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">&#8592; Prev</a>` : '<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page < totalPages ? `<a href="/category/${category.slug}/page/${page + 1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">Next &#8594;</a>` : '<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>` : '';
 
   const body = `
-${header(site)}
+${renderHeader(site)}
 <main class="site-main">
   <div class="wrap">
     <div class="ad ad-leader" style="min-height:90px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
@@ -467,7 +467,7 @@ ${header(site)}
     ${paginationHtml}
   </div>
 </main>
-${footer(site)}`;
+${renderFooter(site)}`;
 
   const pageTitle = page > 1 ? `${category.name} — Page ${page} — ${site.name}` : `${category.name} — ${site.name}`;
   const pageSchemas = page === 1 ? [breadcrumbSchema, itemListSchema] : [breadcrumbSchema];
@@ -494,7 +494,7 @@ export function renderTagPage(tag, articles, site) {
     </article>`).join('');
 
   const body = `
-${header(site)}
+${renderHeader(site)}
 <main class="site-main">
   <div class="wrap">
     <div class="breadcrumb" style="margin:16px 0 4px"><a href="/">Home</a> › <span>Topic: ${esc(tag.name)}</span></div>
@@ -503,7 +503,7 @@ ${header(site)}
     <div class="art-grid">${listHtml}</div>
   </div>
 </main>
-${footer(site)}`;
+${renderFooter(site)}`;
 
   const itemListSchema = {
     '@context': 'https://schema.org',
@@ -527,7 +527,7 @@ ${footer(site)}`;
 }
 
 // ── Shared partials ──────────────────────────────────────────
-function header(site) {
+export function renderHeader(site) {
   return `
 <div class="ticker">
   <span class="ticker-lbl">TRENDING</span>
@@ -563,7 +563,7 @@ function header(site) {
 <script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`;
 }
 
-function footer(site) {
+export function renderFooter(site) {
   return `
 <footer class="site-footer">
   ${adUnit('footer')}

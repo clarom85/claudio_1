@@ -135,7 +135,7 @@ ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function esc(str=''){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
-function header(site){return`
+export function renderHeader(site){return`
 <div class="hdr-dateline">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} — EST. ${new Date().getFullYear()}</div>
 <header>
   <div class="hdr-main">
@@ -149,7 +149,7 @@ function header(site){return`
 </header>
 <script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`}
 
-function footer(site){return`
+export function renderFooter(site){return`
 <footer class="site-footer">
   ${adUnit('footer')}
   <div class="wrap">
@@ -209,7 +209,7 @@ ${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FO
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="${r.image||`/images/${r.slug}.jpg`}" alt="${esc(r.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
-  const body=`${header(site)}<main class="site-main"><div class="wrap">
+  const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">
     <header class="art-hdr">
       <div class="art-kicker"><a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'Expert Guide')}</a></div>
       <h1 class="art-title">${esc(article.title)}</h1>
@@ -233,7 +233,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
     </div>
     ${adUnit('leaderboard')}
   ${adUnit('leaderboard')}
-  </div></main>${footer(site)}`;
+  </div></main>${renderFooter(site)}`;
   const pubIso=article.date?new Date(article.date).toISOString():'';
   const modIso=article.updatedAt?new Date(article.updatedAt).toISOString():pubIso;
   return renderBase({title:article.title,description:article.metaDescription,slug:article.slug,siteName:site.name,siteUrl:site.url,schemas:article.schemas||[],body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:article.image?`${site.url}${article.image}`:'',datePublished:pubIso,dateModified:modIso,authorUrl:`${site.url}/author/${site.authorAvatar||''}/`,lcpImage:article.image?`${site.url}${article.image}`:''});
@@ -247,7 +247,7 @@ export function renderHomePage(articles,site){
   </div>`:'';
   const gridHtml=latest.length?`<section><h2 class="section-title">Latest Coverage</h2><div class="art-grid">${latest.map(a=>`<article class="card"><div class="card-img"><img src="${a.image||`/images/${a.slug}.jpg`}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3><p class="card-excerpt">${esc(a.excerpt)}</p></div></article>`).join('')}</div></section>`:'';
   const h1Html=`<h1 class="section-title" style="margin-top:0">${esc(site.tagline||site.name)}</h1>`;
-  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${h1Html}${heroHtml}${adUnit('leaderboard')}${gridHtml}${adUnit('leaderboard')}</div></main>${footer(site)}`;
+  const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${h1Html}${heroHtml}${adUnit('leaderboard')}${gridHtml}${adUnit('leaderboard')}</div></main>${renderFooter(site)}`;
   const orgSchema={'@context':'https://schema.org','@type':'Organization','@id':`${site.url}/#organization`,name:site.name,url:site.url,logo:{'@type':'ImageObject',url:`${site.url}/logo.png`,width:200,height:60}};
   const webSiteSchema={'@context':'https://schema.org','@type':'WebSite','@id':`${site.url}/#website`,url:site.url,name:site.name,description:site.tagline||site.name,potentialAction:{'@type':'SearchAction',target:{'@type':'EntryPoint',urlTemplate:`${site.url}/?s={search_term_string}`},'query-input':'required name=search_term_string'}};
   const heroImg=hero?(hero.image||`/images/${hero.slug}.jpg`):'';
@@ -263,14 +263,14 @@ export function renderCategoryPage(articles,category,site,page=1,totalPages=1){
   const prevUrl=page>1?(page===2?`${catBase}/`:`${catBase}/page/${page-1}/`):'';
   const nextUrl=page<totalPages?`${catBase}/page/${page+1}/`:'';
   const paginationHtml=totalPages>1?`<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${page>1?`<a href="${page===2?`/category/${category.slug}/`:`/category/${category.slug}/page/${page-1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">&#8592; Prev</a>`:'<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page<totalPages?`<a href="/category/${category.slug}/page/${page+1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">Next &#8594;</a>`:'<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>`:'';
-  const body=`${header(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}<div style="margin:20px 0 4px;font-size:13px;color:var(--muted)"><a href="/" style="color:var(--green)">Home</a> › <span>${esc(category.name)}</span></div><h1 class="section-title">${esc(category.name)}</h1><p style="color:var(--muted);margin-bottom:28px;font-size:14px">${articles.length} expert article${articles.length!==1?'s':''}</p><div class="art-grid">${gridHtml}</div>${adUnit('leaderboard')}${paginationHtml}</div></main>${footer(site)}`;
+  const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}<div style="margin:20px 0 4px;font-size:13px;color:var(--muted)"><a href="/" style="color:var(--green)">Home</a> › <span>${esc(category.name)}</span></div><h1 class="section-title">${esc(category.name)}</h1><p style="color:var(--muted);margin-bottom:28px;font-size:14px">${articles.length} expert article${articles.length!==1?'s':''}</p><div class="art-grid">${gridHtml}</div>${adUnit('leaderboard')}${paginationHtml}</div></main>${renderFooter(site)}`;
   const pageTitle=page>1?`${category.name} — Page ${page} — ${site.name}`:`${category.name} — ${site.name}`;
   const pageSchemas=page===1?[schema,itemListSchema]:[schema];
   return renderBase({title:pageTitle,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:page>1?`category/${category.slug}/page/${page}`:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:pageSchemas,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:articles[0]?`${site.url}/images/${articles[0].slug}.jpg`:'',prevUrl,nextUrl});
 }
 
 export function render404Page(site){
-  const body=`${header(site)}<main class="site-main"><div class="wrap" style="text-align:center;padding:80px 20px"><h1 style="font-family:'Playfair Display',serif;font-size:48px">404</h1><p style="margin:16px 0 24px;font-size:18px">Page not found</p><a href="/" style="background:#1a5c3a;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700">← Back to Home</a></div></main>${footer(site)}`;
+  const body=`${renderHeader(site)}<main class="site-main"><div class="wrap" style="text-align:center;padding:80px 20px"><h1 style="font-family:'Playfair Display',serif;font-size:48px">404</h1><p style="margin:16px 0 24px;font-size:18px">Page not found</p><a href="/" style="background:#1a5c3a;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700">← Back to Home</a></div></main>${renderFooter(site)}`;
   return renderBase({title:'Page Not Found',description:'Page not found',siteName:site.name,siteUrl:site.url,body,noindex:true,ga4MeasurementId:site.ga4MeasurementId||''});
 }
 
@@ -291,13 +291,13 @@ export function renderTagPage(tag, articles, site) {
       '@type': 'ListItem', position: i + 1, url: `${site.url}/${a.slug}/`, name: a.title
     }))
   };
-  const body = `${header(site)}<main class="site-main"><div class="wrap">
+  const body = `${renderHeader(site)}<main class="site-main"><div class="wrap">
     ${adUnit('leaderboard')}
     <h1 class="section-title">Topic: ${esc(tag.name)}</h1>
     <p style="color:var(--muted);margin-bottom:28px">${articles.length} article${articles.length !== 1 ? 's' : ''}</p>
     <div class="art-grid">${listHtml}</div>
     ${adUnit('leaderboard')}
-  </div></main>${footer(site)}`;
+  </div></main>${renderFooter(site)}`;
   return renderBase({
     title: `${tag.name} — ${site.name}`,
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
