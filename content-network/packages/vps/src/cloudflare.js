@@ -163,6 +163,64 @@ export async function purgeUrls(domain, urls) {
   console.log(`  ✅ Purged ${urls.length} URLs: ${domain}`);
 }
 
+/* ── Email Routing ────────────────────────────────────────────── */
+
+/**
+ * Abilita Cloudflare Email Routing e imposta una regola catch-all
+ * che inoltra *@domain a forwardTo.
+ * CF aggiunge automaticamente i record MX necessari.
+ *
+ * Gmail mostrerà "To: editor@domain.com" (o contact@, ads@, ecc.)
+ * nel campo To: così sai sempre da quale sito proviene l'email.
+ */
+export async function setupEmailRouting(zoneId, forwardTo) {
+  // 1. Abilita Email Routing sulla zona (idempotente)
+  try {
+    await cfFetch(`/zones/${zoneId}/email/routing/enable`, 'POST');
+    console.log(`  ✅ Email Routing enabled`);
+  } catch (err) {
+    if (err.message.toLowerCase().includes('already enabled') ||
+        err.message.toLowerCase().includes('already exists')) {
+      console.log(`  ℹ️  Email Routing already enabled`);
+    } else {
+      throw err;
+    }
+  }
+
+  // 2. Aggiungi forwardTo come indirizzo di destinazione verificato
+  //    (CF richiede che l'indirizzo sia "verified" prima di poterlo usare)
+  try {
+    await cfFetch(`/accounts/${await _getAccountId()}/email/routing/addresses`, 'POST', {
+      email: forwardTo,
+    });
+    console.log(`  ✅ Destination address registered: ${forwardTo}`);
+  } catch (err) {
+    if (err.message.toLowerCase().includes('already exists') ||
+        err.message.toLowerCase().includes('duplicate')) {
+      // già registrato — ok
+    } else {
+      console.warn(`  ⚠️  Could not register destination address: ${err.message}`);
+    }
+  }
+
+  // 3. Imposta regola catch-all → forward a destinazione
+  await cfFetch(`/zones/${zoneId}/email/routing/rules/catch_all`, 'PUT', {
+    actions: [{ type: 'forward', value: [forwardTo] }],
+    enabled: true,
+    matchers: [{ type: 'all' }],
+    name: 'catch-all forward',
+  });
+
+  console.log(`  ✅ Email routing: *@domain → ${forwardTo}`);
+}
+
+/** Recupera l'account ID Cloudflare (necessario per registrare indirizzi email). */
+async function _getAccountId() {
+  const accounts = await cfFetch('/accounts');
+  if (!accounts?.length) throw new Error('No Cloudflare accounts found');
+  return accounts[0].id;
+}
+
 /* ── Full setup (chiamato da site-spawner) ────────────────────── */
 
 /**
@@ -175,6 +233,14 @@ export async function setupDomain(domain, serverIp) {
   const zone = await addZone(domain);
   await createDnsRecords(zone.id, domain, serverIp);
   await configureZoneSettings(zone.id);
+
+  // Email routing — catch-all → vireonmediaadv@gmail.com (o override da env)
+  const forwardTo = process.env.FORWARD_EMAIL || 'vireonmediaadv@gmail.com';
+  try {
+    await setupEmailRouting(zone.id, forwardTo);
+  } catch (err) {
+    console.warn(`  ⚠️  Email routing setup failed (non-blocking): ${err.message}`);
+  }
 
   const nameservers = zone.name_servers || [];
   if (nameservers.length) {
