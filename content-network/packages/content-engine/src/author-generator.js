@@ -103,9 +103,9 @@ async function fetchAuthorPhoto(persona, destDir) {
   const gender = inferGender(persona.name);
   // Query specifiche per ritratti frontali con viso — evita busti/torsi/figure intere
   const queries = [
-    `${gender.pexelsGender} face portrait close up looking at camera`,
-    `${gender.pexelsGender} headshot face only professional neutral background`,
-    `${gender.pexelsGender} portrait face forward close up studio`
+    `white ${gender.pexelsGender} face portrait close up looking at camera`,
+    `white ${gender.pexelsGender} headshot face only professional neutral background`,
+    `white ${gender.pexelsGender} portrait face forward close up studio`
   ];
 
   // VPS: destDir = /var/www/domain → salva in /var/www/domain/images/
