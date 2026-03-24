@@ -35,8 +35,8 @@ async function run() {
   }
 
   const sites = all
-    ? await sql`SELECT id, domain, template, niche_slug, ga4_measurement_id FROM sites WHERE status != 'inactive' ORDER BY id`
-    : await sql`SELECT id, domain, template, niche_slug, ga4_measurement_id FROM sites WHERE id = ${siteId}`;
+    ? await sql`SELECT s.id, s.domain, s.template, s.ga4_measurement_id, n.slug AS niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
+    : await sql`SELECT s.id, s.domain, s.template, s.ga4_measurement_id, n.slug AS niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
 
   if (!sites.length) { console.error('Nessun sito trovato'); process.exit(1); }
 
