@@ -10,6 +10,7 @@
 import { createWriteStream, mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { pipeline } from 'stream/promises';
+import { spawnSync } from 'child_process';
 
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PEXELS_KEY = process.env.PEXELS_API_KEY;
@@ -242,6 +243,19 @@ function saveUsedId(imagesDir, photoId) {
   writeFileSync(filePath, JSON.stringify({ ids: [...usedIds] }), 'utf-8');
 }
 
+/**
+ * Compresses a JPEG in-place using jpegoptim (if available).
+ * Targets 82% quality and strips EXIF — typically saves 40-70% of file size.
+ * Fails silently if jpegoptim is not installed.
+ */
+function compressJpeg(filePath) {
+  try {
+    spawnSync('jpegoptim', ['--max=82', '--strip-all', '--quiet', filePath], { timeout: 10000 });
+  } catch {
+    // jpegoptim not installed — skip compression silently
+  }
+}
+
 async function searchPexels(query, usedIds, pages = 2) {
   for (let page = 1; page <= pages; page++) {
     const res = await fetch(
@@ -292,6 +306,9 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
 
       await pipeline(imgRes.body, createWriteStream(destPath));
       saveUsedId(imagesDir, photo.id);
+
+      // Compress in-place: target ~82% quality, strip EXIF (saves 40-70% size)
+      compressJpeg(destPath);
 
       console.log(`  [image] Saved /images/${slug}.jpg (Pexels #${photo.id}, query: "${query}")`);
       return `/images/${slug}.jpg`;

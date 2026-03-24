@@ -101,7 +101,7 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       return {
         slug,
         title: articleData.title,
-        metaDescription,
+        metaDescription: metaDescription.slice(0, 160),
         content: html,
         wordCount,
         schemaMarkup: schemas,

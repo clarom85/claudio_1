@@ -27,6 +27,8 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .hdr-nav ul{list-style:none;display:flex;gap:4px;flex-wrap:wrap}
 .hdr-nav a{color:rgba(255,255,255,.65);text-decoration:none;padding:6px 12px;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:4px;transition:all .2s}
 .hdr-nav a:hover{background:var(--orange);color:#fff}
+.nav-toggle{display:none;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.8);font-size:24px;line-height:1;width:48px;height:48px;align-items:center;justify-content:center;margin-left:auto}
+@media(max-width:640px){.nav-toggle{display:flex}.hdr-nav ul{display:none;flex-direction:column;width:100%;gap:0}.hdr-nav ul.nav-open{display:flex}.hdr-nav a{padding:14px 20px;border-radius:0;border-bottom:1px solid rgba(255,255,255,.1)}}
 
 /* Layout */
 .site-main{padding:32px 0 64px}
@@ -187,9 +189,10 @@ function header(site){return`
   <div class="hdr-main"><div class="wrap">
     <a href="/" class="logo"><span class="logo-v">${esc((site.name||'V')[0].toUpperCase())}</span><span class="logo-text">${esc(site.name.toUpperCase())}</span></a>
     ${adUnit('leaderboard')}
-    <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--orange);font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
+    <nav class="hdr-nav"><button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--orange);font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
   </div></div>
-</header>`}
+</header>
+<script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`}
 
 function footer(site){return`
 <footer class="site-footer">${adUnit('footer')}<div class="wrap">

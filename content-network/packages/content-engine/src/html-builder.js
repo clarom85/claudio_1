@@ -101,7 +101,9 @@ function escapeRegexChars(str) {
 }
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [] }) {
-  const { title, metaDescription, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations } = articleData;
+  const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations } = articleData;
+  // Enforce Google's 160-char limit — Claude occasionally overshoots
+  const metaDescription = (articleData.metaDescription || '').slice(0, 160);
 
   const datePublished = new Date().toISOString();
   const dateFormatted = new Date(datePublished).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });

@@ -28,6 +28,8 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .hdr-nav ul{list-style:none;display:flex;justify-content:center;flex-wrap:wrap}
 .hdr-nav a{display:block;color:rgba(255,255,255,.9);text-decoration:none;padding:9px 18px;font-size:13px;font-weight:600;font-family:var(--ff-head);transition:background .2s}
 .hdr-nav a:hover{background:rgba(255,255,255,.15)}
+.nav-toggle{display:none;background:none;border:none;cursor:pointer;color:#fff;font-size:24px;line-height:1;width:48px;height:48px;align-items:center;justify-content:center;margin-left:auto}
+@media(max-width:640px){.nav-toggle{display:flex}.hdr-nav ul{display:none;flex-direction:column;width:100%}.hdr-nav ul.nav-open{display:flex}.hdr-nav a{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.15)}}
 
 /* Layout */
 .site-main{padding:28px 0 56px}
@@ -144,8 +146,9 @@ function header(site){return`
       <div class="hdr-rule"></div>
     </div>
   </div>
-  <nav class="hdr-nav"><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#c9a84c;font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
-</header>`}
+  <nav class="hdr-nav"><button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#c9a84c;font-weight:700">Free Calculator</a></li>`:''}</ul></nav>
+</header>
+<script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`}
 
 function footer(site){return`
 <footer class="site-footer">
