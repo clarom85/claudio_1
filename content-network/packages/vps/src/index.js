@@ -67,8 +67,18 @@ server {
         try_files $uri $uri/ $uri/index.html =404;
     }
 
-    # Assets cache 1 anno
-    location ~* \\.(css|js|png|jpg|jpeg|webp|ico|svg|woff2)$ {
+    # Images — serve WebP to supporting browsers (map $webp_suffix in /etc/nginx/conf.d/webp.conf)
+    location ~* ^(/images/.+)\\.jpe?g$ {
+        set $img_base $1;
+        add_header Vary Accept;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        try_files $img_base$webp_suffix $uri =404;
+    }
+
+    # Other static assets cache 1 anno
+    location ~* \\.(css|js|png|webp|ico|svg|woff2)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
         access_log off;
@@ -104,6 +114,30 @@ server {
 }
 
 export function reloadNginx() {
+  // Ensure WebP map and conf.d include exist (idempotent — safe to run on every spawn)
+  try {
+    const webpConf = '/etc/nginx/conf.d/webp.conf';
+    if (!existsSync(webpConf)) {
+      writeFileSync(webpConf,
+        '# Serve WebP images automatically to supporting browsers\n' +
+        'map $http_accept $webp_suffix {\n' +
+        '    default   "";\n' +
+        '    "~*webp"  ".webp";\n' +
+        '}\n'
+      );
+    }
+    // Add conf.d include to nginx.conf if not already present
+    const nginxConf = readFileSync('/etc/nginx/nginx.conf', 'utf-8');
+    if (!nginxConf.includes('conf.d')) {
+      writeFileSync('/etc/nginx/nginx.conf',
+        nginxConf.replace(
+          'include /etc/nginx/sites-enabled/*;',
+          'include /etc/nginx/conf.d/*.conf;\n    include /etc/nginx/sites-enabled/*;'
+        )
+      );
+    }
+  } catch { /* non-VPS environment — skip */ }
+
   try {
     execSync('nginx -t 2>&1', { stdio: 'pipe' });
     execSync('nginx -s reload');

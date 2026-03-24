@@ -244,16 +244,22 @@ function saveUsedId(imagesDir, photoId) {
 }
 
 /**
- * Compresses a JPEG in-place using jpegoptim (if available).
- * Targets 82% quality and strips EXIF — typically saves 40-70% of file size.
- * Fails silently if jpegoptim is not installed.
+ * Post-processes a downloaded JPEG:
+ * 1. Strips EXIF metadata with jpegoptim (if available)
+ * 2. Generates a WebP version with cwebp (if available) — nginx serves it to browsers that support it
+ * Both steps fail silently if the tools are not installed (local dev safe).
  */
-function compressJpeg(filePath) {
+function postProcessImage(filePath) {
+  // Strip EXIF metadata (privacy + minor size saving)
   try {
-    spawnSync('jpegoptim', ['--max=82', '--strip-all', '--quiet', filePath], { timeout: 10000 });
-  } catch {
-    // jpegoptim not installed — skip compression silently
-  }
+    spawnSync('jpegoptim', ['--strip-all', '--quiet', filePath], { timeout: 10000 });
+  } catch { /* not installed */ }
+
+  // Generate WebP — nginx serves this automatically via content negotiation
+  try {
+    const webpPath = filePath.replace(/\.jpg$/i, '.webp');
+    spawnSync('cwebp', ['-q', '82', '-quiet', filePath, '-o', webpPath], { timeout: 15000 });
+  } catch { /* not installed */ }
 }
 
 async function searchPexels(query, usedIds, pages = 2) {
@@ -307,8 +313,8 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
       await pipeline(imgRes.body, createWriteStream(destPath));
       saveUsedId(imagesDir, photo.id);
 
-      // Compress in-place: target ~82% quality, strip EXIF (saves 40-70% size)
-      compressJpeg(destPath);
+      // Strip EXIF + generate WebP variant for content negotiation
+      postProcessImage(destPath);
 
       console.log(`  [image] Saved /images/${slug}.jpg (Pexels #${photo.id}, query: "${query}")`);
       return `/images/${slug}.jpg`;
