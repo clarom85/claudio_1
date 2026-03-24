@@ -78,8 +78,15 @@ server {
         try_files $img_base$webp_suffix $uri =404;
     }
 
-    # Other static assets cache 1 anno
-    location ~* \\.(css|js|png|webp|ico|svg|woff2)$ {
+    # CSS/JS — 1 day (can change after deploys, do NOT mark immutable)
+    location ~* \\.(css|js)$ {
+        expires 1d;
+        add_header Cache-Control "public, max-age=86400";
+        access_log off;
+    }
+
+    # Images/fonts — immutable 1 year (never change for same slug)
+    location ~* \\.(png|webp|ico|svg|woff2)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
         access_log off;
