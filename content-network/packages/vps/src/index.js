@@ -41,7 +41,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name www.${domain};
-    return 301 http://${domain}$request_uri;
+    return 301 https://${domain}$request_uri;
 }
 
 server {
