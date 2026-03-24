@@ -55,8 +55,16 @@ async function run() {
     process.exit(1);
   }
 
+  // Carica slug e titoli già esistenti per il sito — usati per dedup
+  const existingArticles = await sql`
+    SELECT slug, title FROM articles WHERE site_id = ${siteId}
+  `;
+  const existingSlugs = new Set(existingArticles.map(a => a.slug));
+  const existingTitles = existingArticles.map(a => a.title.toLowerCase());
+
   let success = 0;
   let failed = 0;
+  let skipped = 0;
   const generatedArticles = [];
 
   // Determina la public dir del sito per le immagini
@@ -65,10 +73,31 @@ async function run() {
 
   for (const kw of keywords) {
     try {
-      process.stdout.write(`  [${success + failed + 1}/${keywords.length}] "${kw.keyword}" ... `);
+      process.stdout.write(`  [${success + failed + skipped + 1}/${keywords.length}] "${kw.keyword}" ... `);
 
       const article = await generateArticle(kw.keyword, niche, site, 3, sitePublicDir);
+
+      // Dedup: salta se slug già esiste
+      if (existingSlugs.has(article.slug)) {
+        await markKeywordUsed(kw.id);
+        skipped++;
+        console.log(`⚠️  SKIP (slug duplicate: ${article.slug})`);
+        continue;
+      }
+
+      // Dedup: salta se titolo troppo simile a uno già esistente (Jaccard ≥ 0.65)
+      const newTitle = article.title.toLowerCase();
+      const dupTitle = existingTitles.find(t => jaccardSimilarity(newTitle, t) >= 0.65);
+      if (dupTitle) {
+        await markKeywordUsed(kw.id);
+        skipped++;
+        console.log(`⚠️  SKIP (title too similar to: "${dupTitle}")`);
+        continue;
+      }
+
       generatedArticles.push({ ...article, keywordId: kw.id });
+      existingSlugs.add(article.slug);
+      existingTitles.push(newTitle);
       success++;
       console.log(`✅ ${article.wordCount} words${article.image ? ' + image' : ''}`);
 
@@ -77,6 +106,7 @@ async function run() {
       console.log(`❌ ${err.message}`);
     }
   }
+  if (skipped > 0) console.log(`\n  Skipped ${skipped} duplicate(s)`);
 
   // Second pass: inietta link interni tra tutti gli articoli generati
   console.log('\n🔗 Injecting internal links...');
@@ -132,6 +162,18 @@ async function run() {
  */
 function getScheduledTime(index, total) {
   return getPublishTime(index, total);
+}
+
+/**
+ * Jaccard similarity tra due stringhe (tokenizzate per parole).
+ * Ritorna valore 0–1. Usato per dedup titoli.
+ */
+function jaccardSimilarity(a, b) {
+  const setA = new Set(a.split(/\s+/).filter(Boolean));
+  const setB = new Set(b.split(/\s+/).filter(Boolean));
+  const intersection = [...setA].filter(w => setB.has(w)).length;
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 0 : intersection / union;
 }
 
 run().catch(err => {
