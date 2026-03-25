@@ -106,7 +106,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .nl-box button{width:100%;background:#c9a84c;color:#1a1a2e;border:none;padding:12px;font-weight:700;cursor:pointer;font-size:15px;border-radius:3px;letter-spacing:.5px;transition:opacity .2s}
 
 /* Home */
-.hero-layout{display:grid;grid-template-columns:2fr 1fr;gap:28px;margin-bottom:32px;padding-bottom:28px;border-bottom:3px double var(--border)}
+.hero-layout{display:grid;grid-template-columns:2fr 1fr;gap:28px;margin-bottom:32px;padding-bottom:28px;border-bottom:3px double var(--border);align-items:start}
 @media(max-width:700px){.hero-layout{grid-template-columns:1fr}}
 .card{background:var(--white);border:1px solid var(--border)}
 .card-img img{width:100%;aspect-ratio:16/9;object-fit:cover}
@@ -117,7 +117,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .card-title a:hover{color:var(--green)}
 .card-excerpt{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:8px}
 .card-meta{font-size:12px;color:var(--muted)}
-.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin:20px 0}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin:20px 0}
 .section-title{font-family:var(--ff-head);font-size:24px;color:var(--dark);margin-bottom:20px;padding-bottom:8px;border-bottom:3px double var(--border)}
 
 /* Footer */
@@ -240,10 +240,10 @@ export function renderArticlePage(article,site,relatedArticles=[]){
 
 export function renderHomePage(articles,site){
   const hero=articles[0];const featured=articles.slice(1,4);const latest=articles.slice(4,20);
-  const heroHtml=hero?`<div class="hero-layout">
-    <article class="card"><div class="card-img"><img src="${hero.image||`/images/${hero.slug}.jpg`}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(hero.category||'Featured')}</div><h2 class="card-title" style="font-size:26px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2><p class="card-excerpt">${esc(hero.excerpt)}</p><div class="card-meta">${esc(hero.author)}</div></div></article>
-    <div>${featured.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>
-  </div>`:'';
+  const featuredHtml=featured.length?`<div>${featured.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>`:'';
+  const heroCard=hero?`<article class="card"><div class="card-img"><img src="${hero.image||`/images/${hero.slug}.jpg`}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(hero.category||'Featured')}</div><h2 class="card-title" style="font-size:26px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2><p class="card-excerpt">${esc(hero.excerpt)}</p><div class="card-meta">${esc(hero.author)}</div></div></article>`:'';
+  const heroHtml=hero?(featuredHtml?`<div class="hero-layout">${heroCard}${featuredHtml}</div>`:`<div style="margin-bottom:32px;padding-bottom:28px;border-bottom:3px double var(--border)">${heroCard}</div>`):'';
+
   const gridHtml=latest.length?`<section><h2 class="section-title">Latest Coverage</h2><div class="art-grid">${latest.map(a=>`<article class="card"><div class="card-img"><img src="${a.image||`/images/${a.slug}.jpg`}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3><p class="card-excerpt">${esc(a.excerpt)}</p></div></article>`).join('')}</div></section>`:'';
   const h1Html=`<div style="text-align:center;padding:20px 16px 22px;border-bottom:3px double var(--border);margin-bottom:28px;background:var(--light)"><span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Your Trusted Source For</span><h1 style="font-family:var(--ff-head);font-size:clamp(20px,3.5vw,32px);color:var(--dark);margin:0 0 10px;font-weight:900;line-height:1.1">${esc(site.tagline||site.name)}</h1><p style="font-size:12px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:0">Real costs &amp; expert advice — updated ${new Date().getFullYear()}</p></div>`;
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${h1Html}${heroHtml}${adUnit('leaderboard')}${gridHtml}${adUnit('leaderboard')}</div></main>${renderFooter(site)}`;
