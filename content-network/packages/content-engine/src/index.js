@@ -45,7 +45,7 @@ async function run() {
 
   console.log(`\n✍️  Content Engine`);
   console.log(`Site: ${site.domain} (${niche.name})`);
-  logScheduleInfo(site.created_at);
+  logScheduleInfo(site.created_at, site.id);
   console.log(`Generating: ${count} articles\n`);
 
   const keywords = await getUnusedKeywords(niche.id, count);

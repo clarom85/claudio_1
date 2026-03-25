@@ -23,7 +23,7 @@ import { runLinkGraphAnalysis } from '@content-network/vps/src/link-graph.js';
 import { alertCritical, alertWarning, alertReport } from '@content-network/vps/src/alert.js';
 import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
-import { getDailyArticleLimit, logScheduleInfo } from '@content-network/content-engine/src/publishing-schedule.js';
+import { getDailyArticleLimit, logScheduleInfo, isDeadDay } from '@content-network/content-engine/src/publishing-schedule.js';
 import { injectInternalLinks } from '@content-network/content-engine/src/link-injector.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -256,6 +256,12 @@ async function triggerDailyGeneration() {
   const liveSites = await getSitesByStatus('live');
 
   for (const site of liveSites) {
+    // Giorno STOP? Siti diversi hanno stop diversificati (seeded su siteId + data)
+    if (isDeadDay(site.id, site.created_at)) {
+      console.log(`\n  📍 ${site.domain} — DEAD DAY (scheduled stop, skipping)`);
+      continue;
+    }
+
     // Calcola limite giornaliero basato sull'età del sito
     const { count: dailyLimit, ageDays, label } = getDailyArticleLimit(site.created_at);
     const cappedLimit = Math.min(dailyLimit, MAX_ARTICLES_PER_DAY);

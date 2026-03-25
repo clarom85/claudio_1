@@ -1,114 +1,178 @@
 /**
- * Publishing Schedule — cadenza articoli basata sull'età del sito
+ * Publishing Schedule — cadenza articoli adattiva basata sull'età del sito
  *
  * Logica anti-penalty Google:
- * - Siti nuovi pubblicano poco e lentamente (crawl budget basso)
- * - La rampa è graduale per sembrare crescita organica
- * - Pubblicazione solo in orari umani (7am-10pm EST)
- * - Jitter casuale ±12 minuti su ogni slot (non meccanico)
- * - Nessuna pubblicazione nelle ore notturne
+ * - Siti nuovi pubblicano poco (Google sandbox), siti maturi pubblicano di più
+ * - Orari di pubblicazione cambiano ogni giorno (nessun pattern fisso riconoscibile)
+ * - Gap variabili tra articoli: da 20 min a 3 ore (comportamento umano)
+ * - Giorni STOP per sito: randomizzati e diversificati (non tutti i siti fermi lo stesso giorno)
+ * - Dead day probability: più alta nella fase di crescita, si riduce per siti maturi
  */
 
 // EST = UTC-5 (non gestiamo DST — margine sufficiente)
 const EST_OFFSET_MS = 5 * 60 * 60 * 1000;
 
-// Finestra di pubblicazione in ora EST
-const PUBLISH_START_HOUR = 7;   // 7:00am EST
-const PUBLISH_END_HOUR   = 22;  // 10:00pm EST
-const PUBLISH_WINDOW_HOURS = PUBLISH_END_HOUR - PUBLISH_START_HOUR; // 15 ore
+// Finestra di pubblicazione (ora EST)
+const PUBLISH_START_MIN = 8 * 60;        // 08:00 EST in minuti dall'inizio giorno
+const PUBLISH_END_MIN   = 22 * 60 + 30;  // 22:30 EST
+const WINDOW_MIN = PUBLISH_END_MIN - PUBLISH_START_MIN; // 870 min
+
+// Gap minimo e massimo tra articoli consecutivi (minuti)
+const GAP_MIN = 20;
+const GAP_MAX = 180;
 
 /**
- * Fasce di rampa basate sui giorni di vita del sito.
- * Ogni fascia ha un range [min, max] — si usa il mid ± 20% random.
+ * Fasce di rampa per età sito.
+ * deadDayProb: probabilità che oggi sia un giorno STOP per questo sito.
+ * I siti maturi hanno deadDayProb più bassa perché pubblicano regolarmente.
  */
 const RAMP = [
-  { maxDays:  14, minPerDay:  3, maxPerDay:  5, label: 'Warm-up (week 1-2)' },
-  { maxDays:  30, minPerDay:  6, maxPerDay: 10, label: 'Early growth (month 1)' },
-  { maxDays:  60, minPerDay: 10, maxPerDay: 16, label: 'Growth (month 2)' },
-  { maxDays:  90, minPerDay: 16, maxPerDay: 22, label: 'Established (month 3)' },
-  { maxDays: 180, minPerDay: 20, maxPerDay: 28, label: 'Authority (month 4-6)' },
-  { maxDays: Infinity, minPerDay: 25, maxPerDay: 35, label: 'Mature (6m+)' },
+  { maxDays:  14, minPerDay:  3, maxPerDay:  5, deadDayProb: 0.05, label: 'Warm-up (week 1-2)' },
+  { maxDays:  30, minPerDay:  5, maxPerDay:  9, deadDayProb: 0.15, label: 'Early growth (month 1)' },
+  { maxDays:  60, minPerDay:  8, maxPerDay: 14, deadDayProb: 0.25, label: 'Growth (month 2)' },
+  { maxDays:  90, minPerDay: 12, maxPerDay: 18, deadDayProb: 0.20, label: 'Established (month 3)' },
+  { maxDays: 180, minPerDay: 16, maxPerDay: 24, deadDayProb: 0.12, label: 'Authority (month 4-6)' },
+  { maxDays: Infinity, minPerDay: 22, maxPerDay: 32, deadDayProb: 0.08, label: 'Mature (6m+)' },
 ];
+
+// ─── Seeded PRNG (Mulberry32) ─────────────────────────────────────────────────
+// Deterministico: stesso siteId + stessa data → sempre stesso risultato.
+// Garantisce che diversi siti abbiano giorni STOP diversificati.
+
+function seededRand(seed) {
+  let t = (seed + 0x6D2B79F5) >>> 0;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+function dayNumber(date = new Date()) {
+  return Math.floor(date.getTime() / (1000 * 60 * 60 * 24));
+}
+
+// ─── Dead day (giorno STOP) ───────────────────────────────────────────────────
+
+/**
+ * Decide se oggi è un giorno STOP per questo sito.
+ * Usa un PRNG deterministico: stesso siteId + stessa data → stesso risultato,
+ * ma siti diversi hanno giorni STOP diversi (diversificati).
+ *
+ * @param {number} siteId
+ * @param {Date|string} siteCreatedAt
+ * @param {Date} [date]
+ * @returns {boolean}
+ */
+export function isDeadDay(siteId, siteCreatedAt, date = new Date()) {
+  const ageDays = Math.floor((date.getTime() - new Date(siteCreatedAt).getTime()) / (1000 * 60 * 60 * 24));
+  const phase = RAMP.find(r => ageDays <= r.maxDays) || RAMP[RAMP.length - 1];
+
+  // Seed unico per sito + giorno: siti diversi → giorni STOP diversi
+  const seed = (siteId * 73856093) ^ (dayNumber(date) * 19349663);
+  return seededRand(seed) < phase.deadDayProb;
+}
+
+// ─── Daily article limit ──────────────────────────────────────────────────────
 
 /**
  * Calcola quanti articoli pubblicare oggi per questo sito.
- * @param {Date|string} siteCreatedAt — data creazione sito
- * @returns {{ count: number, label: string }}
+ * Il numero varia ogni giorno all'interno del range della fase.
+ *
+ * @param {Date|string} siteCreatedAt
+ * @param {Date} [date]
+ * @returns {{ count: number, ageDays: number, label: string }}
  */
-export function getDailyArticleLimit(siteCreatedAt) {
-  const created = new Date(siteCreatedAt);
-  const ageDays = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
-
+export function getDailyArticleLimit(siteCreatedAt, date = new Date()) {
+  const ageDays = Math.floor((date.getTime() - new Date(siteCreatedAt).getTime()) / (1000 * 60 * 60 * 24));
   const phase = RAMP.find(r => ageDays <= r.maxDays) || RAMP[RAMP.length - 1];
 
-  // Variazione casuale nel range — ogni giorno un numero leggermente diverso
+  // Variazione casuale nel range — diversa ogni giorno
   const range = phase.maxPerDay - phase.minPerDay;
   const count = phase.minPerDay + Math.floor(Math.random() * (range + 1));
 
   return { count, ageDays, label: phase.label };
 }
 
+// ─── Time slots ───────────────────────────────────────────────────────────────
+
 /**
- * Schedula N articoli distribuiti nella finestra 7am-10pm EST di oggi.
- * Ogni slot ha un jitter casuale ±12 minuti.
+ * Genera N timestamp di pubblicazione organici per oggi.
+ * Gli orari cambiano ogni giorno: gap variabili (20 min – 3h), nessun pattern fisso.
  *
- * @param {number} index         — indice articolo (0-based)
- * @param {number} total         — totale articoli da schedulare
- * @param {Date}   [baseDate]    — data di partenza (default: now)
- * @returns {Date} — timestamp pubblicazione
+ * @param {number} index   — indice articolo (0-based)
+ * @param {number} total   — totale articoli da schedulare
+ * @param {Date}   [baseDate]
+ * @returns {Date}
  */
 export function getPublishTime(index, total, baseDate = new Date()) {
-  // Converti ora corrente in EST
+  // Calcola la data base in EST (ignora l'ora, partiamo dall'inizio finestra)
   const nowEst = new Date(baseDate.getTime() - EST_OFFSET_MS);
-  const currentHourEst = nowEst.getUTCHours();
+  const currentMinEst = nowEst.getUTCHours() * 60 + nowEst.getUTCMinutes();
 
-  // Se siamo già in fascia serale, schedula per domani mattina
-  let startEst;
-  if (currentHourEst >= PUBLISH_END_HOUR - 1) {
-    // Domani alle 7am EST
-    const tomorrow = new Date(nowEst);
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-    tomorrow.setUTCHours(PUBLISH_START_HOUR, 0, 0, 0);
-    startEst = tomorrow;
-  } else if (currentHourEst < PUBLISH_START_HOUR) {
-    // Oggi alle 7am EST
-    const today = new Date(nowEst);
-    today.setUTCHours(PUBLISH_START_HOUR, 0, 0, 0);
-    startEst = today;
+  // Determina la data EST da cui partiamo
+  let baseDateEst = new Date(nowEst);
+  let startMin; // minuto EST da cui iniziare la distribuzione
+
+  if (currentMinEst >= PUBLISH_END_MIN - GAP_MIN) {
+    // Troppo tardi oggi → schedula da domani mattina
+    baseDateEst.setUTCDate(baseDateEst.getUTCDate() + 1);
+    baseDateEst.setUTCHours(0, 0, 0, 0);
+    startMin = PUBLISH_START_MIN;
+  } else if (currentMinEst < PUBLISH_START_MIN) {
+    startMin = PUBLISH_START_MIN;
   } else {
-    // Ora corrente arrotondata ai 10 minuti successivi
-    startEst = new Date(nowEst);
-    startEst.setUTCMinutes(Math.ceil(startEst.getUTCMinutes() / 10) * 10, 0, 0);
+    // Arrotonda ai prossimi 5 minuti
+    startMin = Math.ceil(currentMinEst / 5) * 5 + 5;
   }
 
-  // Intervallo tra articoli in minuti, distribuito nella finestra
-  const windowMinutes = PUBLISH_WINDOW_HOURS * 60;
-  const intervalMinutes = total > 1 ? windowMinutes / (total - 1) : windowMinutes;
+  // Genera tutti gli slot per questo batch in modo coerente
+  // usando Math.random() con un seed virtuale basato sull'inizio del batch
+  const slots = generateOrganicSlots(total, startMin, PUBLISH_END_MIN);
+  const slotMin = slots[Math.min(index, slots.length - 1)];
 
-  // Offset per questo articolo
-  const offsetMinutes = index * intervalMinutes;
-
-  // Jitter casuale ±12 minuti (non pubblicare esattamente all'ora)
-  const jitterMinutes = (Math.random() * 24) - 12;
-
-  const publishEst = new Date(startEst.getTime() + (offsetMinutes + jitterMinutes) * 60 * 1000);
-
-  // Clamp: non uscire dalla finestra 7am-10pm EST
-  publishEst.setUTCHours(
-    Math.min(Math.max(publishEst.getUTCHours(), PUBLISH_START_HOUR), PUBLISH_END_HOUR - 1)
-  );
-
-  // Riconverti in UTC
-  return new Date(publishEst.getTime() + EST_OFFSET_MS);
+  // Costruisci il Date finale in UTC
+  const result = new Date(baseDateEst);
+  result.setUTCHours(Math.floor(slotMin / 60), slotMin % 60, 0, 0);
+  return new Date(result.getTime() + EST_OFFSET_MS);
 }
 
 /**
- * Log diagnostico — utile per debug
+ * Genera N slot di minuti distribuiti organicamente nella finestra [startMin, endMin].
+ * Gap variabili: tra GAP_MIN (20) e GAP_MAX (180) minuti.
+ * Chiamato una sola volta per batch → tutti gli articoli usano la stessa lista.
+ *
+ * Pattern organico: a volte due articoli vicini, poi una pausa lunga — come un editor umano.
  */
-export function logScheduleInfo(siteCreatedAt) {
+function generateOrganicSlots(count, startMin, endMin) {
+  if (count <= 0) return [];
+  if (count === 1) {
+    const mid = startMin + Math.floor(Math.random() * (endMin - startMin));
+    return [mid];
+  }
+
+  const available = endMin - startMin - (count * GAP_MIN);
+  const slots = [];
+  let cursor = startMin;
+
+  for (let i = 0; i < count; i++) {
+    const remaining = count - i - 1;
+    const maxGap = remaining > 0
+      ? Math.min(GAP_MAX, Math.floor((endMin - cursor - remaining * GAP_MIN) / 1))
+      : GAP_MAX;
+    const gap = GAP_MIN + Math.floor(Math.random() * Math.max(1, maxGap - GAP_MIN + 1));
+    cursor += gap;
+    if (cursor >= endMin) cursor = endMin - (remaining * GAP_MIN) - 1;
+    slots.push(Math.min(cursor, endMin - 1));
+  }
+
+  return slots;
+}
+
+// ─── Diagnostics ─────────────────────────────────────────────────────────────
+
+export function logScheduleInfo(siteCreatedAt, siteId = 0) {
   const { count, ageDays, label } = getDailyArticleLimit(siteCreatedAt);
-  console.log(`  📅 Schedule: site is ${ageDays} days old → ${label}`);
-  console.log(`  📰 Today's limit: ${count} articles/day`);
-  console.log(`  🕐 Window: ${PUBLISH_START_HOUR}am–${PUBLISH_END_HOUR - 12}pm EST (with ±12min jitter)`);
+  const dead = isDeadDay(siteId, siteCreatedAt);
+  console.log(`  Schedule: ${ageDays}d old → ${label}${dead ? ' [DEAD DAY — skip]' : ''}`);
+  console.log(`  Today's target: ${count} articles | window: 08:00–22:30 EST | gaps: 20min–3h`);
   return count;
 }
