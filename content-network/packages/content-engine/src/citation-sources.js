@@ -76,6 +76,49 @@ export const TRUSTED_CITATION_URLS = {
   'www.bankrate.com':        'https://www.bankrate.com/',
   'www.usda.gov':            'https://www.usda.gov/topics/',
   'fdc.nal.usda.gov':        'https://fdc.nal.usda.gov/',
+
+  // Building, Construction & Home Improvement
+  'www.cpsc.gov':            'https://www.cpsc.gov/Safety-Education/',
+  'cpsc.gov':                'https://www.cpsc.gov/',
+  'www.epa.gov':             'https://www.epa.gov/',
+  'epa.gov':                 'https://www.epa.gov/',
+  'www.iccsafe.org':         'https://www.iccsafe.org/building-safety-journal/',
+  'iccsafe.org':             'https://www.iccsafe.org/',
+  'www.nahb.org':            'https://www.nahb.org/research/',
+  'nahb.org':                'https://www.nahb.org/',
+  'www.nrca.net':            'https://www.nrca.net/',
+  'nrca.net':                'https://www.nrca.net/',
+  'www.nari.org':            'https://www.nari.org/',
+  'nari.org':                'https://www.nari.org/',
+  'www.nwfa.org':            'https://www.nwfa.org/',
+  'nwfa.org':                'https://www.nwfa.org/',
+  'www.rfci.com':            'https://www.rfci.com/',
+  'rfci.com':                'https://www.rfci.com/',
+  'www.awc.org':             'https://www.awc.org/codes-standards/',
+  'awc.org':                 'https://www.awc.org/',
+
+  // Automotive & Safety
+  'www.iihs.org':            'https://www.iihs.org/ratings/',
+  'iihs.org':                'https://www.iihs.org/',
+  'www.carfax.com':          'https://www.carfax.com/',
+
+  // Mental Health & Senior Care
+  'www.samhsa.gov':          'https://www.samhsa.gov/data/',
+  'samhsa.gov':              'https://www.samhsa.gov/',
+  'www.nimh.nih.gov':        'https://www.nimh.nih.gov/health/statistics/',
+  'nimh.nih.gov':            'https://www.nimh.nih.gov/',
+  'www.aging.gov':           'https://www.aging.gov/',
+
+  // Cybersecurity
+  'www.mitre.org':           'https://www.mitre.org/',
+  'mitre.org':               'https://www.mitre.org/',
+  'attack.mitre.org':        'https://attack.mitre.org/',
+
+  // Legal & Courts
+  'www.justia.com':          'https://www.justia.com/',
+  'justia.com':              'https://www.justia.com/',
+  'www.law.cornell.edu':     'https://www.law.cornell.edu/',
+  'law.cornell.edu':         'https://www.law.cornell.edu/',
 };
 
 /**
