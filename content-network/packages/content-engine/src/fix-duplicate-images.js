@@ -1,22 +1,23 @@
 /**
  * fix-duplicate-images.js
- * Rileva e sostituisce le immagini duplicate su un sito.
+ * Rileva e sostituisce TUTTE le immagini duplicate su disco per un sito.
+ * Scansiona tutti i JPG nella cartella images/ (non solo articoli published).
  * Uso: node packages/content-engine/src/fix-duplicate-images.js --site-id 5
  */
 import 'dotenv/config';
 import { createHash } from 'crypto';
-import { createWriteStream, mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { pipeline } from 'stream/promises';
+import { spawnSync } from 'child_process';
 import { sql } from '@content-network/db';
 
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PEXELS_KEY = process.env.PEXELS_API_KEY;
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 const USED_IDS_FILE = '.pexels-used.json';
+const SKIP_FILES = /^(author-|og-default|placeholder)/;
 
-function md5File(path) {
-  const buf = readFileSync(path);
+function md5(buf) {
   return createHash('md5').update(buf).digest('hex');
 }
 
@@ -33,24 +34,47 @@ function saveUsedId(imagesDir, id) {
   writeFileSync(f, JSON.stringify({ ids: [...ids] }), 'utf-8');
 }
 
-function sanitizeQuery(keyword) {
-  return keyword
-    .replace(/\bcost(s)?\b/gi, '').replace(/\bprice(s)?\b/gi, '')
-    .replace(/\bhow (much|to)\b/gi, '').replace(/\bnear me\b/gi, '')
-    .replace(/\b\d{4,5}\b/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+function postProcess(filePath) {
+  try { spawnSync('jpegoptim', ['--strip-all', '--quiet', filePath], { timeout: 10000 }); } catch {}
+  try {
+    spawnSync('cwebp', ['-q', '82', '-quiet', filePath, '-o', filePath.replace(/\.jpg$/i, '.webp')], { timeout: 15000 });
+  } catch {}
 }
 
-async function fetchUniquePhoto(query, usedIds) {
-  for (let page = 1; page <= 5; page++) {
+function slugToQuery(filename) {
+  return filename
+    .replace(/\.jpg$/, '')
+    .replace(/-/g, ' ')
+    .replace(/\bcost(s)?\b/gi, '')
+    .replace(/\bprice(s)?\b/gi, '')
+    .replace(/\bhow (much|to)\b/gi, '')
+    .replace(/\bnear me\b/gi, '')
+    .replace(/\b\d{4,5}\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60);
+}
+
+async function fetchUniquePhoto(query, usedIds, existingMd5s) {
+  for (let page = 1; page <= 6; page++) {
     const res = await fetch(
-      `${PEXELS_API}?query=${encodeURIComponent(query)}&per_page=15&page=${page}&orientation=landscape`,
+      `${PEXELS_API}?query=${encodeURIComponent(query)}&per_page=20&page=${page}&orientation=landscape`,
       { headers: { Authorization: PEXELS_KEY } }
     );
-    if (!res.ok) return null;
+    if (!res.ok) break;
     const data = await res.json();
     if (!data.photos?.length) break;
-    const photo = data.photos.find(p => !usedIds.has(p.id));
-    if (photo) return photo;
+    for (const photo of data.photos) {
+      if (usedIds.has(photo.id)) continue;
+      // Download and check MD5 before accepting
+      try {
+        const r = await fetch(photo.src.large);
+        if (!r.ok) continue;
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (existingMd5s.has(md5(buf))) { usedIds.add(photo.id); continue; }
+        return { photo, buf };
+      } catch { continue; }
+    }
   }
   return null;
 }
@@ -69,70 +93,63 @@ async function run() {
   const imagesDir = join(WWW_ROOT, site.domain, 'images');
   if (!existsSync(imagesDir)) { console.error(`Directory immagini non trovata: ${imagesDir}`); process.exit(1); }
 
-  // Carica articoli pubblicati con immagine
-  const articles = await sql`
-    SELECT a.id, a.slug, a.image, k.keyword
-    FROM articles a
-    JOIN keywords k ON a.keyword_id = k.id
-    WHERE a.site_id = ${siteId} AND a.status = 'published' AND a.image IS NOT NULL
-    ORDER BY a.id
-  `;
+  // Scansiona TUTTI i JPG su disco (non solo articoli published nel DB)
+  const allJpgs = readdirSync(imagesDir)
+    .filter(f => f.endsWith('.jpg') && !SKIP_FILES.test(f))
+    .map(f => ({ filename: f, path: join(imagesDir, f) }));
 
-  console.log(`\n🔍 Analisi immagini per ${site.domain} (${articles.length} articoli)\n`);
+  console.log(`\n🔍 Scansione ${allJpgs.length} immagini per ${site.domain}...\n`);
 
-  // Calcola MD5 di ogni immagine → trova duplicati
-  const md5Map = new Map(); // md5 → primo slug che lo usa
+  // Gruppo per MD5: md5 → primo filename (keeper)
+  const md5Map = new Map();
   const duplicates = [];
 
-  for (const art of articles) {
-    const imgPath = join(WWW_ROOT, site.domain, art.image);
-    if (!existsSync(imgPath)) { console.log(`  ⚠️  File mancante: ${art.image}`); continue; }
-    const hash = md5File(imgPath);
-    if (md5Map.has(hash)) {
-      duplicates.push({ ...art, imgPath, hash });
-      console.log(`  🔁 DUPLICATO: ${art.slug} (stesso MD5 di ${md5Map.get(hash)})`);
-    } else {
-      md5Map.set(hash, art.slug);
-    }
+  for (const img of allJpgs) {
+    try {
+      const hash = md5(readFileSync(img.path));
+      if (md5Map.has(hash)) {
+        duplicates.push({ ...img, hash, keeper: md5Map.get(hash) });
+        console.log(`  🔁 DUP: ${img.filename} == ${md5Map.get(hash)}`);
+      } else {
+        md5Map.set(hash, img.filename);
+      }
+    } catch { console.log(`  ⚠️  Impossibile leggere: ${img.filename}`); }
   }
 
   if (!duplicates.length) {
-    console.log('✅ Nessun duplicato trovato — tutte le immagini sono uniche!');
+    console.log('✅ Nessun duplicato trovato!');
     process.exit(0);
   }
 
   console.log(`\n📥 Re-scarico ${duplicates.length} immagini duplicate...\n`);
 
-  // Carica ID Pexels già usati (dal file di tracking)
+  // usedIds + existingMd5s: aggiornati live durante il loop
   const usedIds = loadUsedIds(imagesDir);
+  const existingMd5s = new Set(md5Map.keys()); // MD5 delle immagini keeper
 
-  // Aggiungi gli MD5 delle immagini non-duplicate come "occupate" —
-  // non possiamo ricavare l'ID Pexels da file già scaricati, ma il file .pexels-used
-  // verrà popolato man mano che re-scarichiamo
   let fixed = 0;
-  for (const art of duplicates) {
-    const query = sanitizeQuery(art.keyword);
-    console.log(`  [${art.slug}] cercando foto unica per "${query}"...`);
+  for (const dup of duplicates) {
+    const query = slugToQuery(dup.filename);
+    console.log(`  [${dup.filename}] query: "${query}"...`);
 
-    const photo = await fetchUniquePhoto(query, usedIds);
-    if (!photo) {
+    const result = await fetchUniquePhoto(query, usedIds, existingMd5s);
+    if (!result) {
       console.log(`  ❌ Nessuna foto disponibile per "${query}"`);
       continue;
     }
 
     try {
-      const imgRes = await fetch(photo.src.large);
-      if (!imgRes.ok) throw new Error(`HTTP ${imgRes.status}`);
-      await pipeline(imgRes.body, createWriteStream(art.imgPath));
-      saveUsedId(imagesDir, photo.id);
-      usedIds.add(photo.id); // aggiorna il set in memoria per questo run
-      console.log(`  ✅ Sostituita: /images/${art.slug.split('/').pop()}.jpg (Pexels #${photo.id})`);
+      writeFileSync(dup.path, result.buf);
+      existingMd5s.add(md5(result.buf));
+      saveUsedId(imagesDir, result.photo.id);
+      usedIds.add(result.photo.id);
+      postProcess(dup.path);
+      console.log(`  ✅ ${dup.filename} → Pexels #${result.photo.id}`);
       fixed++;
     } catch (err) {
-      console.log(`  ❌ Download fallito: ${err.message}`);
+      console.log(`  ❌ Salvataggio fallito: ${err.message}`);
     }
 
-    // Piccola pausa per rispettare i rate limit Pexels
     await new Promise(r => setTimeout(r, 300));
   }
 

@@ -7,10 +7,10 @@
  * → ogni sito non ripete mai la stessa foto Pexels, anche tra run separati.
  */
 
-import { createWriteStream, mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { pipeline } from 'stream/promises';
 import { spawnSync } from 'child_process';
+import { createHash } from 'crypto';
 
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PEXELS_KEY = process.env.PEXELS_API_KEY;
@@ -244,6 +244,30 @@ function saveUsedId(imagesDir, photoId) {
 }
 
 /**
+ * Computes MD5 hash of a Buffer.
+ */
+function md5(buf) {
+  return createHash('md5').update(buf).digest('hex');
+}
+
+/**
+ * Scans all article JPEGs in imagesDir and returns a Set of their MD5 hashes.
+ * This is the primary dedup mechanism — works even if .pexels-used.json is missing.
+ * Excludes author photos, og-default, and placeholder (non-article images).
+ */
+function loadExistingMd5s(imagesDir) {
+  const set = new Set();
+  try {
+    const SKIP = /^(author-|og-default|placeholder)/;
+    const files = readdirSync(imagesDir).filter(f => f.endsWith('.jpg') && !SKIP.test(f));
+    for (const f of files) {
+      try { set.add(md5(readFileSync(join(imagesDir, f)))); } catch { /* skip unreadable */ }
+    }
+  } catch { /* dir doesn't exist yet */ }
+  return set;
+}
+
+/**
  * Post-processes a downloaded JPEG:
  * 1. Strips EXIF metadata with jpegoptim (if available)
  * 2. Generates a WebP version with cwebp (if available) — nginx serves it to browsers that support it
@@ -297,6 +321,9 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
   if (!existsSync(imagesDir)) mkdirSync(imagesDir, { recursive: true });
 
   const usedIds = loadUsedIds(imagesDir);
+  // MD5-based dedup: scans existing images on disk — primary guard against duplicates.
+  // Works even if .pexels-used.json is missing (e.g. after first deploy or file deletion).
+  const existingMd5s = loadExistingMd5s(imagesDir);
   const queries = buildQueries(keyword, title, nicheSlug);
 
   console.log(`  [image] Queries: ${queries.map((q, i) => `${i + 1}."${q}"`).join(' → ')}`);
@@ -306,11 +333,21 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
       const photo = await searchPexels(query, usedIds);
       if (!photo) continue;
 
-      const destPath = join(imagesDir, `${slug}.jpg`);
       const imgRes = await fetch(photo.src.large);
       if (!imgRes.ok) continue;
 
-      await pipeline(imgRes.body, createWriteStream(destPath));
+      // Download to buffer → check MD5 before committing to disk
+      const imgBuf = Buffer.from(await imgRes.arrayBuffer());
+      const imgMd5 = md5(imgBuf);
+      if (existingMd5s.has(imgMd5)) {
+        console.log(`  [image] MD5 collision for Pexels #${photo.id} — trying next photo`);
+        usedIds.add(photo.id); // mark ID as exhausted for this run
+        continue;
+      }
+
+      const destPath = join(imagesDir, `${slug}.jpg`);
+      writeFileSync(destPath, imgBuf);
+      existingMd5s.add(imgMd5); // update in-memory set for this run
       saveUsedId(imagesDir, photo.id);
 
       // Strip EXIF + generate WebP variant for content negotiation
