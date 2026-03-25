@@ -15,6 +15,271 @@ import { createHash } from 'crypto';
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PEXELS_KEY = process.env.PEXELS_API_KEY;
 const USED_IDS_FILE = '.pexels-used.json';
+const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
+const POLLINATIONS_TIMEOUT_MS = 35000;
+
+// ─── Pollinations prompt builder ──────────────────────────────────────────────
+// Pattern → detailed photorealistic prompt for Pollinations/Flux.
+// More descriptive than Pexels queries: full sentences, lighting, composition.
+
+const POLLINATIONS_TOPICS = {
+  'home-improvement-costs': [
+    { re: /hvac|air.?condition|furnace|heating|cooling|heat.?pump/i,
+      p: 'a professional HVAC technician in work uniform installing a modern outdoor central air conditioning unit beside a suburban American home, tools laid out on lawn, bright sunny day' },
+    { re: /roof|shingle|gutter|flashing/i,
+      p: 'a professional roofer wearing a safety harness carefully replacing dark asphalt shingles on a residential home roof, blue sky background, American suburb, ladder visible' },
+    { re: /kitchen/i,
+      p: 'a beautifully renovated modern American kitchen with white quartz countertops, subway tile backsplash, stainless steel appliances, open shelving, warm natural light through large window' },
+    { re: /bathroom|shower|tub|toilet/i,
+      p: 'a newly renovated master bathroom featuring a walk-in shower with glass door, modern floating vanity, white porcelain tiles, brushed nickel fixtures, soft warm lighting' },
+    { re: /hardwood|laminate|vinyl.?floor|flooring/i,
+      p: 'a professional flooring installer laying solid hardwood planks in a bright suburban living room, tools and spare boards nearby, natural light from windows' },
+    { re: /tile|ceramic|grout/i,
+      p: 'a tile installer carefully laying ceramic floor tiles in a home renovation project, tile spacers visible, professional tools on site, clean well-lit workspace' },
+    { re: /carpet/i,
+      p: 'a professional carpet installer stretching and fitting plush carpet in a bright living room, knee kicker tool visible, fresh clean installation' },
+    { re: /deck|patio|pergola/i,
+      p: 'a newly built composite wood deck in a suburban backyard, outdoor furniture arranged on it, green lawn, sunny afternoon, American neighborhood' },
+    { re: /window/i,
+      p: 'a window installation professional fitting a new energy-efficient double-pane window in a suburban home exterior, caulk gun and tools nearby, bright daylight' },
+    { re: /door|entry/i,
+      p: 'a contractor installing a new solid wood front door on a suburban American home, hardware and tools visible, clean professional work setting' },
+    { re: /plumb|pipe|water.?heat|drain|sewer/i,
+      p: 'a licensed plumber in work clothes fixing copper pipes under a kitchen sink, organized tools on floor, well-lit residential workspace' },
+    { re: /electric|wir|panel|outlet/i,
+      p: 'a licensed electrician wearing safety glasses working on a residential electrical panel, wiring organized, bright garage setting, professional equipment' },
+    { re: /paint|wall/i,
+      p: 'a professional house painter rolling fresh white paint on bright interior walls of a modern living room, plastic drop cloth protecting hardwood floors' },
+    { re: /landscap|lawn|garden|sod/i,
+      p: 'professional landscapers installing fresh sod in a suburban front yard, green lawn being laid, sunny day, American neighborhood street in background' },
+    { re: /insulation|attic/i,
+      p: 'a home insulation contractor installing fiberglass batt insulation in an attic space, protective gear and mask worn, professional installation equipment' },
+    { re: /driveway|concrete|asphalt/i,
+      p: 'workers pouring and finishing fresh concrete for a residential driveway, trowels and tools visible, suburban home in background, sunny day' },
+    { re: /fence/i,
+      p: 'a contractor installing a new cedar wood privacy fence in a suburban backyard, posts being set, professional tools visible, green grass lawn' },
+    { re: /basement|foundation/i,
+      p: 'a newly renovated basement interior with fresh drywall, recessed lighting, LVP flooring, clean and bright finished living space' },
+    { re: /siding|exterior/i,
+      p: 'workers installing new vinyl siding on a suburban American home exterior, scaffolding setup, fresh clean installation in progress, sunny day' },
+    { re: /stair|step/i,
+      p: 'a carpenter installing new hardwood stair treads and white risers on a residential staircase, tools visible, bright interior setting' },
+  ],
+  'solar-energy': [
+    { re: /battery|storage/i,
+      p: 'a modern home energy storage battery system mounted on a garage wall beside a solar inverter, clean suburban garage, professional installation' },
+    { re: /panel|install/i,
+      p: 'solar installation workers mounting monocrystalline solar panels on a residential rooftop, sunny day, suburban neighborhood, safety equipment worn' },
+    { re: /inverter/i,
+      p: 'a close-up of a modern solar inverter mounted on a home exterior wall, wiring connected, clean professional installation, residential setting' },
+    { re: /tax.?credit|incentive|rebate|saving/i,
+      p: 'a happy homeowner couple reviewing solar energy savings on a tablet outside their home with solar panels visible on roof, sunny day' },
+    { re: /off.?grid/i,
+      p: 'an off-grid solar cabin in a rural forest setting with solar panels on roof, batteries visible through window, sustainable living setup' },
+  ],
+  'home-security-systems': [
+    { re: /camera|cctv|surveillance/i,
+      p: 'a modern outdoor security camera mounted on the corner of a suburban home exterior, night-vision dome camera, clean installation, residential setting' },
+    { re: /alarm|sensor/i,
+      p: 'a smart home alarm panel mounted on interior wall near front door, touchscreen interface, motion sensor visible, modern home interior' },
+    { re: /door.?bell|ring/i,
+      p: 'a smart video doorbell camera installed beside a front door of an American suburban home, illuminated button, clean installation' },
+    { re: /smart.?lock/i,
+      p: 'a modern smart keypad door lock installed on a home front door, illuminated number pad, sleek contemporary design' },
+  ],
+  'pet-care-by-breed': [
+    { re: /dog|puppy|canine/i,
+      p: 'a happy golden retriever dog playing in a sunny suburban backyard, green grass, natural outdoor lighting, joyful and healthy appearance' },
+    { re: /cat|kitten|feline/i,
+      p: 'a beautiful domestic cat sitting on a sunny windowsill looking outside, warm natural light, clean home interior, relaxed and healthy' },
+    { re: /vet|veterinar/i,
+      p: 'a friendly veterinarian in white coat gently examining a dog on an exam table in a bright modern veterinary clinic' },
+    { re: /groom/i,
+      p: 'a professional dog groomer carefully brushing a fluffy golden doodle dog on a grooming table, bright professional grooming salon' },
+    { re: /food|diet|nutrition/i,
+      p: 'healthy premium dog food in a ceramic bowl beside a water bowl on clean kitchen floor, natural lighting, fresh ingredients visible' },
+  ],
+  'personal-finance': [
+    { re: /invest|stock|portfolio/i,
+      p: 'a professional investor reviewing financial charts and investment portfolio on dual monitors at a clean modern desk, natural office lighting' },
+    { re: /budget|save|saving/i,
+      p: 'a person organizing finances with a budget spreadsheet on laptop, coins and bills on desk, calculator nearby, bright home office' },
+    { re: /debt|loan|credit/i,
+      p: 'a person carefully reviewing financial documents and loan papers at a kitchen table, organized paperwork, focused expression, natural lighting' },
+    { re: /retire|401k|pension/i,
+      p: 'a happy senior couple reviewing retirement savings documents on a tablet on their front porch, relaxed and financially secure expressions' },
+    { re: /tax/i,
+      p: 'organized tax documents, a calculator, and a laptop with tax software on a clean home office desk, professional and orderly' },
+  ],
+  'insurance-guide': [
+    { re: /health/i,
+      p: 'a doctor and patient reviewing health insurance documents in a bright modern medical office, stethoscope on desk, professional setting' },
+    { re: /car|auto|vehicle/i,
+      p: 'a car insurance agent and driver reviewing auto policy documents beside a vehicle in a parking lot, sunny day, professional interaction' },
+    { re: /home|house/i,
+      p: 'a home insurance agent reviewing policy documents with a homeowner outside their suburban home, professional and friendly interaction' },
+    { re: /life/i,
+      p: 'a financial advisor discussing life insurance with a young family at a kitchen table, documents and tablet visible, warm home setting' },
+  ],
+  'real-estate-investing': [
+    { re: /rental|rent/i,
+      p: 'a real estate investor standing in front of a well-maintained rental property home, clipboard in hand, sunny day, suburban neighborhood' },
+    { re: /flip|renovate/i,
+      p: 'a renovated house exterior showing dramatic before-and-after transformation, fresh paint, new landscaping, bright sunny day' },
+    { re: /commercial/i,
+      p: 'a modern commercial real estate building in a downtown district, glass facade, professional signage, business district setting' },
+    { re: /mortgage|financ/i,
+      p: 'a real estate agent and couple signing mortgage documents at a desk, keys on table, bright modern office, celebration atmosphere' },
+  ],
+  'health-symptoms': [
+    { re: /back.?pain|spine/i,
+      p: 'a physical therapist helping a patient with back stretching exercises in a bright modern rehabilitation clinic, professional equipment visible' },
+    { re: /headache|migraine/i,
+      p: 'a person sitting at a desk holding their temples with eyes closed, soft home lighting, showing mild discomfort, relatable setting' },
+    { re: /sleep|insomnia/i,
+      p: 'a person lying awake in bed in a dark room, alarm clock showing 3am, moonlight through window, relatable sleep struggle scene' },
+    { re: /stress|anxiety/i,
+      p: 'a person practicing deep breathing at a park bench, eyes closed, peaceful nature setting, soft natural morning light, calm atmosphere' },
+  ],
+  'weight-loss-fitness': [
+    { re: /gym|workout|exercise/i,
+      p: 'a person doing a determined workout in a modern gym, free weights rack in background, bright overhead lighting, athletic wear, focused expression' },
+    { re: /run|cardio/i,
+      p: 'a runner on a suburban trail path in morning light, athletic gear, motion captured, trees in background, healthy lifestyle' },
+    { re: /diet|meal|eat/i,
+      p: 'a healthy meal prep spread with colorful vegetables, grilled chicken, brown rice in glass containers, bright kitchen countertop, organized nutrition' },
+    { re: /yoga|stretch/i,
+      p: 'a person doing a yoga warrior pose on a mat in a bright airy studio, natural light from large windows, peaceful focused expression' },
+  ],
+  'automotive-guide': [
+    { re: /engine|oil|fluid/i,
+      p: 'a mechanic in work overalls checking engine oil level in a car engine bay, organized garage workshop, professional tools visible' },
+    { re: /tire|wheel|brake/i,
+      p: 'an auto technician mounting a tire on a vehicle wheel balancer in a professional auto shop, bright workshop lighting' },
+    { re: /buy|sell|used/i,
+      p: 'a salesperson and couple examining a used car at a dealership lot, car hood open, inspecting engine, sunny day' },
+    { re: /repair|fix/i,
+      p: 'a professional mechanic underneath a vehicle on a hydraulic lift in a modern auto repair shop, organized tool cabinet visible' },
+  ],
+  'cybersecurity-privacy': [
+    { re: /hack|breach|attack/i,
+      p: 'a cybersecurity professional analyzing threat data on multiple monitors in a dark operations center, code and network diagrams visible' },
+    { re: /vpn|privacy/i,
+      p: 'a person using a laptop with a VPN shield graphic on screen, home office setting, focused on digital privacy, natural lighting' },
+    { re: /password|account/i,
+      p: 'a close-up of hands typing a secure password on a laptop keyboard, login screen visible, home office environment, focused security context' },
+    { re: /antivirus|malware/i,
+      p: 'a laptop screen showing antivirus security software scanning results, green shield indicator, home desk setting, protection concept' },
+  ],
+  'mental-health-wellness': [
+    { re: /therapy|therapist/i,
+      p: 'a supportive therapy session with a counselor and patient talking in a warm comfortable office, plants, soft lighting, professional but welcoming' },
+    { re: /anxiety|stress/i,
+      p: 'a person sitting cross-legged on a grass field with eyes closed, practicing mindfulness breathing, soft golden afternoon light, peaceful nature setting' },
+    { re: /depress/i,
+      p: 'a person receiving a comforting supportive hand on shoulder from a friend outdoors, warm light, hope and support concept, subtle and tasteful' },
+    { re: /meditat|mindful/i,
+      p: 'a person meditating in a serene home setting with morning light, seated on a cushion, calm peaceful expression, minimalist interior' },
+  ],
+  'senior-care-medicare': [
+    { re: /medicare|medicaid/i,
+      p: 'a senior patient and a friendly doctor reviewing Medicare insurance documents in a bright modern medical office, professional and reassuring atmosphere' },
+    { re: /nursing|care.?home|assisted/i,
+      p: 'a bright modern assisted living facility common room with comfortable furniture, elderly residents engaged in activities, caring staff visible' },
+    { re: /elder|senior|aging/i,
+      p: 'a happy active senior couple walking in a sunny park, smiling and healthy, casual clothing, green trees in background, vitality and wellness' },
+  ],
+  'legal-advice': [
+    { re: /lawyer|attorney/i,
+      p: 'a professional attorney at a clean desk reviewing legal documents, law books in background, modern law office, confident professional appearance' },
+    { re: /lawsuit|court/i,
+      p: 'a courthouse exterior with marble columns and steps, American justice architecture, clear blue sky, authoritative and professional' },
+    { re: /contract|document/i,
+      p: 'two professionals reviewing and signing a legal contract at a conference table, pens and documents organized, bright modern office' },
+    { re: /accident|injury/i,
+      p: 'a personal injury attorney consulting with a client in a professional office setting, documents on desk, empathetic professional interaction' },
+  ],
+  'business-startup': [
+    { re: /fund|invest|capital/i,
+      p: 'entrepreneurs presenting a business pitch to investors in a modern conference room, presentation on screen, engaged audience, professional startup setting' },
+    { re: /team|hire|employee/i,
+      p: 'a diverse startup team collaborating around a whiteboard in a modern open office, sticky notes and diagrams, creative energetic atmosphere' },
+    { re: /market|brand|logo/i,
+      p: 'a marketing team reviewing brand strategy documents and design mockups on a conference table, laptops and mood boards visible' },
+    { re: /launch|product/i,
+      p: 'an entrepreneur excitedly launching a new product, laptop open showing a website going live, modern home office, celebratory moment' },
+  ],
+};
+
+const POLLINATIONS_FALLBACKS = {
+  'home-improvement-costs':    'professional home renovation contractors working on a suburban American home, tools and equipment visible, sunny day',
+  'solar-energy':              'solar panels installed on a residential rooftop with a blue sky background, clean energy concept',
+  'home-security-systems':     'a modern smart home security system with cameras and alarm panel, suburban home setting',
+  'pet-care-by-breed':         'a happy healthy pet dog playing outdoors in a sunny suburban backyard',
+  'software-error-fixes':      'a person focused on fixing a computer issue at a clean modern desk setup, multiple monitors',
+  'diet-specific-recipes':     'a colorful healthy meal spread with fresh vegetables and nutritious food on a kitchen counter',
+  'small-town-tourism':        'a charming main street of a small American town with shops and restaurants, sunny day',
+  'personal-finance':          'a person reviewing personal finance documents and budget on a laptop at a clean home office desk',
+  'insurance-guide':           'a professional insurance agent reviewing policy documents with clients in a modern office',
+  'real-estate-investing':     'a real estate investor reviewing property investment documents beside a suburban rental home',
+  'health-symptoms':           'a friendly doctor consulting with a patient in a bright modern medical clinic',
+  'credit-cards-banking':      'a person reviewing banking and credit card statements on a laptop at a clean desk',
+  'weight-loss-fitness':       'a person exercising outdoors on a trail in athletic gear, healthy active lifestyle',
+  'automotive-guide':          'a professional mechanic working on a vehicle in a clean modern auto repair shop',
+  'online-education':          'a student learning online on a laptop at a bright home desk, notes and books nearby',
+  'cybersecurity-privacy':     'a cybersecurity professional working on multiple monitors in a modern secure operations environment',
+  'mental-health-wellness':    'a person in a peaceful mindfulness moment outdoors in nature, calm and serene atmosphere',
+  'legal-advice':              'a professional attorney reviewing legal documents at a modern law office desk',
+  'business-startup':          'a startup team collaborating in a modern bright co-working office space',
+  'senior-care-medicare':      'happy active senior adults enjoying activities outdoors in a sunny community setting',
+};
+
+function buildPollinationsPrompt(keyword, title, nicheSlug) {
+  const text = `${keyword} ${title || ''}`.toLowerCase();
+  const topics = POLLINATIONS_TOPICS[nicheSlug] || [];
+
+  let subject = null;
+  for (const { re, p } of topics) {
+    if (re.test(text)) { subject = p; break; }
+  }
+  if (!subject) subject = POLLINATIONS_FALLBACKS[nicheSlug] || `professional ${cleanKeyword(keyword)} scene, realistic setting`;
+
+  return `${subject}, photorealistic editorial photography, sharp focus, high resolution, natural lighting, no text overlays, no watermarks, no logos, no CGI look`;
+}
+
+async function fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir) {
+  const prompt = buildPollinationsPrompt(keyword, title, nicheSlug);
+  // Use hash of slug as seed → deterministic but unique per article
+  const seed = parseInt(createHash('md5').update(slug).digest('hex').slice(0, 8), 16) % 999999;
+  const url = `${POLLINATIONS_BASE}/${encodeURIComponent(prompt)}?width=1200&height=630&nologo=true&seed=${seed}&model=flux`;
+
+  console.log(`  [image] Pollinations prompt: "${prompt.slice(0, 80)}..."`);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), POLLINATIONS_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('image')) throw new Error(`Unexpected content-type: ${contentType}`);
+
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < 10000) throw new Error('Image too small — likely an error response');
+
+    const destPath = join(imagesDir, `${slug}.jpg`);
+    writeFileSync(destPath, buf);
+    postProcessImage(destPath);
+    console.log(`  [image] Saved /images/${slug}.jpg (Pollinations)`);
+    return `/images/${slug}.jpg`;
+  } catch (err) {
+    clearTimeout(timer);
+    console.warn(`  [image] Pollinations failed: ${err.message}`);
+    return null;
+  }
+}
 
 // ─── Niche-aware visual topic map ────────────────────────────────────────────
 // Maps keyword patterns → visually descriptive Pexels queries.
@@ -312,21 +577,25 @@ async function searchPexels(query, usedIds, pages = 2) {
  * @returns {string|null}    - Path relativo HTML (es. /images/slug.jpg) o null
  */
 export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = '', title = '' } = {}) {
-  if (!PEXELS_KEY) {
-    console.warn('  [image] PEXELS_API_KEY not set, skipping');
-    return null;
-  }
-
   const imagesDir = join(destDir, 'images');
   if (!existsSync(imagesDir)) mkdirSync(imagesDir, { recursive: true });
 
+  // 1. Try Pollinations.ai first — unique AI-generated image, no API key needed
+  const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
+  if (pollinationsResult) return pollinationsResult;
+
+  // 2. Fallback: Pexels stock photo
+  if (!PEXELS_KEY) {
+    console.warn('  [image] Pollinations failed and PEXELS_API_KEY not set — no image');
+    return null;
+  }
+
+  console.log('  [image] Falling back to Pexels...');
   const usedIds = loadUsedIds(imagesDir);
-  // MD5-based dedup: scans existing images on disk — primary guard against duplicates.
-  // Works even if .pexels-used.json is missing (e.g. after first deploy or file deletion).
   const existingMd5s = loadExistingMd5s(imagesDir);
   const queries = buildQueries(keyword, title, nicheSlug);
 
-  console.log(`  [image] Queries: ${queries.map((q, i) => `${i + 1}."${q}"`).join(' → ')}`);
+  console.log(`  [image] Pexels queries: ${queries.map((q, i) => `${i + 1}."${q}"`).join(' → ')}`);
 
   for (const query of queries) {
     try {
@@ -336,28 +605,25 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
       const imgRes = await fetch(photo.src.large);
       if (!imgRes.ok) continue;
 
-      // Download to buffer → check MD5 before committing to disk
       const imgBuf = Buffer.from(await imgRes.arrayBuffer());
       const imgMd5 = md5(imgBuf);
       if (existingMd5s.has(imgMd5)) {
-        console.log(`  [image] MD5 collision for Pexels #${photo.id} — trying next photo`);
-        usedIds.add(photo.id); // mark ID as exhausted for this run
+        console.log(`  [image] MD5 collision for Pexels #${photo.id} — trying next`);
+        usedIds.add(photo.id);
         continue;
       }
 
       const destPath = join(imagesDir, `${slug}.jpg`);
       writeFileSync(destPath, imgBuf);
-      existingMd5s.add(imgMd5); // update in-memory set for this run
+      existingMd5s.add(imgMd5);
       saveUsedId(imagesDir, photo.id);
-
-      // Strip EXIF + generate WebP variant for content negotiation
       postProcessImage(destPath);
 
       console.log(`  [image] Saved /images/${slug}.jpg (Pexels #${photo.id}, query: "${query}")`);
       return `/images/${slug}.jpg`;
 
     } catch (err) {
-      console.warn(`  [image] Error for query "${query}": ${err.message}`);
+      console.warn(`  [image] Pexels error for query "${query}": ${err.message}`);
     }
   }
 
