@@ -12,13 +12,13 @@
 // EST = UTC-5 (non gestiamo DST — margine sufficiente)
 const EST_OFFSET_MS = 5 * 60 * 60 * 1000;
 
-// Finestra di pubblicazione (ora EST)
-const PUBLISH_START_MIN = 8 * 60;        // 08:00 EST in minuti dall'inizio giorno
-const PUBLISH_END_MIN   = 22 * 60 + 30;  // 22:30 EST
-const WINDOW_MIN = PUBLISH_END_MIN - PUBLISH_START_MIN; // 870 min
+// Finestra di pubblicazione (ora EST) — orari organici, nessuna pubblicazione di notte
+const PUBLISH_START_MIN = 8 * 60;   // 08:00 EST
+const PUBLISH_END_MIN   = 20 * 60;  // 20:00 EST (no pubblicazioni dopo le 8pm)
+const WINDOW_MIN = PUBLISH_END_MIN - PUBLISH_START_MIN; // 720 min
 
 // Gap minimo e massimo tra articoli consecutivi (minuti)
-const GAP_MIN = 20;
+const GAP_MIN = 25;   // minimo 25 min tra articoli
 const GAP_MAX = 180;
 
 /**
@@ -188,12 +188,26 @@ function generateOrganicSlots(count, startMin, endMin) {
   return slots;
 }
 
+// ─── Publishing window check ─────────────────────────────────────────────────
+
+/**
+ * Restituisce true se l'orario corrente è dentro la finestra di pubblicazione EST.
+ * Usato come guard assoluto in publishDueArticles() — indipendente da scheduled_for.
+ *
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+export function isWithinPublishingWindow(now = new Date()) {
+  const estTotal = ((now.getUTCHours() - 5 + 24) % 24) * 60 + now.getUTCMinutes();
+  return estTotal >= PUBLISH_START_MIN && estTotal < PUBLISH_END_MIN;
+}
+
 // ─── Diagnostics ─────────────────────────────────────────────────────────────
 
 export function logScheduleInfo(siteCreatedAt, siteId = 0) {
   const { count, ageDays, label } = getDailyArticleLimit(siteCreatedAt);
   const dead = isDeadDay(siteId, siteCreatedAt);
   console.log(`  Schedule: ${ageDays}d old → ${label}${dead ? ' [DEAD DAY — skip]' : ''}`);
-  console.log(`  Today's target: ${count} articles | window: 08:00–22:30 EST | gaps: 20min–3h`);
+  console.log(`  Today's target: ${count} articles | window: 08:00–20:00 EST | gaps: 25min–3h`);
   return count;
 }

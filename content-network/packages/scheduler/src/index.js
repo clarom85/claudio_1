@@ -23,7 +23,7 @@ import { runLinkGraphAnalysis } from '@content-network/vps/src/link-graph.js';
 import { alertCritical, alertWarning, alertReport } from '@content-network/vps/src/alert.js';
 import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
-import { getDailyArticleLimit, logScheduleInfo, isDeadDay } from '@content-network/content-engine/src/publishing-schedule.js';
+import { getDailyArticleLimit, logScheduleInfo, isDeadDay, isWithinPublishingWindow } from '@content-network/content-engine/src/publishing-schedule.js';
 import { injectInternalLinks, injectPillarSatelliteLinks } from '@content-network/content-engine/src/link-injector.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -43,8 +43,9 @@ async function run() {
   // 1. Pubblica articoli in coda
   await publishDueArticles(stats);
 
-  // 2. Genera nuovi articoli (ogni giorno alle 01:xx)
-  if (now.getHours() === 1) {
+  // 2. Genera nuovi articoli (ogni giorno alle 06:xx UTC = 01:00 EST, pre-alba)
+  // A quest'ora getPublishTime() schedula gli slot dalle 08:00 EST in poi — zero pubblicazioni notturne
+  if (now.getHours() === 6) {
     await triggerDailyGeneration();
   }
 
@@ -91,6 +92,12 @@ async function run() {
 }
 
 async function publishDueArticles(stats) {
+  // Guard assoluto: nessuna pubblicazione fuori finestra EST 08:00–20:00
+  if (!isWithinPublishingWindow()) {
+    console.log('  Outside publishing window (EST 08:00–20:00) — skipping publish');
+    return;
+  }
+
   // Recovery: articoli bloccati in 'processing' da > 10 minuti → rimetti in pending
   await sql`
     UPDATE publish_queue SET status = 'pending'
