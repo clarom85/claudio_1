@@ -81,15 +81,36 @@ export function isDeadDay(siteId, siteCreatedAt, date = new Date()) {
  * @param {Date} [date]
  * @returns {{ count: number, ageDays: number, label: string }}
  */
+// Moltiplicatore per giorno della settimana (0=Dom … 6=Sab).
+// Martedì/Mercoledì sono i picchi editoriali tipici; weekend più basso.
+const DOW_MULTIPLIER = [0.60, 0.95, 1.10, 1.10, 1.00, 0.85, 0.65];
+
+// Variazione settimana-su-settimana: settimane diverse hanno "ritmo" diverso.
+// Usa un seed deterministico basato sul numero di settimana ISO → stesso valore
+// per tutta la settimana, ma diverso da una settimana all'altra.
+function weeklyVariation(date) {
+  const weekNum = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000));
+  const r = seededRand(weekNum * 2654435761);
+  // Range: da -10% a +15% del volume base
+  return 0.90 + r * 0.25;
+}
+
 export function getDailyArticleLimit(siteCreatedAt, date = new Date()) {
   const ageDays = Math.floor((date.getTime() - new Date(siteCreatedAt).getTime()) / (1000 * 60 * 60 * 24));
   const phase = RAMP.find(r => ageDays <= r.maxDays) || RAMP[RAMP.length - 1];
 
   // Variazione casuale nel range — diversa ogni giorno
   const range = phase.maxPerDay - phase.minPerDay;
-  const count = phase.minPerDay + Math.floor(Math.random() * (range + 1));
+  const base = phase.minPerDay + Math.floor(Math.random() * (range + 1));
 
-  return { count, ageDays, label: phase.label };
+  // Applica moltiplicatore giorno-settimana + variazione settimanale
+  const dow = date.getDay(); // 0=Dom … 6=Sab
+  const adjusted = Math.round(base * DOW_MULTIPLIER[dow] * weeklyVariation(date));
+
+  // Clamp: mai sotto 1 (se non è dead day) e mai sopra il max di fase
+  const count = Math.max(1, Math.min(adjusted, phase.maxPerDay));
+
+  return { count, ageDays, label: phase.label, dow };
 }
 
 // ─── Time slots ───────────────────────────────────────────────────────────────
