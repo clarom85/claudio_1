@@ -122,11 +122,11 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 
 /* Footer */
 .site-footer{background:var(--dark);color:rgba(255,255,255,.75);padding:36px 0 16px;margin-top:56px}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:28px;margin-bottom:24px}
-@media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}}
+.footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px;margin-bottom:24px;align-items:start}
+@media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}.footer-col{padding-left:4px}}
 .footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:18px;margin-bottom:10px}
 .footer-col h4{color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
-.footer-col ul{list-style:none}
+.footer-col ul{list-style:none;padding-left:0}
 .footer-col li{margin-bottom:6px}
 .footer-col a{color:rgba(255,255,255,.65);text-decoration:none;font-size:13px}
 .footer-col a:hover{color:#fff}
@@ -154,9 +154,9 @@ export function renderFooter(site){return`
   ${adUnit('footer')}
   <div class="wrap">
     <div class="footer-grid">
+      <div class="footer-col"><h4>Navigate</h4><ul><li><a href="/">Home</a></li><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li></ul></div>
       <div class="footer-about"><h3>${esc(site.name)}</h3><p>Delivering trusted, expert-backed information since ${new Date().getFullYear()}.</p></div>
-      <div class="footer-col"><h4>Navigate</h4><ul><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li></ul></div>
-      <div class="footer-col"><h4>Legal</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></div>
+      <div class="footer-col"><h4>Legal</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li><li><a href="/editorial-guidelines/">Editorial</a></li></ul></div>
     </div>
     <div class="footer-bottom"><p>© ${new Date().getFullYear()} ${esc(site.name)}. All rights reserved. For informational purposes only.</p></div>
   </div>
@@ -240,7 +240,10 @@ export function renderArticlePage(article,site,relatedArticles=[]){
 
 export function renderHomePage(articles,site){
   const hero=articles[0];const featured=articles.slice(1,4);const latest=articles.slice(4,20);
-  const featuredHtml=featured.length?`<div>${featured.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>`:'';
+  const heroSideCta=site.toolSlug
+    ?`<div style="background:var(--green);padding:18px 20px;margin-top:4px;text-align:center"><p style="color:rgba(255,255,255,.85);font-size:13px;margin:0 0 12px;line-height:1.5">Get an instant cost estimate for your project.</p><a href="/tools/${site.toolSlug}/" style="display:block;background:#c9a84c;color:#1a1a2e;padding:10px 16px;font-weight:700;font-size:14px;text-decoration:none">Free Calculator →</a></div>`
+    :`<div class="nl-box" style="margin-top:4px"><h3>Weekly Expert Tips</h3><form class="nl-form newsletter-form"><input type="email" placeholder="your@email.com"/><button type="submit">Subscribe</button></form></div>`;
+  const featuredHtml=featured.length?`<div style="display:flex;flex-direction:column">${featured.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}${heroSideCta}</div>`:'';
   const heroCard=hero?`<article class="card"><div class="card-img"><img src="${hero.image||`/images/${hero.slug}.jpg`}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(hero.category||'Featured')}</div><h2 class="card-title" style="font-size:26px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2><p class="card-excerpt">${esc(hero.excerpt)}</p><div class="card-meta">${esc(hero.author)}</div></div></article>`:'';
   const heroHtml=hero?(featuredHtml?`<div class="hero-layout">${heroCard}${featuredHtml}</div>`:`<div style="margin-bottom:32px;padding-bottom:28px;border-bottom:3px double var(--border)">${heroCard}</div>`):'';
 

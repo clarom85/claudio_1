@@ -49,6 +49,8 @@ const STOP_WORDS = new Set([
   'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might',
   'i', 'my', 'your', 'it', 'its', 'this', 'that', 'these', 'those',
   'get', 'use', 'make', 'need', 'want', 'like', 'vs', 'per',
+  // Decorative title words: non cambiano il topic di fondo
+  'guide', 'overview', 'breakdown', 'explained', 'basics', 'intro',
 ]);
 
 /**
@@ -144,7 +146,7 @@ function jaccardSimilarity(a, b) {
  * Topic fingerprint dedup: stessa intent class + stesso fingerprint → scartata.
  * Previene cannibalizzazione SEO tra articoli quasi identici.
  */
-export function deduplicateAcrossSites(keywords, existingKeywords, threshold = 0.65) {
+export function deduplicateAcrossSites(keywords, existingKeywords, threshold = 0.55) {
   const existingNorm = existingKeywords.map(k => k.toLowerCase().trim());
   const existingSet = new Set(existingNorm);
   // Pre-build fingerprint set for existing keywords keyed by intent::fingerprint

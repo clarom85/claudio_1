@@ -85,9 +85,9 @@ async function run() {
         continue;
       }
 
-      // Dedup: salta se titolo troppo simile a uno già esistente (Jaccard ≥ 0.65)
+      // Dedup: salta se titolo troppo simile a uno già esistente (Jaccard ≥ 0.55, normalizzato)
       const newTitle = article.title.toLowerCase();
-      const dupTitle = existingTitles.find(t => jaccardSimilarity(newTitle, t) >= 0.65);
+      const dupTitle = existingTitles.find(t => jaccardSimilarity(newTitle, t) >= 0.55);
       if (dupTitle) {
         await markKeywordUsed(kw.id);
         skipped++;
@@ -165,12 +165,55 @@ function getScheduledTime(index, total) {
 }
 
 /**
- * Jaccard similarity tra due stringhe (tokenizzate per parole).
+ * Normalizza un titolo per il confronto topic-semantico:
+ * 1. Prende solo il titolo principale (prima del colon/dash)
+ * 2. Rimuove anni (2024, 2025, 2026…)
+ * 3. Rimuove parole "rumore" puramente decorative (complete, ultimate, real…)
+ * 4. Rimuove stop words
+ * 5. Stemma le parole rimanenti (doppio-pass per "-ations" → "-ation" → stem)
+ * 6. Ritorna Set di token normalizzati
+ */
+function normalizeTitleTokens(title) {
+  const STOP = new Set([
+    'a','an','the','and','or','but','in','on','at','to','for','of','with','by',
+    'from','is','are','was','were','be','been','have','has','do','does','did',
+    'will','would','could','should','i','my','your','it','its','this','that',
+    'vs','per','not','no','all','any','how','what','why','when','where','which',
+    'who','get','can','much','does',
+  ]);
+  // Solo parole puramente decorative che non aggiungono significato al topic
+  const NOISE = new Set([
+    'complete','honest','ultimate','comprehensive','expert','full','detailed',
+    'updated','new','fast','quick','simple','easy','actual','typical','true',
+    'total','every','real','breakdown',
+  ]);
+  function stem(w) {
+    return w.replace(/(?<=\w{3})(ing|tion|ment|ness|er|es|s)$/i, '');
+  }
+  function stemDouble(w) {
+    const s = stem(w);
+    return s !== w ? stem(s) : s; // secondo pass per "renovations" → "renovation" → "renovat"
+  }
+  // Prendi solo la parte prima del colon o em-dash (il sottotitolo aggiunge rumore)
+  let t = title.toLowerCase().split(/\s*[:\u2014\u2013]\s*/)[0];
+  // Rimuovi anni e punteggiatura
+  t = t.replace(/\b20\d{2}\b/g, '').replace(/[^\w\s]/g, ' ');
+  const tokens = t.split(/\s+/)
+    .map(w => w.trim())
+    .filter(w => w.length > 2 && !STOP.has(w) && !NOISE.has(w))
+    .map(stemDouble);
+  return new Set(tokens);
+}
+
+/**
+ * Jaccard similarity tra due titoli di articoli.
+ * Usa normalizzazione semantica (strip sottotitolo, noise words, stop words, stem).
  * Ritorna valore 0–1. Usato per dedup titoli.
  */
 function jaccardSimilarity(a, b) {
-  const setA = new Set(a.split(/\s+/).filter(Boolean));
-  const setB = new Set(b.split(/\s+/).filter(Boolean));
+  const setA = normalizeTitleTokens(a);
+  const setB = normalizeTitleTokens(b);
+  if (setA.size === 0 || setB.size === 0) return 0;
   const intersection = [...setA].filter(w => setB.has(w)).length;
   const union = new Set([...setA, ...setB]).size;
   return union === 0 ? 0 : intersection / union;
