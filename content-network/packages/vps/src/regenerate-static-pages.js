@@ -7,6 +7,7 @@ import 'dotenv/config';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
+import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from '@content-network/site-spawner/src/niche-methodology.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
@@ -154,6 +155,16 @@ async function regenerateStaticPages(site) {
 
   const pages = buildPages(siteName, site.domain, siteUrl);
 
+  // Add niche-specific methodology page
+  const nicheSlug = site.niche_slug || '';
+  const methMeta = NICHE_METHODOLOGY[nicheSlug] || DEFAULT_METHODOLOGY;
+  pages['methodology/index.html'] = {
+    title: methMeta.title,
+    noindex: false,
+    description: methMeta.intro.slice(0, 155),
+    body: renderMethodologyBody(nicheSlug, site.domain)
+  };
+
   for (const [path, page] of Object.entries(pages)) {
     const dir = join(WWW_ROOT, site.domain, path.replace('/index.html', ''));
     mkdirSync(dir, { recursive: true });
@@ -175,8 +186,8 @@ async function run() {
   }
 
   const sites = all
-    ? await sql`SELECT id, domain FROM sites WHERE status != 'inactive' ORDER BY id`
-    : await sql`SELECT id, domain FROM sites WHERE id = ${siteId}`;
+    ? await sql`SELECT s.id, s.domain, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
+    : await sql`SELECT s.id, s.domain, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
 
   if (!sites.length) { console.error('Nessun sito trovato'); process.exit(1); }
 
