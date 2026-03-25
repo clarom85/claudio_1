@@ -4,6 +4,7 @@
  * - Classifica intent
  * - Prioritizza long-tail (3-8 parole)
  * - Deduplica cross-sito per evitare cannibalizzazione
+ * - Intent dedup: evita articoli su topic identici con phrasing diverso
  */
 
 const INFORMATIONAL_SIGNALS = [
@@ -27,6 +28,47 @@ export function classifyIntent(keyword) {
   if (COMMERCIAL_SIGNALS.some(s => kw.includes(s))) return 'commercial';
   if (INFORMATIONAL_SIGNALS.some(s => kw.includes(s))) return 'informational';
   return 'informational';
+}
+
+// Intent prefixes to strip before fingerprinting (order: longest first)
+const INTENT_PREFIXES = [
+  'how much does it cost to', 'how much does a', 'how much do', 'how much is',
+  'how much does', 'what is the average cost of', 'what is the cost of',
+  'what is the average', 'average cost to', 'average cost of', 'average price of',
+  'best way to', 'how to', 'what is a', 'what are the', 'what is',
+  'why does', 'why do', 'why is', 'when to', 'when should',
+  'which is the best', 'which is better', 'which', 'where to', 'where can',
+  'guide to', 'tips for', 'steps to', 'ways to', 'cost to', 'cost of',
+  'price of', 'price to',
+];
+
+const STOP_WORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+  'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during',
+  'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
+  'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might',
+  'i', 'my', 'your', 'it', 'its', 'this', 'that', 'these', 'those',
+  'get', 'use', 'make', 'need', 'want', 'like', 'vs', 'per',
+]);
+
+/**
+ * Returns a canonical topic fingerprint for a keyword.
+ * Strips intent prefixes + stop words + stems remaining terms → sorted join.
+ * Two keywords with the same fingerprint target the same underlying topic.
+ */
+export function topicFingerprint(keyword) {
+  let kw = keyword.toLowerCase().trim();
+  // Strip longest-matching intent prefix
+  for (const prefix of INTENT_PREFIXES) {
+    if (kw.startsWith(prefix + ' ')) {
+      kw = kw.slice(prefix.length + 1);
+      break;
+    }
+  }
+  const words = kw.split(/\s+/)
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w))
+    .map(stem);
+  return words.sort().join(' ');
 }
 
 // Keywords con anni obsoleti (es. "best X 2022") vengono scartate.
@@ -65,10 +107,21 @@ export function filterKeywords(keywords) {
   }
 
   // Sort: preferisci long-tail 4-7 parole
-  return filtered.sort((a, b) => {
+  const sorted = filtered.sort((a, b) => {
     const aScore = a.wordCount >= 4 && a.wordCount <= 7 ? 1 : 0;
     const bScore = b.wordCount >= 4 && b.wordCount <= 7 ? 1 : 0;
     return bScore - aScore;
+  });
+
+  // Intent dedup: within the same intent class, keep only one keyword per topic fingerprint.
+  // This prevents generating two articles on "cost to repair roof" vs "average roof repair price".
+  const seenFingerprints = new Map(); // fingerprint+intent → first keyword seen
+  return sorted.filter(item => {
+    const fp = topicFingerprint(item.keyword);
+    const key = `${item.intent}::${fp}`;
+    if (seenFingerprints.has(key)) return false;
+    seenFingerprints.set(key, item.keyword);
+    return true;
   });
 }
 
@@ -87,16 +140,27 @@ function jaccardSimilarity(a, b) {
 
 /**
  * Rimuove keywords troppo simili a quelle già nel DB.
- * Jaccard threshold 0.75 = 75% parole in comune → scartata.
+ * Jaccard threshold 0.65 = 65% parole in comune → scartata.
+ * Topic fingerprint dedup: stessa intent class + stesso fingerprint → scartata.
  * Previene cannibalizzazione SEO tra articoli quasi identici.
  */
 export function deduplicateAcrossSites(keywords, existingKeywords, threshold = 0.65) {
   const existingNorm = existingKeywords.map(k => k.toLowerCase().trim());
   const existingSet = new Set(existingNorm);
+  // Pre-build fingerprint set for existing keywords keyed by intent::fingerprint
+  const existingFingerprints = new Set(
+    existingNorm.map(k => `${classifyIntent(k)}::${topicFingerprint(k)}`)
+  );
 
   return keywords.filter(k => {
     const kw = k.keyword.toLowerCase().trim();
     if (existingSet.has(kw)) return false;
+
+    // Intent-based topic dedup against DB
+    const fp = `${k.intent || classifyIntent(kw)}::${topicFingerprint(kw)}`;
+    if (existingFingerprints.has(fp)) return false;
+
+    // Jaccard similarity check
     for (const ex of existingNorm) {
       if (jaccardSimilarity(kw, ex) >= threshold) return false;
     }
