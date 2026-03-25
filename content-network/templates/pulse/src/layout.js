@@ -302,6 +302,7 @@ ${renderHeader(site)}
   </script>
 </div>`;
         })()}
+      </div>
       <aside class="sidebar">
         ${adUnit('sidebar')}
         ${relatedHtml ? `<div class="sidebar-box"><h3>Related Articles</h3>${relatedHtml}</div>` : ''}
@@ -309,7 +310,7 @@ ${renderHeader(site)}
         ${site.toolSlug?`<div style='background:#c0392b;padding:20px;margin-bottom:20px;border-radius:4px;text-align:center'><strong style='color:#fff;font-size:15px;display:block;margin-bottom:8px'>Free Cost Calculator</strong><p style='color:rgba(255,255,255,.85);font-size:13px;margin:0 0 14px;line-height:1.5'>Get an instant estimate for your project in 60 seconds.</p><a href='/tools/${site.toolSlug}/' style='display:block;background:#f8f8f8;color:#c0392b;padding:11px 16px;border-radius:3px;font-weight:700;font-size:14px;text-decoration:none'>Calculate My Cost →</a></div>`:''}
         <div class="sidebar-newsletter">
           <h3>Get Expert Tips Weekly</h3>
-          <form class="nl-form" onsubmit="return false">
+          <form class="nl-form newsletter-form">
             <input type="email" placeholder="your@email.com"/>
             <button type="submit">Subscribe Free</button>
           </form>
@@ -452,7 +453,7 @@ export function renderCategoryPage(articles, category, site, page = 1, totalPage
   const catBase = `${site.url}/category/${category.slug}`;
   const prevUrl = page > 1 ? (page === 2 ? `${catBase}/` : `${catBase}/page/${page - 1}/`) : '';
   const nextUrl = page < totalPages ? `${catBase}/page/${page + 1}/` : '';
-  const paginationHtml = totalPages > 1 ? `<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${page > 1 ? `<a href="${page === 2 ? `/category/${category.slug}/` : `/category/${category.slug}/page/${page - 1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">&#8592; Prev</a>` : '<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page < totalPages ? `<a href="/category/${category.slug}/page/${page + 1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--fg);text-decoration:none">Next &#8594;</a>` : '<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>` : '';
+  const paginationHtml = totalPages > 1 ? `<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${page > 1 ? `<a href="${page === 2 ? `/category/${category.slug}/` : `/category/${category.slug}/page/${page - 1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--navy);text-decoration:none">&#8592; Prev</a>` : '<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page < totalPages ? `<a href="/category/${category.slug}/page/${page + 1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--navy);text-decoration:none">Next &#8594;</a>` : '<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>` : '';
 
   const body = `
 ${renderHeader(site)}
