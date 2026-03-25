@@ -120,7 +120,7 @@ img{max-width:100%;height:auto;display:block}
 .related-title:hover{color:var(--red)}
 
 /* Homepage */
-.hero-grid{display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:32px}
+.hero-grid{display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:32px;align-items:start}
 @media(max-width:700px){.hero-grid{grid-template-columns:1fr}}
 .card{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
 .card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.15)}
@@ -133,7 +133,7 @@ img{max-width:100%;height:auto;display:block}
 .card-title a:hover{color:var(--red)}
 .card-excerpt{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:10px}
 .card-meta{font-size:12px;color:var(--muted);display:flex;gap:12px}
-.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin:24px 0}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:24px 0}
 .section-title{font-family:var(--ff-head);font-size:22px;color:var(--navy);margin-bottom:20px;padding-bottom:8px;border-bottom:3px solid var(--red)}
 
 /* Compact card sidebar */
@@ -332,18 +332,7 @@ export function renderHomePage(articles, site) {
   const featured = articles.slice(1, 5);
   const latest = articles.slice(5, 25);
 
-  const heroHtml = hero ? `
-    <section class="hero-grid">
-      <article class="card">
-        <div class="card-img"><img src="${hero.image||'/images/'+hero.slug+'.jpg'}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div>
-        <div class="card-body">
-          <div class="card-cat">${esc(hero.category || 'Featured')}</div>
-          <h2 class="card-title" style="font-size:28px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2>
-          <p class="card-excerpt">${esc(hero.excerpt)}</p>
-          <div class="card-meta"><span>${esc(hero.author)}</span></div>
-        </div>
-      </article>
-      <div>${featured.map(a => `
+  const featuredHtml = featured.length ? `<div>${featured.map(a => `
         <div class="compact-card">
           <img class="compact-img" src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/>
           <div>
@@ -351,8 +340,17 @@ export function renderHomePage(articles, site) {
             <a href="/${a.slug}/" style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;line-height:1.3;display:block">${esc(a.title)}</a>
           </div>
         </div>`).join('')}
-      </div>
-    </section>` : '';
+      </div>` : '';
+  const heroCard = hero ? `<article class="card">
+        <div class="card-img"><img src="${hero.image||'/images/'+hero.slug+'.jpg'}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div>
+        <div class="card-body">
+          <div class="card-cat">${esc(hero.category || 'Featured')}</div>
+          <h2 class="card-title" style="font-size:28px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2>
+          <p class="card-excerpt">${esc(hero.excerpt)}</p>
+          <div class="card-meta"><span>${esc(hero.author)}</span></div>
+        </div>
+      </article>` : '';
+  const heroHtml = hero ? (featuredHtml ? `<section class="hero-grid">${heroCard}${featuredHtml}</section>` : `<section style="margin-bottom:32px;padding-bottom:28px;border-bottom:3px double var(--border)">${heroCard}</section>`) : '';
 
   const gridHtml = latest.length ? `
     <section>

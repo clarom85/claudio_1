@@ -112,7 +112,7 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .card-title a{color:var(--white);text-decoration:none}
 .card-title a:hover{color:var(--orange)}
 .card-excerpt{font-size:13px;color:var(--muted);line-height:1.6}
-.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin:20px 0}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin:20px 0}
 .section-title{font-family:var(--ff-head);font-size:28px;letter-spacing:3px;color:var(--white);margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .section-title span{color:var(--orange)}
 

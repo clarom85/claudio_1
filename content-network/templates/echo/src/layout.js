@@ -91,7 +91,7 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .nl-box button{width:100%;background:#5a7a5a;color:#fff;border:none;padding:12px;font-weight:700;cursor:pointer;font-size:15px;border-radius:3px;letter-spacing:.5px;transition:opacity .2s}
 
 /* Home */
-.home-hero{display:grid;grid-template-columns:3fr 2fr;gap:32px;margin-bottom:36px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+.home-hero{display:grid;grid-template-columns:3fr 2fr;gap:32px;margin-bottom:36px;padding-bottom:32px;border-bottom:1px solid var(--border);align-items:start}
 @media(max-width:700px){.home-hero{grid-template-columns:1fr}}
 .card{background:var(--white);border:1px solid var(--border)}
 .card-img img{width:100%;aspect-ratio:3/2;object-fit:cover}
@@ -101,7 +101,7 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .card-title a{color:var(--warm);text-decoration:none}
 .card-title a:hover{color:var(--terra)}
 .card-excerpt{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:10px}
-.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;margin:20px 0}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin:20px 0}
 .section-title{font-family:var(--ff-head);font-size:28px;font-weight:400;color:var(--warm);margin-bottom:24px;padding-bottom:10px;border-bottom:1px solid var(--border);letter-spacing:2px;text-transform:uppercase}
 
 /* Footer */
@@ -229,10 +229,10 @@ export function renderArticlePage(article,site,relatedArticles=[]){
 
 export function renderHomePage(articles,site){
   const hero=articles[0];const side=articles.slice(1,4);const latest=articles.slice(4,20);
-  const heroHtml=hero?`<div class="home-hero">
-    <article class="card"><div class="card-img"><img src="${hero.image||'/images/'+hero.slug+'.jpg'}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(hero.category||'Featured')}</div><h2 class="card-title" style="font-size:28px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2><p class="card-excerpt">${esc(hero.excerpt)}</p></div></article>
-    <div>${side.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'" style="aspect-ratio:3/2"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>
-  </div>`:'';
+  const sideHtml=side.length?`<div>${side.map(a=>`<article class="card" style="margin-bottom:16px"><div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'" style="aspect-ratio:3/2"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><div class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></div></div></article>`).join('')}</div>`:'';
+  const heroCard=hero?`<article class="card"><div class="card-img"><img src="${hero.image||'/images/'+hero.slug+'.jpg'}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(hero.category||'Featured')}</div><h2 class="card-title" style="font-size:28px"><a href="/${hero.slug}/">${esc(hero.title)}</a></h2><p class="card-excerpt">${esc(hero.excerpt)}</p></div></article>`:'';
+  const heroHtml=hero?(sideHtml?`<div class="home-hero">${heroCard}${sideHtml}</div>`:`<div style="margin-bottom:36px;padding-bottom:32px;border-bottom:1px solid var(--border)">${heroCard}</div>`):'';
+
   const gridHtml=latest.length?`<section><h2 class="section-title">Latest Stories</h2><div class="art-grid">${latest.map(a=>`<article class="card"><div class="card-img"><img src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/></div><div class="card-body"><div class="card-cat">${esc(a.category||'Guide')}</div><h3 class="card-title"><a href="/${a.slug}/">${esc(a.title)}</a></h3><p class="card-excerpt">${esc(a.excerpt)}</p></div></article>`).join('')}</div></section>`:'';
   const h1Html=`<div style="text-align:center;padding:20px 16px 22px;margin-bottom:28px;border-bottom:2px solid var(--border);background:var(--light)"><span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--terra);display:block;margin-bottom:8px">Lifestyle &amp; Wellness</span><h1 style="font-family:var(--ff-head);font-size:clamp(20px,3.5vw,32px);color:var(--warm);margin:0 0 10px;font-weight:700;line-height:1.15">${esc(site.tagline||site.name)}</h1><p style="font-size:12px;color:var(--muted);letter-spacing:1px;margin:0;text-transform:uppercase">Trusted guides — updated ${new Date().getFullYear()}</p></div>`;
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${h1Html}${heroHtml}${adUnit('leaderboard')}${gridHtml}</div></main>${renderFooter(site)}`;
