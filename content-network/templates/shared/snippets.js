@@ -137,6 +137,27 @@ export const NATIVE_ADS_HTML = (siteUrl = '') => `
 </div>
 `;
 
+// ── MGID Native Ads ───────────────────────────────────────────
+export function getMgidLoader() {
+  const id = process.env.MGID_SITE_ID || '';
+  return id ? `<script src="https://jsc.mgid.com/site/${id}.js" async></script>` : '';
+}
+
+export function injectMgidInArticle(content) {
+  const id = process.env.MGID_IN_ARTICLE_WIDGET_ID || '';
+  if (!id) return content;
+  const widget = `<div data-type="_mgwidget" data-widget-id="${id}"></div>`;
+  let count = 0;
+  const result = content.replace(/<\/p>/gi, m => { count++; return count === 3 ? `${m}${widget}` : m; });
+  return count >= 3 ? result : content + widget;
+}
+
+export function getMgidSmartWidget() {
+  const id = process.env.MGID_SMART_WIDGET_ID || '';
+  if (!id) return '';
+  return `<div data-type="_mgwidget" data-widget-id="${id}" style="margin:32px 0"></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
+}
+
 export const NATIVE_ADS_JS = `
 // Native ads: popola con articoli correlati simulando formato native
 fetch('/api/articles.json').then(function(r){ return r.json(); }).then(function(arts){

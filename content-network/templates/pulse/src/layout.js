@@ -2,7 +2,7 @@
  * PULSE — Tabloid style
  * Rosso/navy, breaking ticker, header bold, sidebar ad-heavy
  */
-import { COOKIE_BANNER_CSS, COOKIE_BANNER_HTML, COOKIE_BANNER_JS, EMAIL_FORM_JS, NATIVE_ADS_CSS, NATIVE_ADS_JS } from '../../shared/snippets.js';
+import { COOKIE_BANNER_CSS, COOKIE_BANNER_HTML, COOKIE_BANNER_JS, EMAIL_FORM_JS, NATIVE_ADS_CSS, NATIVE_ADS_JS, getMgidLoader, injectMgidInArticle, getMgidSmartWidget } from '../../shared/snippets.js';
 
 export const CSS = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -227,7 +227,7 @@ ${lcpImage ? `<link rel="preload" as="image" href="${lcpImage}" fetchpriority="h
 <link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
-</head>
+${getMgidLoader()}</head>
 <body>
 ${body}
 ${ezoicId ? '' : COOKIE_BANNER_HTML}
@@ -281,7 +281,7 @@ ${renderHeader(site)}
 
     <div class="art-layout">
       <div class="art-body">
-        ${content}
+        ${injectMgidInArticle(content)}
         ${(() => {
           const shortname = process.env.DISQUS_SHORTNAME || '';
           if (!shortname) return '';
@@ -318,6 +318,7 @@ ${renderHeader(site)}
         ${adUnit('sidebar')}
       </aside>
     </div>
+${getMgidSmartWidget()}
   </div>
 </main>
 ${renderFooter(site)}`;
