@@ -370,7 +370,7 @@ export function renderHomePage(articles, site) {
       </div>
     </section>` : '<p style="text-align:center;padding:48px;color:#999">Articles coming soon...</p>';
 
-  const h1Html = `<h1 class="section-title" style="margin-top:0">${esc(site.tagline || site.name)}</h1>`;
+  const h1Html = `<div style="background:var(--accent);color:#fff;text-align:center;padding:20px 16px;margin-bottom:24px;border-radius:2px"><span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.75;display:block;margin-bottom:8px">Breaking News &amp; Analysis</span><h1 style="font-size:clamp(18px,3.5vw,30px);font-weight:900;margin:0 0 8px;line-height:1.15">${esc(site.tagline||site.name)}</h1><p style="font-size:12px;opacity:.8;letter-spacing:1px;margin:0;text-transform:uppercase">In-depth coverage — updated ${new Date().getFullYear()}</p></div>`;
   const body = `
 ${renderHeader(site)}
 <main class="site-main">

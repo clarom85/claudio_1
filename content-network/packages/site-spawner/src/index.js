@@ -661,8 +661,8 @@ async function generateAuthorPage(domain, author, siteConfig, template) {
 
   // Paragrafi della bio lunga
   const bioParagraphs = (author.longBio || author.shortBio)
-    .split('\n\n')
-    .filter(p => p.trim())
+    .split(/\n\n|\n/)
+    .filter(p => p.trim().length > 30)
     .map(p => `<p style="font-size:16px;line-height:1.9;margin-bottom:22px">${p.trim()}</p>`)
     .join('');
 
@@ -675,38 +675,47 @@ async function generateAuthorPage(domain, author, siteConfig, template) {
     : '';
 
   const body = `
+<style>
+.author-bio-grid{display:grid;grid-template-columns:1fr 280px;gap:32px;align-items:start}
+@media(max-width:700px){
+  .author-bio-grid{grid-template-columns:1fr}
+  .author-hero-flex{flex-direction:column;align-items:center;text-align:center;padding:24px!important}
+  .author-hero-flex img{width:120px!important;height:120px!important}
+  .author-hero-flex .author-short-bio{text-align:left}
+}
+</style>
 <div style="max-width:900px;margin:32px auto;padding:0 20px">
   <!-- Hero -->
   <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:36px;">
     <div style="height:4px;background:#c0392b;"></div>
-    <div style="padding:40px;display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
-      <img src="/authors/${author.avatar}.jpg"
+    <div class="author-hero-flex" style="padding:40px;display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
+      <img src="/images/author-${author.avatar}.jpg"
         alt="${author.name}"
-        onerror="this.src='/images/placeholder.webp'"
-        style="width:180px;height:180px;object-fit:cover;border-radius:50%;border:4px solid #f4f4f0;box-shadow:0 4px 16px rgba(0,0,0,0.15);flex-shrink:0;" />
-      <div style="flex:1;min-width:240px;">
+        onerror="this.style.display='none'"
+        style="width:160px;height:160px;object-fit:cover;object-position:center;border-radius:50%;border:4px solid #f4f4f0;box-shadow:0 4px 16px rgba(0,0,0,0.15);flex-shrink:0;" />
+      <div style="flex:1;min-width:220px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#c0392b;margin-bottom:8px;">Expert Contributor</div>
-        <h1 style="font-family:Georgia,serif;font-size:clamp(24px,4vw,36px);font-weight:900;color:#1a1a2e;margin-bottom:8px;line-height:1.2;">${author.name}</h1>
-        <p style="font-size:16px;font-weight:600;color:#666;margin-bottom:20px;">${author.title}</p>
-        <p style="font-size:15px;line-height:1.75;color:#333;border-left:3px solid #c0392b;padding-left:14px;margin-bottom:24px;">${author.shortBio}</p>
+        <h1 style="font-family:Georgia,serif;font-size:clamp(22px,4vw,34px);font-weight:900;color:#1a1a2e;margin-bottom:8px;line-height:1.2;">${author.name}</h1>
+        <p style="font-size:15px;font-weight:600;color:#666;margin-bottom:16px;">${author.title}</p>
+        <p class="author-short-bio" style="font-size:14px;line-height:1.75;color:#333;border-left:3px solid #c0392b;padding-left:14px;margin-bottom:20px;">${author.shortBio}</p>
         ${socialLinks}
       </div>
     </div>
   </div>
 
   <!-- Bio lunga -->
-  <div style="display:grid;grid-template-columns:1fr 280px;gap:32px;align-items:start;">
-    <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:36px;">
-      <h2 style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #c0392b;">About ${author.name}</h2>
+  <div class="author-bio-grid">
+    <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:32px;">
+      <h2 style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #c0392b;">About ${author.name}</h2>
       ${bioParagraphs}
     </div>
     <aside>
       <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:24px;border-top:3px solid #c0392b;margin-bottom:20px;">
-        <h3 style="font-family:Georgia,serif;font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">Role at ${siteName}</h3>
+        <h3 style="font-family:Georgia,serif;font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Role at ${siteName}</h3>
         <p style="font-size:14px;line-height:1.7;color:#555;">${author.title} — writes and reviews all content in this area to ensure accuracy and real-world relevance.</p>
       </div>
       <div style="background:#1a1a2e;color:white;border-radius:4px;padding:24px;">
-        <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">Editorial Standards</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Editorial Standards</h3>
         <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.75);margin-bottom:16px;">All content is fact-checked and reviewed before publication. We follow strict guidelines for accuracy.</p>
         <a href="/about/" style="color:#c0392b;font-size:13px;font-weight:600;text-decoration:none;">Read our editorial process →</a>
       </div>
