@@ -24,7 +24,7 @@ import { alertCritical, alertWarning, alertReport } from '@content-network/vps/s
 import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { getDailyArticleLimit, logScheduleInfo, isDeadDay } from '@content-network/content-engine/src/publishing-schedule.js';
-import { injectInternalLinks } from '@content-network/content-engine/src/link-injector.js';
+import { injectInternalLinks, injectPillarSatelliteLinks } from '@content-network/content-engine/src/link-injector.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -386,15 +386,17 @@ async function refreshStaleArticles(stats) {
 async function relinkSite(site) {
   console.log(`\n  🔗 Re-linking pass: ${site.domain}...`);
 
-  // Carica tutti gli articoli pubblicati (slug, title, content, tags)
+  // Carica tutti gli articoli pubblicati (slug, title, content, tags, cluster data)
   const articles = await sql`
-    SELECT id, slug, title, content, meta_description,
-           schema_markup, published_at, created_at,
-           COALESCE(tags, '{}') as tags
-    FROM articles
-    WHERE site_id = ${site.id}
-      AND status = 'published'
-    ORDER BY published_at ASC
+    SELECT a.id, a.slug, a.title, a.content, a.meta_description,
+           a.schema_markup, a.published_at, a.created_at,
+           COALESCE(a.tags, '{}') as tags,
+           k.cluster_slug, k.is_pillar
+    FROM articles a
+    LEFT JOIN keywords k ON a.keyword_id = k.id
+    WHERE a.site_id = ${site.id}
+      AND a.status = 'published'
+    ORDER BY a.published_at ASC
   `;
 
   if (articles.length < 2) {
@@ -402,20 +404,24 @@ async function relinkSite(site) {
     return;
   }
 
-  // Prepara array per link injector
+  // Prepara array per link injector (inclusi campi cluster per bidirectional linking)
   const input = articles.map(a => ({
     id: a.id,
     slug: a.slug,
     title: a.title,
     content: a.content || '',
     tags: a.tags || [],
+    cluster_slug: a.cluster_slug || null,
+    is_pillar: a.is_pillar || false,
     // Campi pass-through
     metaDescription: a.meta_description,
     schemas: a.schema_markup,
   }));
 
-  // Inietta link — idempotente (non duplica link già esistenti)
-  const relinked = injectInternalLinks(input);
+  // Pass 1: Bidirectional pillar-satellite linking (structural, deterministic)
+  const clusterLinked = injectPillarSatelliteLinks(input);
+  // Pass 2: Random cross-linking for remaining link budget — idempotente
+  const relinked = injectInternalLinks(clusterLinked);
 
   let updated = 0;
 

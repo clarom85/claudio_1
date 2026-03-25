@@ -8,6 +8,11 @@
  * - Non linkare l'articolo a se stesso
  * - Solo la prima occorrenza di ogni frase viene linkata
  * - Non modifica testo dentro tag HTML esistenti
+ *
+ * Bidirectional cluster linking (injectPillarSatelliteLinks):
+ * - Satellite → Pillar: ogni satellite linka al suo pillar (topical hub signal)
+ * - Pillar → Satellites: ogni pillar linka ai suoi satellite (distribute PageRank)
+ * - Corre PRIMA del random pass per garantire copertura strutturale del cluster
  */
 
 /**
@@ -112,4 +117,96 @@ function injectLink(content, phrase, slug) {
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Bidirectional pillar-satellite cluster linking.
+ *
+ * Each article must have: { slug, title, content, cluster_slug, is_pillar }
+ *
+ * For each cluster:
+ *  - Every satellite injects a link to the pillar (if not already present)
+ *  - The pillar injects links to up to MAX_PILLAR_OUTBOUND satellites (if not present)
+ *
+ * Returns the updated articles array (same structure).
+ */
+const MAX_PILLAR_OUTBOUND = 5;
+
+export function injectPillarSatelliteLinks(articles) {
+  if (!articles?.length) return articles;
+
+  // Group by cluster_slug — skip articles with no cluster
+  const clusters = new Map(); // cluster_slug → { pillar, satellites[] }
+  for (const art of articles) {
+    if (!art.cluster_slug) continue;
+    if (!clusters.has(art.cluster_slug)) {
+      clusters.set(art.cluster_slug, { pillar: null, satellites: [] });
+    }
+    const c = clusters.get(art.cluster_slug);
+    if (art.is_pillar) {
+      c.pillar = art;
+    } else {
+      c.satellites.push(art);
+    }
+  }
+
+  // Work on a mutable copy keyed by slug
+  const bySlug = new Map(articles.map(a => [a.slug, { ...a }]));
+
+  for (const [, cluster] of clusters) {
+    const { pillar, satellites } = cluster;
+    if (!pillar || satellites.length === 0) continue;
+
+    const pillarPhrases = buildPhrases(pillar.title);
+
+    // 1. Satellite → Pillar: ensure each satellite links to the pillar
+    for (const sat of satellites) {
+      const current = bySlug.get(sat.slug);
+      if (!current) continue;
+      // Skip if a link to the pillar already exists
+      if (current.content.includes(`/${pillar.slug}`)) continue;
+
+      for (const phrase of pillarPhrases) {
+        if (phrase.length < 10) continue;
+        const result = injectLink(current.content, phrase, pillar.slug);
+        if (result.injected) {
+          bySlug.set(sat.slug, { ...current, content: result.content });
+          break;
+        }
+      }
+    }
+
+    // 2. Pillar → Satellites: inject links to satellites (up to MAX_PILLAR_OUTBOUND)
+    let pillarLinksAdded = 0;
+    const pillarCurrent = bySlug.get(pillar.slug);
+    if (!pillarCurrent) continue;
+
+    // Shuffle satellites for variety across weekly runs
+    const shuffledSats = [...satellites].sort(() => Math.random() - 0.5);
+    let updatedPillarContent = pillarCurrent.content;
+
+    for (const sat of shuffledSats) {
+      if (pillarLinksAdded >= MAX_PILLAR_OUTBOUND) break;
+      // Skip if already linked
+      if (updatedPillarContent.includes(`/${sat.slug}`)) continue;
+
+      const satPhrases = buildPhrases(sat.title);
+      for (const phrase of satPhrases) {
+        if (phrase.length < 10) continue;
+        const result = injectLink(updatedPillarContent, phrase, sat.slug);
+        if (result.injected) {
+          updatedPillarContent = result.content;
+          pillarLinksAdded++;
+          break;
+        }
+      }
+    }
+
+    if (updatedPillarContent !== pillarCurrent.content) {
+      bySlug.set(pillar.slug, { ...pillarCurrent, content: updatedPillarContent });
+    }
+  }
+
+  // Return in original order
+  return articles.map(a => bySlug.get(a.slug) || a);
 }
