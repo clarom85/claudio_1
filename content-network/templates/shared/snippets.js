@@ -138,24 +138,21 @@ export const NATIVE_ADS_HTML = (siteUrl = '') => `
 `;
 
 // ── MGID Native Ads ───────────────────────────────────────────
-export function getMgidLoader() {
-  const id = process.env.MGID_SITE_ID || '';
-  return id ? `<script src="https://jsc.mgid.com/site/${id}.js" async></script>` : '';
+export function getMgidLoader(siteId = '') {
+  return siteId ? `<script src="https://jsc.mgid.com/site/${siteId}.js" async></script>` : '';
 }
 
-export function injectMgidInArticle(content) {
-  const id = process.env.MGID_IN_ARTICLE_WIDGET_ID || '';
-  if (!id) return content;
-  const widget = `<div data-type="_mgwidget" data-widget-id="${id}"></div>`;
+export function injectMgidInArticle(content, widgetId = '') {
+  if (!widgetId) return content;
+  const widget = `<div data-type="_mgwidget" data-widget-id="${widgetId}"></div>`;
   let count = 0;
   const result = content.replace(/<\/p>/gi, m => { count++; return count === 3 ? `${m}${widget}` : m; });
   return count >= 3 ? result : content + widget;
 }
 
-export function getMgidSmartWidget() {
-  const id = process.env.MGID_SMART_WIDGET_ID || '';
-  if (!id) return '';
-  return `<div data-type="_mgwidget" data-widget-id="${id}" style="margin:32px 0"></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
+export function getMgidSmartWidget(widgetId = '') {
+  if (!widgetId) return '';
+  return `<div data-type="_mgwidget" data-widget-id="${widgetId}" style="margin:32px 0"></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
 }
 
 export const NATIVE_ADS_JS = `

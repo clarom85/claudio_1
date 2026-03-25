@@ -176,7 +176,7 @@ img{max-width:100%;height:auto;display:block}
 .article-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--navy);margin-top:36px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--red)}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
-export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '', lcpImage = '', ga4MeasurementId = '' }) {
+export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '', lcpImage = '', ga4MeasurementId = '', mgidSiteId = '' }) {
   const canonical = slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
@@ -227,7 +227,7 @@ ${lcpImage ? `<link rel="preload" as="image" href="${lcpImage}" fetchpriority="h
 <link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Open+Sans:wght@400;500;600&display=swap"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
-${getMgidLoader()}</head>
+${getMgidLoader(mgidSiteId)}</head>
 <body>
 ${body}
 ${ezoicId ? '' : COOKIE_BANNER_HTML}
@@ -281,7 +281,7 @@ ${renderHeader(site)}
 
     <div class="art-layout">
       <div class="art-body">
-        ${injectMgidInArticle(content)}
+        ${injectMgidInArticle(content, site.mgidInArticleId)}
         ${(() => {
           const shortname = process.env.DISQUS_SHORTNAME || '';
           if (!shortname) return '';
@@ -318,14 +318,14 @@ ${renderHeader(site)}
         ${adUnit('sidebar')}
       </aside>
     </div>
-${getMgidSmartWidget()}
+${getMgidSmartWidget(site.mgidSmartId)}
   </div>
 </main>
 ${renderFooter(site)}`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '', ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : '' });
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '', mgidSiteId: site.mgidSiteId || '', ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : '' });
 }
 
 export function renderHomePage(articles, site) {
