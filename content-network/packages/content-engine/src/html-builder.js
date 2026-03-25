@@ -100,7 +100,7 @@ function escapeRegexChars(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [] }) {
+export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '' }) {
   const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations } = articleData;
   // Enforce Google's 160-char limit — Claude occasionally overshoots
   const metaDescription = (articleData.metaDescription || '').slice(0, 160);
@@ -149,27 +149,88 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     </ol>
   </nav>` : '';
 
-  // Max 2 inline ads inside sections: only after section index 1 and 3 (2nd and 4th)
-  // Use different Ezoic placeholder IDs (102 vs 103) to avoid duplicate IDs on page
-  // linkInjector ha stato condiviso tra tutte le sezioni → max 3 link totali per articolo
+  // Determine article layout type from schema hint + keyword patterns
+  const isHowTo = articleData.schemaType === 'HowTo'
+    || /\bhow[ -]to\b|\bstep[- ]by[- ]step\b|\bguide to\b|\binstall(ation)?\b/i.test(keyword);
+  const isCost = !isHowTo && /\bcost(s)?\b|\bprice(s)?\b|\b vs \b|\bcompar|\bhow much\b|\baverage\b|\bexpensive\b|\bcheap/i.test(keyword);
+  const layoutType = isHowTo ? 'howto' : isCost ? 'cost' : 'standard';
+
+  // Max 2 inline ads inside sections — different Ezoic IDs to avoid duplicates
+  // linkInjector: shared state across all sections → max 3 total links per article
   const linkInjector = createLinkInjector(relatedArticles, slug, 3);
+
+  // ── Cost layout: Quick Summary box ──────────────────────────────────────────
+  const costSummaryHTML = (layoutType === 'cost' && articleData.keyTakeaways?.length)
+    ? `<div style="background:#f0f9f4;border:2px solid #c3e6d0;border-left:5px solid #1a5c3a;border-radius:6px;padding:20px 24px;margin:0 0 28px;">
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1a5c3a;margin:0 0 12px;">💰 Quick Cost Summary</p>
+      <ul style="list-style:none;padding:0;margin:0;">
+        ${articleData.keyTakeaways.slice(0,4).map(t=>`<li style="font-size:15px;line-height:1.7;padding:5px 0 5px 20px;position:relative;color:#1a1a1a;border-bottom:1px solid #d5ead9;"><span style="position:absolute;left:0;color:#1a5c3a;font-weight:700;">$</span>${escapeHtml(t)}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  // ── Cost layout: inline calculator CTA (shown after section 2) ──────────────
+  const calcCtaHTML = (layoutType === 'cost' && toolSlug)
+    ? `<div style="background:linear-gradient(135deg,#1a5c3a 0%,#2d7a4f 100%);color:#fff;border-radius:8px;padding:24px 28px;margin:28px 0;text-align:center;box-shadow:0 4px 16px rgba(26,92,58,.25)">
+      <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin:0 0 8px">Free Tool</p>
+      <h3 style="font-size:20px;font-weight:700;margin:0 0 10px;line-height:1.2">Get Your Personalized Cost Estimate</h3>
+      <p style="font-size:14px;opacity:.88;margin:0 0 18px;line-height:1.5">Answer 3 quick questions — get a price range tailored to your project and location.</p>
+      <a href="/tools/${toolSlug}/" style="display:inline-block;background:#fff;color:#1a5c3a;padding:12px 32px;border-radius:6px;font-weight:700;font-size:15px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.15)">Start Free Calculator →</a>
+    </div>` : '';
+
+  // ── HowTo layout: progress header ───────────────────────────────────────────
+  const howtoHeaderHTML = layoutType === 'howto'
+    ? `<div style="display:flex;align-items:center;gap:12px;background:#f0f4ff;border:1px solid #d0d9ff;border-radius:6px;padding:14px 18px;margin:0 0 24px;">
+      <span style="font-size:24px">📋</span>
+      <div>
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#3b5bdb;margin:0 0 2px">Step-by-Step Guide</p>
+        <p style="font-size:14px;color:#444;margin:0">${sections.length} steps · Est. ${Math.max(5, sections.length * 3)}–${Math.max(10, sections.length * 7)} minutes</p>
+      </div>
+    </div>` : '';
 
   let sectionsHTML = '';
   sections.forEach((section, i) => {
     const adAfter = i === 1 ? adUnit('inline') : i === 3 ? adUnit('inline2') : '';
+    // For cost layout: inject calculator CTA after section 2 instead of 2nd ad
+    const calcAfter = (layoutType === 'cost' && i === 1) ? calcCtaHTML : '';
 
     let listHTML = '';
     if (section.hasList && section.listItems?.length) {
       listHTML = `<ul class="art-list">${section.listItems.map(item => `<li>${item}</li>`).join('')}</ul>`;
     }
 
-    sectionsHTML += `
-    <section class="article-section" style="margin-bottom:36px">
-      <h2 id="${slugify(section.h2)}" style="margin-top:36px">${escapeHtml(section.h2)}</h2>
-      ${linkInjector(section.content).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join('')}
+    const sectionContent = linkInjector(section.content).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join('');
+
+    if (layoutType === 'howto') {
+      // HowTo layout: numbered step with badge
+      sectionsHTML += `
+    <section class="article-section how-to-step" style="margin-bottom:28px;padding:20px 24px;background:#f9fafb;border-left:4px solid #3b5bdb;border-radius:0 6px 6px 0">
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+        <span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:#3b5bdb;color:#fff;font-weight:700;font-size:16px;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">${i + 1}</span>
+        <h2 id="${slugify(section.h2)}" style="font-size:20px;font-weight:700;margin:0;line-height:1.3">${escapeHtml(section.h2)}</h2>
+      </div>
+      ${sectionContent}
       ${listHTML}
     </section>
     ${adAfter}`;
+    } else if (layoutType === 'cost') {
+      // Cost layout: data-focused section with subtle accent
+      sectionsHTML += `
+    <section class="article-section" style="margin-bottom:36px">
+      <h2 id="${slugify(section.h2)}" style="margin-top:36px;padding-bottom:8px;border-bottom:2px solid #e8f5ef">${escapeHtml(section.h2)}</h2>
+      ${sectionContent}
+      ${listHTML}
+    </section>
+    ${calcAfter}${i !== 1 ? adAfter : ''}`;
+    } else {
+      // Standard layout
+      sectionsHTML += `
+    <section class="article-section" style="margin-bottom:36px">
+      <h2 id="${slugify(section.h2)}" style="margin-top:36px">${escapeHtml(section.h2)}</h2>
+      ${sectionContent}
+      ${listHTML}
+    </section>
+    ${adAfter}`;
+    }
   });
 
   const faqHTML = faq.map(item => `
@@ -242,6 +303,8 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         <p class="intro-text">${escapeHtml(intro)}</p>
       </div>
 
+      ${howtoHeaderHTML}
+      ${costSummaryHTML}
       ${tocHTML}
 
       ${AD_UNIT_INLINE}

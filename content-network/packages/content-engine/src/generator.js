@@ -86,7 +86,8 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         siteUrl: `https://${site.domain}`,
         slug,
         keyword,
-        relatedArticles: existingArticles
+        relatedArticles: existingArticles,
+        toolSlug: site.toolSlug || ''
       });
 
       // Fetch image from Pexels if a public directory is provided
