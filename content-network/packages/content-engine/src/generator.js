@@ -7,6 +7,7 @@ import { buildArticleHTML } from './html-builder.js';
 import { AUTHOR_PERSONAS } from './prompts.js';
 import { fetchArticleImage } from './image-fetcher.js';
 import { fetchLiveData, formatLiveDataBlock } from './data-fetcher.js';
+import { sanitizeCitations } from './citation-sources.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -67,6 +68,11 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         console.warn(`  JSON parse failed (attempt ${attempt}):`, parseErr.message);
         if (attempt === retries) throw parseErr;
         continue;
+      }
+
+      // Sanifica citation URLs: rimpiazza URL inventati con URL verificati dalla whitelist
+      if (articleData.citations) {
+        articleData.citations = sanitizeCitations(articleData.citations);
       }
 
       // Valida campi obbligatori

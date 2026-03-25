@@ -7,6 +7,8 @@
  * per evitare il fingerprint uniforme del modello AI su tutti i siti.
  */
 
+import { getCitationPromptGuidance } from './citation-sources.js';
+
 // ── Per-niche prompt configuration ───────────────────────────────────────────
 const NICHE_PROMPT_CONFIGS = {
 
@@ -331,10 +333,12 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
     {
       "claim": "the specific fact or statistic this source supports",
       "source": "Full organization name (e.g. CDC, IRS, Bureau of Labor Statistics)",
-      "url": "https://actual-url.gov/specific-page"
+      "url": "https://www.bls.gov/"
     }
   ]
 }
+
+${getCitationPromptGuidance()}
 
 E-E-A-T LANGUAGE REQUIREMENTS (Google's quality signals — every article must demonstrate all four):
 - EXPERIENCE: Weave 1-2 first-person experience markers naturally into section content — not just in authorNote. Use phrases anchored to specific situations: "Every time I've seen this go wrong, it's because...", "The most common thing I notice on inspections is...", "Clients who come to me after trying X always say..." — make it feel like advice from someone who has done this, not read about it.
