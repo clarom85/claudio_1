@@ -98,12 +98,10 @@ async function publishDueArticles(stats) {
     return;
   }
 
-  // Recovery: articoli bloccati in 'processing' da > 10 minuti → rimetti in pending
-  await sql`
-    UPDATE publish_queue SET status = 'pending'
-    WHERE status = 'processing'
-      AND updated_at < NOW() - INTERVAL '10 minutes'
-  `;
+  // Recovery: articoli bloccati in 'processing' → rimetti in pending
+  // (lo scheduler fa process.exit(0) dopo ogni run, quindi qualunque item
+  //  in 'processing' all'avvio è necessariamente rimasto bloccato da un crash precedente)
+  await sql`UPDATE publish_queue SET status = 'pending' WHERE status = 'processing'`;
 
   // Pubblica max articoli per questa ora (finestra 15 ore / ~2 per ora in warm-up)
   const BATCH_PER_HOUR = Math.ceil(MAX_ARTICLES_PER_DAY / 15);
