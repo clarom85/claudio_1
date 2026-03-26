@@ -325,7 +325,7 @@ ${renderFooter(site)}`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
-  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '', mgidSiteId: site.mgidSiteId || '', ogImage: article.image ? `${site.url}${article.image}` : '', datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : '' });
+  return renderBase({ title, description: metaDescription, slug, siteName: site.name, siteUrl: site.url, schemas, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '', mgidSiteId: site.mgidSiteId || '', ogImage: article.image ? `${site.url}${article.image}` : `${site.url}/images/${slug}.jpg`, datePublished: pubIso, dateModified: modIso, authorUrl: `${site.url}/author/${site.authorAvatar}/`, lcpImage: article.image ? `${site.url}${article.image}` : `${site.url}/images/${slug}.jpg` });
 }
 
 export function renderHomePage(articles, site) {
@@ -398,7 +398,7 @@ ${renderFooter(site)}`;
   const heroImg = hero ? (hero.image || `/images/${hero.slug}.jpg`) : '';
   const metaDesc = site.tagline ? `${site.tagline}. Trusted guides, real data, expert advice.` : `${site.name}: trusted source for expert guides, practical advice, and in-depth how-to articles.`;
   return renderBase({
-    title: `${site.name} — Expert Guides & How-To Articles`,
+    title: `Expert Guides & How-To Articles`,
     description: metaDesc,
     siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: heroImg ? `${site.url}${heroImg}` : '',

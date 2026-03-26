@@ -134,9 +134,9 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
 
   const breadcrumbItems = [{ name: 'Home', path: '/' }];
   if (categorySlug && articleData.category) {
-    breadcrumbItems.push({ name: articleData.category, path: `/category/${categorySlug}` });
+    breadcrumbItems.push({ name: articleData.category, path: `/category/${categorySlug}/` });
   }
-  breadcrumbItems.push({ name: title, path: `/${slug}` });
+  breadcrumbItems.push({ name: title, path: `/${slug}/` });
 
   const breadcrumb = buildBreadcrumbSchema(breadcrumbItems, siteUrl);
 

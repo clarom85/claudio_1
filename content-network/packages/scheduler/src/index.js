@@ -275,7 +275,7 @@ async function rebuildAffectedSites(stats) {
       // Sitemap + RSS feed + ping search engines
       const categoryUrls = buildCategoryUrls(articlesData);
       const tagUrls = buildTagUrls(articlesData);
-      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls], { siteName: siteConfig.name });
+      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls], { siteName: siteConfig.name, authorSlugs: siteConfig.authorAvatar ? [siteConfig.authorAvatar] : [], toolSlug: siteConfig.toolSlug || null });
       generateRssFeed(site.domain, published, { siteName: siteConfig.name });
       await pingSitemap(site.domain);
 
