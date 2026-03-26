@@ -183,7 +183,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
   ).join('\n');
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
   const ga4Id = ga4MeasurementId || process.env.GA4_MEASUREMENT_ID || '';
-  const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
+  const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
   const ezoicId = process.env.EZOIC_SITE_ID || '';
   const effectiveOgImage = ogImage || (siteUrl ? `${siteUrl}/images/og-default.jpg` : '');
   const isArticle = slug && !slug.startsWith('category/') && !slug.startsWith('tag/') && slug !== 'about' && slug !== 'contact' && slug !== 'privacy' && slug !== 'terms' && slug !== 'disclaimer' && slug !== 'advertise' && slug !== 'editorial-process';
@@ -196,7 +196,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
 <meta name="robots" content="${robots}"/>
 <meta name="theme-color" content="#c0392b"/>
 <meta property="og:locale" content="en_US"/>
-${gscVerification ? `<meta name="google-site-verification" content="${gscVerification}"/>` : ''}
+${gscKeys.map(k=>`<meta name="google-site-verification" content="${k}"/>`).join('\n')}
 <title>${esc(title)} | ${esc(siteName)}</title>
 <meta name="description" content="${esc(description)}"/>
 <link rel="canonical" href="${canonical}"/>${prevUrl ? `<link rel="prev" href="${prevUrl}"/>` : ''}${nextUrl ? `<link rel="next" href="${nextUrl}"/>` : ''}

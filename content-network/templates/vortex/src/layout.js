@@ -156,13 +156,13 @@ export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],b
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
   const robots=noindex?'noindex, follow':'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
   const ga4Id=ga4MeasurementId||process.env.GA4_MEASUREMENT_ID||'';
-  const gscVerification=process.env.GOOGLE_SITE_VERIFICATION||'';
+  const gscKeys=(process.env.GOOGLE_SITE_VERIFICATION||'').split(',').map(s=>s.trim()).filter(Boolean);
   const ezoicId=process.env.EZOIC_SITE_ID||'';
   const effectiveOgImage=ogImage||(siteUrl?`${siteUrl}/images/og-default.jpg`:'');
   const isArticle=slug&&!slug.startsWith('category/')&&!slug.startsWith('tag/')&&slug!=='about'&&slug!=='contact'&&slug!=='privacy'&&slug!=='terms'&&slug!=='disclaimer'&&slug!=='advertise'&&slug!=='editorial-process';
   return `<!DOCTYPE html><html lang="en" data-adsense="${adsenseId}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="${robots}"/><meta name="theme-color" content="#f97316"/>
-<meta property="og:locale" content="en_US"/>${gscVerification?`<meta name="google-site-verification" content="${gscVerification}"/>`:''}
+<meta property="og:locale" content="en_US"/>${gscKeys.map(k=>`<meta name="google-site-verification" content="${k}"/>`).join('\n')}
 <title>${esc(title)} | ${esc(siteName)}</title>
 <meta name="description" content="${esc(description)}"/><link rel="canonical" href="${canonical}"/>${prevUrl?`<link rel="prev" href="${prevUrl}"/>`:''}${nextUrl?`<link rel="next" href="${nextUrl}"/>`:''}
 <link rel="alternate" type="application/rss+xml" title="${esc(siteName)}" href="${siteUrl}/feed.xml"/>${authorUrl?`<link rel="author" href="${authorUrl}"/>`:''}

@@ -18,7 +18,7 @@ function htmlEsc(str = '') {
 function simplePageWrapper(title, description, content, site, { noindex = false, canonical = '', ogImage = '' } = {}) {
   const effectiveOgImage = ogImage || `${site.url}/images/og-default.jpg`;
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
-  const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
+  const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
   const ga4Script = ga4Id ? `
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
@@ -27,7 +27,7 @@ function simplePageWrapper(title, description, content, site, { noindex = false,
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="${robots}"/>
-${gscVerification ? `<meta name="google-site-verification" content="${gscVerification}"/>` : ''}
+${gscKeys.map(k=>`<meta name="google-site-verification" content="${k}"/>`).join('\n')}
 <title>${htmlEsc(title)} | ${htmlEsc(site.name)}</title>
 <meta name="description" content="${htmlEsc(description)}"/>
 ${canonical ? `<link rel="canonical" href="${canonical}"/>` : ''}
