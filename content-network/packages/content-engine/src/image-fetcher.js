@@ -580,52 +580,48 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
   const imagesDir = join(destDir, 'images');
   if (!existsSync(imagesDir)) mkdirSync(imagesDir, { recursive: true });
 
-  // 1. Try Pollinations.ai first — unique AI-generated image, no API key needed
-  const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
-  if (pollinationsResult) return pollinationsResult;
+  // 1. Try Pexels first (primary — reliable stock photos)
+  if (PEXELS_KEY) {
+    const usedIds = loadUsedIds(imagesDir);
+    const existingMd5s = loadExistingMd5s(imagesDir);
+    const queries = buildQueries(keyword, title, nicheSlug);
 
-  // 2. Fallback: Pexels stock photo
-  if (!PEXELS_KEY) {
-    console.warn('  [image] Pollinations failed and PEXELS_API_KEY not set — no image');
-    return null;
-  }
+    console.log(`  [image] Pexels queries: ${queries.map((q, i) => `${i + 1}."${q}"`).join(' → ')}`);
 
-  console.log('  [image] Falling back to Pexels...');
-  const usedIds = loadUsedIds(imagesDir);
-  const existingMd5s = loadExistingMd5s(imagesDir);
-  const queries = buildQueries(keyword, title, nicheSlug);
+    for (const query of queries) {
+      try {
+        const photo = await searchPexels(query, usedIds);
+        if (!photo) continue;
 
-  console.log(`  [image] Pexels queries: ${queries.map((q, i) => `${i + 1}."${q}"`).join(' → ')}`);
+        const imgRes = await fetch(photo.src.large);
+        if (!imgRes.ok) continue;
 
-  for (const query of queries) {
-    try {
-      const photo = await searchPexels(query, usedIds);
-      if (!photo) continue;
+        const imgBuf = Buffer.from(await imgRes.arrayBuffer());
+        const imgMd5 = md5(imgBuf);
+        if (existingMd5s.has(imgMd5)) {
+          console.log(`  [image] MD5 collision for Pexels #${photo.id} — trying next`);
+          usedIds.add(photo.id);
+          continue;
+        }
 
-      const imgRes = await fetch(photo.src.large);
-      if (!imgRes.ok) continue;
+        const destPath = join(imagesDir, `${slug}.jpg`);
+        writeFileSync(destPath, imgBuf);
+        existingMd5s.add(imgMd5);
+        saveUsedId(imagesDir, photo.id);
+        postProcessImage(destPath);
 
-      const imgBuf = Buffer.from(await imgRes.arrayBuffer());
-      const imgMd5 = md5(imgBuf);
-      if (existingMd5s.has(imgMd5)) {
-        console.log(`  [image] MD5 collision for Pexels #${photo.id} — trying next`);
-        usedIds.add(photo.id);
-        continue;
+        console.log(`  [image] Saved /images/${slug}.jpg (Pexels #${photo.id}, query: "${query}")`);
+        return `/images/${slug}.jpg`;
+
+      } catch (err) {
+        console.warn(`  [image] Pexels error for query "${query}": ${err.message}`);
       }
-
-      const destPath = join(imagesDir, `${slug}.jpg`);
-      writeFileSync(destPath, imgBuf);
-      existingMd5s.add(imgMd5);
-      saveUsedId(imagesDir, photo.id);
-      postProcessImage(destPath);
-
-      console.log(`  [image] Saved /images/${slug}.jpg (Pexels #${photo.id}, query: "${query}")`);
-      return `/images/${slug}.jpg`;
-
-    } catch (err) {
-      console.warn(`  [image] Pexels error for query "${query}": ${err.message}`);
     }
   }
+
+  // 2. Fallback: Pollinations AI-generated image
+  const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
+  if (pollinationsResult) return pollinationsResult;
 
   console.warn(`  [image] No image found for keyword: "${keyword}"`);
   return null;
