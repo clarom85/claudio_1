@@ -982,7 +982,7 @@ export const TOOL_CONFIGS = {
      Tool: Life Insurance Needs Calculator
   ───────────────────────────────────────────────────────── */
   'insurance-guide': {
-    slug: 'life-insurance-calculator',
+    slug: 'insurance-rate-estimator',
     title: 'Life Insurance Needs Calculator',
     headline: 'How Much Life Insurance Do You Actually Need?',
     description: 'Calculate your true life insurance coverage needs based on income replacement, debts, dependents, and existing assets — not an agent\'s commission.',
