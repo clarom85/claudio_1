@@ -145,9 +145,14 @@ export function getMgidLoader(siteId = '') {
 export function injectMgidInArticle(content, widgetId = '') {
   if (!widgetId) return content;
   const widget = `<div data-type="_mgwidget" data-widget-id="${widgetId}"></div>`;
+  // Start counting </p> only AFTER the TOC nav (if present) to avoid inserting inside structural elements
+  const navEnd = content.lastIndexOf('</nav>');
+  const pivot  = navEnd >= 0 ? navEnd + 6 : 0;   // 6 = length of '</nav>'
+  const before = content.slice(0, pivot);
+  const after  = content.slice(pivot);
   let count = 0;
-  const result = content.replace(/<\/p>/gi, m => { count++; return count === 3 ? `${m}${widget}` : m; });
-  return count >= 3 ? result : content + widget;
+  const patched = after.replace(/<\/p>/gi, m => { count++; return count === 3 ? `${m}${widget}` : m; });
+  return count >= 3 ? before + patched : content + widget;
 }
 
 export function getMgidSmartWidget(widgetId = '') {
