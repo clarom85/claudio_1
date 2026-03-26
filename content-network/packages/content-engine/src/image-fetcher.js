@@ -1,10 +1,11 @@
 /**
- * Image fetcher — scarica immagine da Pexels API per ogni articolo
- * Richiede: PEXELS_API_KEY in .env
+ * Image fetcher — cascade: Pexels → Pixabay → Pollinations
+ * Env: PEXELS_API_KEY (primary), PIXABAY_API_KEY (fallback)
  * Salva: /images/{slug}.jpg nella directory pubblica del sito
  *
  * Unicità: traccia gli ID foto già usati in images/.pexels-used.json
- * → ogni sito non ripete mai la stessa foto Pexels, anche tra run separati.
+ * → ogni sito non ripete mai la stessa foto, anche tra run separati.
+ * ID Pexels: numerici | ID Pixabay: prefisso "pb_" per evitare collisioni.
  */
 
 import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'fs';
@@ -14,6 +15,8 @@ import { createHash } from 'crypto';
 
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PEXELS_KEY = process.env.PEXELS_API_KEY;
+const PIXABAY_API = 'https://pixabay.com/api/';
+const PIXABAY_KEY = process.env.PIXABAY_API_KEY;
 const USED_IDS_FILE = '.pexels-used.json';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
 const POLLINATIONS_TIMEOUT_MS = 35000;
@@ -566,6 +569,36 @@ async function searchPexels(query, usedIds, pages = 2) {
   return null;
 }
 
+async function searchPixabay(query, usedIds) {
+  const url = `${PIXABAY_API}?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&per_page=20&safesearch=true&min_width=1000`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data.hits?.length) return null;
+  // Usa largeImageURL (piena risoluzione) — disponibile con API key registrata
+  return data.hits.find(p => !usedIds.has(`pb_${p.id}`) && (p.largeImageURL || p.webformatURL)) || null;
+}
+
+async function downloadPixabayImage(photo, slug, imagesDir, usedIds, existingMd5s) {
+  const imageUrl = photo.largeImageURL || photo.webformatURL;
+  const imgRes = await fetch(imageUrl);
+  if (!imgRes.ok) return null;
+
+  const imgBuf = Buffer.from(await imgRes.arrayBuffer());
+  if (imgBuf.length < 10000) return null;
+
+  const imgMd5 = md5(imgBuf);
+  if (existingMd5s.has(imgMd5)) return null;
+
+  const destPath = join(imagesDir, `${slug}.jpg`);
+  writeFileSync(destPath, imgBuf);
+  existingMd5s.add(imgMd5);
+  // Traccia ID con prefisso "pb_" per evitare collisioni con ID Pexels
+  saveUsedId(imagesDir, `pb_${photo.id}`);
+  postProcessImage(destPath);
+  return `/images/${slug}.jpg`;
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
@@ -619,7 +652,28 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 2. Fallback: Pollinations AI-generated image
+  // 2. Fallback: Pixabay (100 req/min, nessun limite mensile)
+  if (PIXABAY_KEY) {
+    const queries = buildQueries(keyword, title, nicheSlug);
+    const usedIds = loadUsedIds(imagesDir);
+    const existingMd5s = loadExistingMd5s(imagesDir);
+    console.log(`  [image] Trying Pixabay fallback...`);
+    for (const query of queries) {
+      try {
+        const photo = await searchPixabay(query, usedIds);
+        if (!photo) continue;
+        const result = await downloadPixabayImage(photo, slug, imagesDir, usedIds, existingMd5s);
+        if (result) {
+          console.log(`  [image] Saved /images/${slug}.jpg (Pixabay #${photo.id}, query: "${query}")`);
+          return result;
+        }
+      } catch (err) {
+        console.warn(`  [image] Pixabay error for query "${query}": ${err.message}`);
+      }
+    }
+  }
+
+  // 3. Last resort: Pollinations AI-generated image
   const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
   if (pollinationsResult) return pollinationsResult;
 
