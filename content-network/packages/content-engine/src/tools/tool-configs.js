@@ -8,29 +8,30 @@ export const TOOL_CONFIGS = {
 
   /* ─────────────────────────────────────────────────────────
      NICCHIA 1: Home Improvement Costs
-     Tool: Project Cost Estimator
+     Tool: Project Cost Estimator (Enhanced — conditional inputs per project)
   ───────────────────────────────────────────────────────── */
   'home-improvement-costs': {
     slug: 'renovation-cost-calculator',
     title: 'Home Renovation Cost Calculator',
     headline: 'How Much Will Your Project Cost?',
-    description: 'Get an instant, contractor-verified cost estimate for your home improvement project. Enter your project details and see a realistic budget range — broken down by labor, materials, and permits.',
-    seoDescription: 'Free home renovation cost calculator. Estimate bathroom remodel, kitchen, roofing, flooring, HVAC, and deck costs based on size, materials, and your region.',
+    description: 'Get an instant, contractor-verified cost estimate for your home improvement project. Select your project type and see project-specific options — results include a low/mid/high range broken down by labor, materials, and permits.',
+    seoDescription: 'Free home renovation cost calculator. Get a detailed estimate for bathroom remodel, kitchen, roofing, flooring, HVAC, deck, windows, and painting projects with material-specific cost breakdowns.',
     type: 'calculator',
-    ctaText: 'Get My Estimate',
+    ctaText: 'Calculate My Cost',
     inputs: [
+      // ── Always-visible base inputs ──────────────────────────
       {
         id: 'project',
         label: 'Project Type',
         type: 'select',
         options: [
           { value: 'bathroom', label: 'Bathroom Remodel' },
-          { value: 'kitchen', label: 'Kitchen Remodel' },
-          { value: 'roof', label: 'Roof Replacement' },
+          { value: 'kitchen',  label: 'Kitchen Remodel' },
+          { value: 'roof',     label: 'Roof Replacement' },
           { value: 'flooring', label: 'Flooring Installation' },
-          { value: 'hvac', label: 'HVAC Replacement' },
-          { value: 'deck', label: 'Deck / Patio Build' },
-          { value: 'windows', label: 'Window Replacement' },
+          { value: 'hvac',     label: 'HVAC Replacement' },
+          { value: 'deck',     label: 'Deck / Patio Build' },
+          { value: 'windows',  label: 'Window Replacement' },
           { value: 'painting', label: 'Interior Painting' },
         ]
       },
@@ -38,18 +39,262 @@ export const TOOL_CONFIGS = {
         id: 'size',
         label: 'Project Size (sq ft)',
         type: 'number',
-        placeholder: 'e.g. 120',
-        min: 10, max: 5000, default: 150,
-        hint: 'For HVAC, enter your home\'s total sq ft. For windows, enter number of windows × 15.'
+        placeholder: 'e.g. 150',
+        min: 10, max: 10000, default: 150,
+        hint: 'Bathroom/Kitchen/Flooring/Deck: sq ft of the space. Roof: home sq ft × 1.3. HVAC: total home sq ft. Windows: number of windows × 15. Painting: total wall sq ft.'
       },
+
+      // ── Bathroom-specific ───────────────────────────────────
+      {
+        id: 'bathroomScope',
+        label: 'Renovation Scope',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'bathroom' },
+        options: [
+          { value: 'cosmetic',  label: 'Cosmetic', hint: 'Paint, fixtures, vanity' },
+          { value: 'mid',       label: 'Full Remodel', hint: 'Tile, plumbing, layout same' },
+          { value: 'gut',       label: 'Full Gut', hint: 'Move walls / plumbing' },
+        ],
+        default: 'mid'
+      },
+      {
+        id: 'bathroomShower',
+        label: 'Shower / Tub Type',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'bathroom' },
+        options: [
+          { value: 'tub-combo',   label: 'Tub + Shower Combo' },
+          { value: 'walk-in',     label: 'Walk-in Shower' },
+          { value: 'curbless',    label: 'Curbless / Custom' },
+        ],
+        default: 'tub-combo'
+      },
+      {
+        id: 'bathroomVanity',
+        label: 'Vanity',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'bathroom' },
+        options: [
+          { value: 'single', label: 'Single Sink' },
+          { value: 'double', label: 'Double Sink' },
+        ],
+        default: 'single'
+      },
+
+      // ── Kitchen-specific ────────────────────────────────────
+      {
+        id: 'kitchenCabinets',
+        label: 'Cabinet Style',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'kitchen' },
+        options: [
+          { value: 'stock',       label: 'Stock / RTA',     hint: 'Ready-to-assemble' },
+          { value: 'semi-custom', label: 'Semi-Custom',     hint: 'Most popular' },
+          { value: 'custom',      label: 'Custom',          hint: 'Built to spec' },
+        ],
+        default: 'semi-custom'
+      },
+      {
+        id: 'kitchenIsland',
+        label: 'Kitchen Island',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'kitchen' },
+        options: [
+          { value: 'no',  label: 'No Island' },
+          { value: 'yes', label: 'Add Island' },
+        ],
+        default: 'no'
+      },
+      {
+        id: 'kitchenAppliances',
+        label: 'New Appliances Included?',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'kitchen' },
+        options: [
+          { value: 'no',  label: 'No (keep existing)' },
+          { value: 'yes', label: 'Yes (full package)' },
+        ],
+        default: 'no'
+      },
+
+      // ── Roof-specific ───────────────────────────────────────
+      {
+        id: 'roofMaterial',
+        label: 'Roofing Material',
+        type: 'select',
+        showWhen: { input: 'project', value: 'roof' },
+        options: [
+          { value: 'asphalt-3tab',          label: 'Asphalt 3-Tab Shingles' },
+          { value: 'asphalt-architectural', label: 'Architectural Shingles' },
+          { value: 'metal-steel',           label: 'Metal — Steel Panels' },
+          { value: 'metal-standing-seam',   label: 'Metal — Standing Seam' },
+          { value: 'tile-concrete',         label: 'Concrete Tile' },
+          { value: 'tile-clay',             label: 'Clay Tile' },
+          { value: 'flat-epdm',             label: 'Flat / EPDM Rubber' },
+        ]
+      },
+      {
+        id: 'roofStories',
+        label: 'Home Height',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'roof' },
+        options: [
+          { value: '1', label: '1 Story' },
+          { value: '2', label: '2 Stories' },
+          { value: '3', label: '3+ Stories' },
+        ],
+        default: '1'
+      },
+      {
+        id: 'roofTearoff',
+        label: 'Remove Existing Roof?',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'roof' },
+        options: [
+          { value: 'yes', label: 'Yes — full tear-off' },
+          { value: 'no',  label: 'No — overlay install' },
+        ],
+        default: 'yes'
+      },
+
+      // ── Flooring-specific ───────────────────────────────────
+      {
+        id: 'flooringMaterial',
+        label: 'Flooring Material',
+        type: 'select',
+        showWhen: { input: 'project', value: 'flooring' },
+        options: [
+          { value: 'solid-hardwood',      label: 'Solid Hardwood' },
+          { value: 'engineered-hardwood', label: 'Engineered Hardwood' },
+          { value: 'ceramic-tile',        label: 'Ceramic / Porcelain Tile' },
+          { value: 'luxury-vinyl',        label: 'Luxury Vinyl Plank (LVP)' },
+          { value: 'laminate',            label: 'Laminate' },
+          { value: 'carpet',              label: 'Carpet' },
+        ]
+      },
+      {
+        id: 'flooringRemoval',
+        label: 'Remove Existing Flooring?',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'flooring' },
+        options: [
+          { value: 'no',  label: 'No — new space' },
+          { value: 'yes', label: 'Yes — remove old floor' },
+        ],
+        default: 'no'
+      },
+
+      // ── HVAC-specific ───────────────────────────────────────
+      {
+        id: 'hvacSystem',
+        label: 'System Type',
+        type: 'select',
+        showWhen: { input: 'project', value: 'hvac' },
+        options: [
+          { value: 'central-ac',       label: 'Central AC Only' },
+          { value: 'heating-cooling',  label: 'Full Heating + Cooling System' },
+          { value: 'mini-split',       label: 'Ductless Mini-Split' },
+          { value: 'heat-pump',        label: 'Heat Pump (all-in-one)' },
+        ]
+      },
+      {
+        id: 'hvacDuctwork',
+        label: 'Ductwork Condition',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'hvac' },
+        options: [
+          { value: 'ok',      label: 'Existing ducts OK' },
+          { value: 'partial', label: 'Needs partial repair' },
+          { value: 'full',    label: 'Needs full replacement' },
+        ],
+        default: 'ok'
+      },
+
+      // ── Deck-specific ───────────────────────────────────────
+      {
+        id: 'deckMaterial',
+        label: 'Decking Material',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'deck' },
+        options: [
+          { value: 'pressure-treated', label: 'Pressure-Treated Wood', hint: 'Most affordable' },
+          { value: 'composite',        label: 'Composite',             hint: 'Low maintenance' },
+          { value: 'pvc',              label: 'PVC / Synthetic',       hint: 'Premium durability' },
+        ],
+        default: 'composite'
+      },
+      {
+        id: 'deckCovered',
+        label: 'Overhead Cover',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'deck' },
+        options: [
+          { value: 'none',    label: 'None — open deck' },
+          { value: 'pergola', label: 'Pergola / Shade structure' },
+          { value: 'roof',    label: 'Full roof / covered porch' },
+        ],
+        default: 'none'
+      },
+
+      // ── Windows-specific ────────────────────────────────────
+      {
+        id: 'windowFrame',
+        label: 'Frame Material',
+        type: 'select',
+        showWhen: { input: 'project', value: 'windows' },
+        options: [
+          { value: 'vinyl',      label: 'Vinyl (most popular)' },
+          { value: 'fiberglass', label: 'Fiberglass' },
+          { value: 'wood',       label: 'Wood' },
+          { value: 'aluminum',   label: 'Aluminum' },
+        ]
+      },
+      {
+        id: 'windowGlazing',
+        label: 'Glazing Type',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'windows' },
+        options: [
+          { value: 'double', label: 'Double-Pane', hint: 'Standard' },
+          { value: 'triple', label: 'Triple-Pane', hint: 'Best efficiency' },
+        ],
+        default: 'double'
+      },
+
+      // ── Painting-specific ───────────────────────────────────
+      {
+        id: 'paintingScope',
+        label: 'Paint Coverage',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'painting' },
+        options: [
+          { value: 'walls-only',    label: 'Walls Only' },
+          { value: 'walls-ceiling', label: 'Walls + Ceilings' },
+          { value: 'full',          label: 'Walls, Ceilings + Trim' },
+        ],
+        default: 'walls-only'
+      },
+      {
+        id: 'paintingCoats',
+        label: 'Coats of Paint',
+        type: 'radio',
+        showWhen: { input: 'project', value: 'painting' },
+        options: [
+          { value: '1', label: '1 Coat', hint: 'Touch-up / same color' },
+          { value: '2', label: '2 Coats', hint: 'Standard repaint' },
+        ],
+        default: '2'
+      },
+
+      // ── Always-visible quality + region ────────────────────
       {
         id: 'quality',
         label: 'Material Quality',
         type: 'radio',
         options: [
-          { value: 'basic', label: 'Basic', hint: 'Builder-grade, functional' },
-          { value: 'mid', label: 'Mid-Range', hint: 'Most popular choice' },
-          { value: 'premium', label: 'Premium', hint: 'High-end finishes' },
+          { value: 'basic',   label: 'Basic',     hint: 'Builder-grade' },
+          { value: 'mid',     label: 'Mid-Range', hint: 'Most popular' },
+          { value: 'premium', label: 'Premium',   hint: 'High-end finishes' },
         ],
         default: 'mid'
       },
@@ -58,57 +303,192 @@ export const TOOL_CONFIGS = {
         label: 'Your Region',
         type: 'select',
         options: [
-          { value: 'northeast', label: 'Northeast (NY, MA, CT...)' },
-          { value: 'south', label: 'South (TX, FL, GA...)' },
-          { value: 'midwest', label: 'Midwest (IL, OH, MI...)' },
-          { value: 'west', label: 'West (CA, WA, CO...)' },
+          { value: 'northeast', label: 'Northeast (NY, MA, CT, NJ...)' },
+          { value: 'south',     label: 'South (TX, FL, GA, NC...)' },
+          { value: 'midwest',   label: 'Midwest (IL, OH, MI, MN...)' },
+          { value: 'west',      label: 'West (CA, WA, CO, AZ...)' },
         ]
       },
     ],
-    // All costs in $/sqft. Formula: base × qualityMult × regionMult × size
+
     formula: `
+      // ── Base $/sqft by project type ───────────────────────────────────────
       const BASE = {
-        bathroom: { labor: 45, materials: 35, permits: 5 },
-        kitchen:  { labor: 55, materials: 65, permits: 8 },
-        roof:     { labor: 4,  materials: 5,  permits: 0.5 },
-        flooring: { labor: 4,  materials: 6,  permits: 0 },
-        hvac:     { labor: 1.2,materials: 2.8,permits: 0.2 },
-        deck:     { labor: 18, materials: 20, permits: 3 },
-        windows:  { labor: 12, materials: 18, permits: 1 },
-        painting: { labor: 2,  materials: 1,  permits: 0 },
+        bathroom: { labor: 48,  materials: 38,  permits: 5.5 },
+        kitchen:  { labor: 58,  materials: 70,  permits: 9   },
+        roof:     { labor: 4.2, materials: 5.5, permits: 0.5 },
+        flooring: { labor: 4.0, materials: 6.5, permits: 0   },
+        hvac:     { labor: 1.4, materials: 3.0, permits: 0.2 },
+        deck:     { labor: 19,  materials: 22,  permits: 3.5 },
+        windows:  { labor: 13,  materials: 20,  permits: 1.0 },
+        painting: { labor: 2.2, materials: 1.1, permits: 0   },
       };
-      const QUALITY = { basic: 0.75, mid: 1.0, premium: 1.6 };
-      const REGION  = { northeast: 1.20, south: 0.88, midwest: 0.95, west: 1.25 };
-      const VARIATION = 0.22; // ±22% for low/high range
 
-      const b = BASE[inputs.project];
-      const qm = QUALITY[inputs.quality];
-      const rm = REGION[inputs.region];
-      const sz = parseFloat(inputs.size) || 150;
+      // ── Quality + Region base multipliers ────────────────────────────────
+      const QUALITY = { basic: 0.72, mid: 1.0, premium: 1.65 };
+      const REGION  = { northeast: 1.22, south: 0.87, midwest: 0.94, west: 1.27 };
 
-      const laborAvg    = b.labor    * qm * rm * sz;
-      const materialsAvg= b.materials* qm * rm * sz;
-      const permitsAvg  = b.permits  * rm * sz;
-      const totalAvg    = laborAvg + materialsAvg + permitsAvg;
-      const totalLow    = Math.round(totalAvg * (1 - VARIATION) / 100) * 100;
-      const totalHigh   = Math.round(totalAvg * (1 + VARIATION) / 100) * 100;
-      const totalMid    = Math.round(totalAvg / 100) * 100;
+      // ── Project-specific multipliers ─────────────────────────────────────
+      // Bathroom
+      const BATH_SCOPE   = { cosmetic: 0.58, mid: 1.0, gut: 1.42 };
+      const BATH_SHOWER  = { 'tub-combo': 1.0, 'walk-in': 1.18, curbless: 1.42 };
+      const BATH_VANITY  = { single: 1.0, double: 1.13 };
+
+      // Kitchen
+      const KIT_CABINETS = { stock: 0.58, 'semi-custom': 1.0, custom: 1.72 };
+      const KIT_ISLAND   = { no: 1.0, yes: 1.16 };
+      const KIT_APPL     = { no: 1.0, yes: 1.28 };
+
+      // Roof
+      const ROOF_MAT     = {
+        'asphalt-3tab': 0.82, 'asphalt-architectural': 1.0,
+        'metal-steel': 1.65, 'metal-standing-seam': 2.05,
+        'tile-concrete': 1.75, 'tile-clay': 1.95, 'flat-epdm': 0.88
+      };
+      const ROOF_STORIES = { '1': 1.0, '2': 1.10, '3': 1.22 };
+      const ROOF_TEAROFF = { yes: 1.16, no: 0.88 };
+
+      // Flooring
+      const FLOOR_MAT    = {
+        'solid-hardwood': 1.55, 'engineered-hardwood': 1.22,
+        'ceramic-tile': 1.12, 'luxury-vinyl': 0.78,
+        'laminate': 0.72, 'carpet': 0.68
+      };
+      const FLOOR_REMOVE = { no: 1.0, yes: 1.22 };
+
+      // HVAC
+      const HVAC_SYS     = {
+        'central-ac': 0.68, 'heating-cooling': 1.0,
+        'mini-split': 1.12, 'heat-pump': 1.08
+      };
+      const HVAC_DUCT    = { ok: 1.0, partial: 1.28, full: 1.58 };
+
+      // Deck
+      const DECK_MAT     = { 'pressure-treated': 0.72, composite: 1.0, pvc: 1.22 };
+      const DECK_COVER   = { none: 1.0, pergola: 1.28, roof: 1.48 };
+
+      // Windows
+      const WIN_FRAME    = { vinyl: 1.0, fiberglass: 1.38, wood: 1.48, aluminum: 1.18 };
+      const WIN_GLAZE    = { double: 1.0, triple: 1.25 };
+
+      // Painting
+      const PAINT_SCOPE  = { 'walls-only': 1.0, 'walls-ceiling': 1.22, full: 1.38 };
+      const PAINT_COATS  = { '1': 0.88, '2': 1.0 };
+
+      // ── Compute project-specific multiplier ──────────────────────────────
+      const p = inputs.project || 'bathroom';
+      let pm = 1.0; // project multiplier
+      if (p === 'bathroom') {
+        pm = (BATH_SCOPE[inputs.bathroomScope]  || 1) *
+             (BATH_SHOWER[inputs.bathroomShower] || 1) *
+             (BATH_VANITY[inputs.bathroomVanity] || 1);
+      } else if (p === 'kitchen') {
+        pm = (KIT_CABINETS[inputs.kitchenCabinets]   || 1) *
+             (KIT_ISLAND[inputs.kitchenIsland]        || 1) *
+             (KIT_APPL[inputs.kitchenAppliances]      || 1);
+      } else if (p === 'roof') {
+        pm = (ROOF_MAT[inputs.roofMaterial]   || 1) *
+             (ROOF_STORIES[inputs.roofStories] || 1) *
+             (ROOF_TEAROFF[inputs.roofTearoff] || 1);
+      } else if (p === 'flooring') {
+        pm = (FLOOR_MAT[inputs.flooringMaterial]    || 1) *
+             (FLOOR_REMOVE[inputs.flooringRemoval]   || 1);
+      } else if (p === 'hvac') {
+        pm = (HVAC_SYS[inputs.hvacSystem]      || 1) *
+             (HVAC_DUCT[inputs.hvacDuctwork]    || 1);
+      } else if (p === 'deck') {
+        pm = (DECK_MAT[inputs.deckMaterial]    || 1) *
+             (DECK_COVER[inputs.deckCovered]    || 1);
+      } else if (p === 'windows') {
+        pm = (WIN_FRAME[inputs.windowFrame]    || 1) *
+             (WIN_GLAZE[inputs.windowGlazing]   || 1);
+      } else if (p === 'painting') {
+        pm = (PAINT_SCOPE[inputs.paintingScope] || 1) *
+             (PAINT_COATS[inputs.paintingCoats] || 1);
+      }
+
+      // ── Core calculation ─────────────────────────────────────────────────
+      const b   = BASE[p];
+      const qm  = QUALITY[inputs.quality] || 1.0;
+      const rm  = REGION[inputs.region]   || 1.0;
+      const sz  = Math.max(10, parseFloat(inputs.size) || 150);
+      const VAR = 0.22; // ±22% range
+
+      const laborAvg     = b.labor    * qm * rm * pm * sz;
+      const materialsAvg = b.materials * qm * rm * pm * sz;
+      const permitsAvg   = b.permits  * rm * sz;
+      const totalAvg     = laborAvg + materialsAvg + permitsAvg;
+      const totalLow     = Math.round(totalAvg * (1 - VAR) / 100) * 100;
+      const totalHigh    = Math.round(totalAvg * (1 + VAR) / 100) * 100;
+      const totalMid     = Math.round(totalAvg / 100) * 100;
+
+      // ── Expert insight per project/material ─────────────────────────────
+      const INSIGHTS = {
+        roof: {
+          'metal-steel':         'Metal roofs last 40–70 years vs. 20–30 for asphalt. The upfront premium typically pays off within 15 years in energy savings and avoided replacement costs.',
+          'metal-standing-seam': 'Standing seam metal is the gold standard for longevity (50–70 years) and comes with strong wind/weather warranties. Best ROI for long-term ownership.',
+          'asphalt-3tab':        '3-tab shingles are the lowest-cost option but only last 15–20 years. Architectural shingles cost 20–30% more and last twice as long — usually the better value.',
+          'tile-clay':           'Clay tile lasts 50–100 years and adds significant resale value in warm-climate markets (FL, CA, AZ). Very heavy — verify your roof framing can support the load.',
+          'flat-epdm':           'EPDM rubber membranes last 20–30 years and are ideal for flat or low-slope roofs. Seam quality during installation is the #1 factor in long-term performance.',
+          default:               'Get at least 3 contractor bids — roofing prices vary 30–40% between contractors for identical work. Verify licensing and check for manufacturer-certified installers.'
+        },
+        kitchen: {
+          custom:      'Custom cabinets account for 35–45% of the total kitchen budget. Consider semi-custom for 80% of the customization at roughly 50% of the cost.',
+          stock:       'Stock cabinets can look premium with quality hardware and a professional paint finish. Budget $800–$2,000 for hardware upgrades — high ROI.',
+          default:     'Keeping the existing plumbing/electrical layout (no wall moves) saves $3,000–$10,000 vs. a full gut. The kitchen layout change is rarely worth the added cost.'
+        },
+        flooring: {
+          'solid-hardwood':      'Solid hardwood can be sanded and refinished 4–6 times over its lifetime. Refinishing ($3–$5/sqft) vs. full replacement ($10–$20/sqft) makes it cost-effective long-term.',
+          'luxury-vinyl':        'LVP is 100% waterproof, DIY-friendly, and costs 60–70% less than hardwood while closely mimicking the look. Top choice for kitchens, bathrooms, and basements.',
+          'ceramic-tile':        'Tile lasts 50–100 years and is the most durable choice for high-moisture areas. Budget for a quality tile setter — poor installation is the #1 cause of premature failure.',
+          default:               'Order 10% extra material beyond your measured sq ft to account for cuts, waste, and future repairs. Matching dye lots later can be difficult.'
+        },
+        bathroom: {
+          gut:      'A full gut remodel typically recovers 60–70% of its cost at resale — one of the best ROI renovations. The key is avoiding over-improving for the neighborhood price ceiling.',
+          cosmetic: 'A cosmetic refresh (paint, vanity, fixtures, mirror) can transform a bathroom for $2,000–$6,000 and recovers 80–90% at resale. Best value-for-money option.',
+          default:  'Moving plumbing add $500–$3,000 per fixture relocation. Keeping pipes in place dramatically reduces cost and risk of hidden issues.'
+        },
+        hvac: {
+          'mini-split':    'Ductless mini-splits are 25–40% more energy-efficient than central systems and avoid costly ductwork. Federal tax credits (up to $2,000) may apply under the Inflation Reduction Act.',
+          'heat-pump':     'Heat pumps provide both heating and cooling in one unit. Modern cold-climate models work efficiently down to -15°F. IRA tax credits cover 30% of cost up to $2,000.',
+          full:            'Full ductwork replacement adds $3,000–$7,000 but ensures optimal airflow and efficiency. Consider spray foam sealing ducts to reduce energy loss by 20–30%.',
+          default:         'Replace your HVAC before complete failure — emergency replacement costs 15–25% more and limits your contractor choices. A system 12+ years old is a candidate for proactive replacement.'
+        },
+        deck: {
+          composite:        'Composite decking costs 30–50% more upfront but requires virtually zero maintenance vs. pressure-treated wood needing annual staining ($300–$600/year). Break-even is typically 7–10 years.',
+          'pressure-treated':'PT wood is the most affordable option. Budget $200–$500/year for cleaning, sealing, and staining to maximize its 15–25 year lifespan.',
+          default:          'A well-built deck recovers 60–80% of its cost at resale and adds year-round livable space. Composite materials have the highest resale ROI in most markets.'
+        },
+        windows: {
+          default: 'Energy Star–certified windows can save $100–$350/year on energy bills. Under the Inflation Reduction Act, the federal tax credit covers 30% of window costs (up to $600/year).'
+        },
+        painting: {
+          default: 'DIY interior painting costs $200–$600 in materials vs. $1,500–$4,000 professionally. Worth hiring out for ceilings, stairwells, and trim — the prep and cutting-in work is where pros earn their keep.'
+        },
+      };
+
+      const projectInsights = INSIGHTS[p] || {};
+      const materialKey = inputs.roofMaterial || inputs.flooringMaterial || inputs.hvacSystem || inputs.deckMaterial || inputs.windowFrame || inputs.kitchenCabinets || inputs.bathroomScope || inputs.hvacDuctwork || '';
+      const insight = projectInsights[materialKey] || projectInsights.default || '';
 
       return {
         totalLow, totalMid, totalHigh,
         labor:     Math.round(laborAvg),
         materials: Math.round(materialsAvg),
         permits:   Math.round(permitsAvg),
-        sqft:      sz
+        sqft:      sz,
+        insight,
       };
     `,
+
     outputs: [
-      { id: 'range',     label: 'Estimated Cost Range', type: 'range-hero' },
-      { id: 'labor',     label: 'Labor',     type: 'currency', percent: true },
-      { id: 'materials', label: 'Materials', type: 'currency', percent: true },
-      { id: 'permits',   label: 'Permits & Fees', type: 'currency', percent: true },
+      { id: 'range',     label: 'Estimated Cost Range',  type: 'range-hero' },
+      { id: 'labor',     label: 'Labor',                 type: 'currency', percent: true },
+      { id: 'materials', label: 'Materials',             type: 'currency', percent: true },
+      { id: 'permits',   label: 'Permits & Fees',        type: 'currency', percent: true },
+      { id: 'insight',   label: 'Expert Insight',        type: 'insight' },
     ],
-    disclaimer: 'Estimates are based on national averages and regional labor data. Actual costs vary based on site conditions, contractor availability, and material prices at time of purchase. Always get 3+ quotes from licensed contractors.',
+    disclaimer: 'Estimates are based on national averages, RS Means construction data, and regional labor indexes. Actual costs vary based on site conditions, local permit requirements, contractor availability, and material prices at the time of purchase. Always obtain 3+ quotes from licensed, insured contractors before committing to a project.',
     relatedArticles: true,
   },
 
