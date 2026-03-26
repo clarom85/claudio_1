@@ -553,7 +553,7 @@ export function renderHeader(site) {
   <nav class="hdr-nav">
     <div class="wrap" style="display:flex;align-items:center">
       <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button>
-      <ul id="main-nav" style="list-style:none;display:flex">
+      <ul id="main-nav" style="list-style:none">
         <li><a href="/">Home</a></li>
         ${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}
         ${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#e67e22;font-weight:700">Free Calculator</a></li>`:''}
