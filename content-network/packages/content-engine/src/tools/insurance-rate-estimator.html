@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insurance Rate Estimator — CoveragePrice Guide</title>
+<meta name="description" content="Get instant insurance rate estimates for auto, health, life, home, renters and umbrella coverage. Granular filters by state, age, coverage level and more.">
+<style>
+  :root {
+    --navy: #0f2d5c;
+    --navy2: #1a3f7a;
+    --amber: #d4a017;
+    --amber2: #f0b429;
+    --bg: #f5f7fa;
+    --white: #fff;
+    --text: #1a2233;
+    --muted: #6b7a99;
+    --border: #dde3ef;
+    --green: #0d7c4c;
+    --red: #c0392b;
+    --radius: 10px;
+    --shadow: 0 4px 20px rgba(15,45,92,.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: var(--navy2); }
+
+  /* ── Header ── */
+  .tool-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+    color: #fff; text-align: center; padding: 40px 20px 32px;
+  }
+  .tool-header h1 { font-size: clamp(1.5rem,4vw,2.2rem); font-weight: 800; margin-bottom: 8px; }
+  .tool-header p { font-size: .97rem; opacity: .82; max-width: 540px; margin: 0 auto; }
+  .tool-header .badge { display: inline-block; background: var(--amber); color: var(--navy); font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 12px; letter-spacing: .04em; text-transform: uppercase; }
+
+  /* ── Stepper ── */
+  .stepper { display: flex; justify-content: center; gap: 0; padding: 22px 20px 0; max-width: 560px; margin: 0 auto; }
+  .step { display: flex; align-items: center; flex: 1; }
+  .step-circle { width: 34px; height: 34px; border-radius: 50%; background: var(--border); color: var(--muted); font-weight: 700; font-size: .88rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: .25s; }
+  .step.active .step-circle { background: var(--amber); color: var(--navy); }
+  .step.done .step-circle { background: var(--navy2); color: #fff; }
+  .step-label { font-size: .75rem; color: var(--muted); margin-left: 7px; white-space: nowrap; }
+  .step.active .step-label { color: var(--navy); font-weight: 600; }
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; }
+  .step.done + .step .step-line, .step.done .step-line { background: var(--navy2); }
+
+  /* ── Main card ── */
+  .tool-wrap { max-width: 760px; margin: 28px auto 60px; padding: 0 16px; }
+  .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .card-body { padding: 32px 36px; }
+  @media(max-width:600px){ .card-body { padding: 22px 18px; } }
+
+  /* ── Section headings ── */
+  .section-title { font-size: 1.05rem; font-weight: 700; color: var(--navy); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .section-title svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* ── Type grid ── */
+  .type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
+  .type-card { border: 2px solid var(--border); border-radius: 8px; padding: 16px 12px; text-align: center; cursor: pointer; transition: .2s; user-select: none; }
+  .type-card:hover { border-color: var(--navy2); background: #f0f4fa; }
+  .type-card.selected { border-color: var(--amber); background: #fffbef; }
+  .type-card .icon { font-size: 2rem; margin-bottom: 6px; }
+  .type-card .type-name { font-size: .88rem; font-weight: 700; color: var(--navy); }
+  .type-card .type-desc { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+
+  /* ── Form grid ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:500px){ .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1/-1; }
+  label { font-size: .82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  select, input[type=range], input[type=number] {
+    border: 1.5px solid var(--border); border-radius: 6px; background: #fff; color: var(--text);
+    font-size: .95rem; padding: 9px 11px; width: 100%; outline: none; appearance: none; transition: border .2s;
+  }
+  select:focus, input:focus { border-color: var(--navy2); }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a99' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  input[type=range] { padding: 4px 0; accent-color: var(--amber); }
+  .range-row { display: flex; align-items: center; gap: 10px; }
+  .range-val { min-width: 48px; font-weight: 700; color: var(--navy); font-size: .92rem; text-align: right; }
+
+  /* ── Toggle chips ── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: .83rem; font-weight: 600; cursor: pointer; transition: .15s; user-select: none; color: var(--muted); }
+  .chip:hover { border-color: var(--navy2); color: var(--navy); }
+  .chip.selected { border-color: var(--amber); background: #fffbef; color: var(--navy); }
+
+  /* ── Buttons ── */
+  .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; }
+  .btn { padding: 11px 28px; border-radius: 6px; font-size: .95rem; font-weight: 700; cursor: pointer; border: none; transition: .18s; }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: var(--navy2); }
+  .btn-secondary { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--navy2); color: var(--navy); }
+  .btn-amber { background: var(--amber); color: var(--navy); }
+  .btn-amber:hover { background: var(--amber2); }
+
+  /* ── Results ── */
+  .result-hero { background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%); border-radius: 8px; color: #fff; padding: 24px 28px; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; }
+  .result-range { }
+  .result-range .label { font-size: .78rem; opacity: .7; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .result-range .amount { font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; }
+  .result-range .sub { font-size: .82rem; opacity: .7; margin-top: 2px; }
+  .result-meta { font-size: .82rem; opacity: .75; line-height: 1.7; }
+
+  .tier-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .tier-table th { background: var(--navy); color: #fff; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; padding: 10px 14px; text-align: left; }
+  .tier-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: .9rem; }
+  .tier-table tr:last-child td { border-bottom: none; }
+  .tier-table .tier-badge { display: inline-block; border-radius: 4px; padding: 2px 9px; font-size: .75rem; font-weight: 700; }
+  .badge-basic { background: #e0e8f7; color: var(--navy2); }
+  .badge-standard { background: #fff3cd; color: #7a5500; }
+  .badge-premium { background: #d4edda; color: var(--green); }
+  .tier-table .price { font-weight: 700; font-size: .97rem; color: var(--navy); }
+  .tier-table .annual { color: var(--muted); font-size: .82rem; }
+
+  .factor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); gap: 10px; margin-bottom: 24px; }
+  .factor-chip { border-radius: 6px; padding: 10px 13px; font-size: .83rem; }
+  .factor-chip .fc-label { font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .factor-chip .fc-impact { font-size: .77rem; }
+  .impact-pos { background: #e8f7ef; border-left: 3px solid var(--green); }
+  .impact-neg { background: #fdf0ef; border-left: 3px solid var(--red); }
+  .impact-neu { background: #f0f4fa; border-left: 3px solid var(--muted); }
+  .impact-pos .fc-impact { color: var(--green); }
+  .impact-neg .fc-impact { color: var(--red); }
+  .impact-neu .fc-impact { color: var(--muted); }
+
+  .savings-box { background: #fffbef; border: 1.5px solid var(--amber); border-radius: 8px; padding: 18px 20px; }
+  .savings-box h4 { font-size: .9rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .savings-box ul { padding-left: 18px; }
+  .savings-box li { font-size: .87rem; color: var(--text); margin-bottom: 6px; line-height: 1.5; }
+
+  .disclaimer { font-size: .75rem; color: var(--muted); margin-top: 20px; line-height: 1.6; }
+
+  /* ── Hidden ── */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="tool-header">
+  <h1>Insurance Rate Estimator</h1>
+  <p>Get a personalized estimate in under 2 minutes — no email required</p>
+  <span class="badge">Free · Instant · No Sign-up</span>
+</div>
+
+<!-- Stepper -->
+<div class="stepper" id="stepper">
+  <div class="step active" id="s1"><div class="step-circle">1</div><span class="step-label">Coverage type</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s2"><div class="step-circle">2</div><span class="step-label">Your profile</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s3"><div class="step-circle">3</div><span class="step-label">Estimate</span></div>
+</div>
+
+<div class="tool-wrap">
+<div class="card">
+<div class="card-body">
+
+  <!-- ═══ STEP 1: Choose type ═══ -->
+  <div class="step-panel active" id="panel1">
+    <div class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      What type of insurance do you need an estimate for?
+    </div>
+    <div class="type-grid" id="typeGrid">
+      <div class="type-card" data-type="auto" onclick="selectType(this)">
+        <div class="icon">🚗</div>
+        <div class="type-name">Auto</div>
+        <div class="type-desc">Car & vehicle coverage</div>
+      </div>
+      <div class="type-card" data-type="health" onclick="selectType(this)">
+        <div class="icon">🏥</div>
+        <div class="type-name">Health</div>
+        <div class="type-desc">Medical & prescription</div>
+      </div>
+      <div class="type-card" data-type="life" onclick="selectType(this)">
+        <div class="icon">❤️</div>
+        <div class="type-name">Life</div>
+        <div class="type-desc">Term & whole life</div>
+      </div>
+      <div class="type-card" data-type="home" onclick="selectType(this)">
+        <div class="icon">🏠</div>
+        <div class="type-name">Homeowners</div>
+        <div class="type-desc">Home & property</div>
+      </div>
+      <div class="type-card" data-type="renters" onclick="selectType(this)">
+        <div class="icon">🔑</div>
+        <div class="type-name">Renters</div>
+        <div class="type-desc">Apartment & rental</div>
+      </div>
+      <div class="type-card" data-type="umbrella" onclick="selectType(this)">
+        <div class="icon">☂️</div>
+        <div class="type-name">Umbrella</div>
+        <div class="type-desc">Extra liability layer</div>
+      </div>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-primary" onclick="goStep(2)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2: Profile inputs ═══ -->
+  <div class="step-panel" id="panel2">
+
+    <!-- AUTO -->
+    <div id="form-auto" class="ins-form" style="display:none">
+      <div class="section-title">🚗 Auto Insurance — Your Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>State</label>
+          <select id="auto-state"></select>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <select id="auto-age">
+            <option value="16">16–19 (teen)</option>
+            <option value="22">20–24</option>
+            <option value="27">25–29</option>
+            <option value="34" selected>30–39</option>
+            <option value="45">40–49</option>
+            <option value="55">50–64</option>
+            <option value="68">65+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select id="auto-gender">
+            <option value="M">Male</option>
+            <option value="F" selected>Female</option>
+            <option value="X">Non-binary / not specified</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Marital status</label>
+          <select id="auto-marital">
+            <option value="single">Single</option>
+            <option value="married" selected>Married</option>
+            <option value="divorced">Divorced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Driving record</label>
+          <select id="auto-record">
+            <option value="clean" selected>Clean (no incidents)</option>
+            <option value="minor">1 minor violation (3y)</option>
+            <option value="major">1 major violation / at-fault</option>
+            <option value="dui">DUI / DWI</option>
+            <option value="multiple">2+ incidents</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Credit score range</label>
+          <select id="auto-credit">
+            <option value="poor">Poor (300–579)</option>
+            <option value="fair">Fair (580–669)</option>
+            <option value="good" selected>Good (670–739)</option>
+            <option value="vgood">Very Good (740–799)</option>
+            <option value="excellent">Excellent (800+)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vehicle type</label>
+          <select id="auto-vehicle">
+            <option value="sedan" selected>Sedan / compact</option>
+            <option value="suv">SUV / crossover</option>
+            <option value="truck">Pickup truck</option>
+            <option value="sports">Sports car</option>
+            <option value="luxury">Luxury vehicle</option>
+            <option value="electric">Electric vehicle</option>
+            <option value="minivan">Minivan</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vehicle year</label>
+          <select id="auto-year">
+            <option value="new">2022–2025 (new)</option>
+            <option value="mid" selected>2016–2021</option>
+            <option value="old">2010–2015</option>
+            <option value="older">Before 2010</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Annual mileage</label>
+          <select id="auto-mileage">
+            <option value="low">Under 7,500</option>
+            <option value="average" selected>7,500–15,000</option>
+            <option value="high">15,000–25,000</option>
+            <option value="vhigh">Over 25,000</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Coverage level</label>
+          <select id="auto-coverage">
+            <option value="liability">Liability only (state min)</option>
+            <option value="basic">Basic (liability + collision)</option>
+            <option value="standard" selected>Standard (full coverage)</option>
+            <option value="premium">Premium (full + extras)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Homeowner?</label>
+          <select id="auto-homeowner">
+            <option value="yes" selected>Yes (bundle discount)</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Deductible</label>
+          <select id="auto-deductible">
+            <option value="250">$250</option>
+            <option value="500" selected>$500</option>
+            <option value="1000">$1,000</option>
+            <option value="2000">$2,000</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group full" style="margin-top:14px">
+        <label>Add-ons (select all that apply)</label>
+        <div class="chips" style="margin-top:6px">
+          <div class="chip" onclick="toggleChip(this)">Roadside Assistance</div>
+          <div class="chip" onclick="toggleChip(this)">Rental Reimbursement</div>
+          <div class="chip" onclick="toggleChip(this)">Gap Insurance</div>
+          <div class="chip" onclick="toggleChip(this)">Rideshare Coverage</div>
+          <div class="chip" onclick="toggleChip(this)">New Car Replacement</div>
+          <div class="chip" onclick="toggleChip(this)">Uninsured Motorist</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEALTH -->
+    <div id="form-health" class="ins-form" style="display:none">
+      <div class="section-title">🏥 Health Insurance — Your Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>State</label>
+          <select id="health-state"></select>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <select id="health-age">
+            <option value="25">18–25</option>
+            <option value="30" selected>26–35</option>
+            <option value="40">36–45</option>
+            <option value="50">46–55</option>
+            <option value="60">56–64</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plan type</label>
+          <select id="health-plan">
+            <option value="bronze">Bronze (low premium, high OOP)</option>
+            <option value="silver" selected>Silver (balanced)</option>
+            <option value="gold">Gold (higher premium, lower OOP)</option>
+            <option value="platinum">Platinum (max coverage)</option>
+            <option value="catastrophic">Catastrophic (under-30 only)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plan network</label>
+          <select id="health-network">
+            <option value="hmo" selected>HMO (lower cost, restricted)</option>
+            <option value="ppo">PPO (flexible, higher cost)</option>
+            <option value="epo">EPO (mid-tier)</option>
+            <option value="hdhp">HDHP + HSA</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Household size</label>
+          <select id="health-household">
+            <option value="1" selected>Just me</option>
+            <option value="2">Me + spouse/partner</option>
+            <option value="3">Me + 1 child</option>
+            <option value="4">Family of 4</option>
+            <option value="5">Family of 5+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Smoker?</label>
+          <select id="health-smoker">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes (tobacco use)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Employment status</label>
+          <select id="health-employment">
+            <option value="employer" selected>Employer-sponsored</option>
+            <option value="marketplace">ACA Marketplace</option>
+            <option value="self">Self-employed</option>
+            <option value="cobra">COBRA</option>
+            <option value="medicaid">Medicaid/CHIP eligible</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Annual household income</label>
+          <select id="health-income">
+            <option value="sub100">Under $20,000 (subsidy likely)</option>
+            <option value="100-200">$20k–$40k (partial subsidy)</option>
+            <option value="200-400" selected>$40k–$75k (some subsidy)</option>
+            <option value="400plus">$75k+ (full price)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pre-existing conditions?</label>
+          <select id="health-preexisting">
+            <option value="none" selected>None</option>
+            <option value="minor">Minor (allergies, mild hypertension)</option>
+            <option value="major">Major (diabetes, heart disease, cancer)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prescription drugs needed?</label>
+          <select id="health-rx">
+            <option value="none" selected>No / occasional</option>
+            <option value="generic">Yes — generics only</option>
+            <option value="brand">Yes — brand-name drugs</option>
+            <option value="specialty">Yes — specialty drugs</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIFE -->
+    <div id="form-life" class="ins-form" style="display:none">
+      <div class="section-title">❤️ Life Insurance — Your Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>State</label>
+          <select id="life-state"></select>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <select id="life-age">
+            <option value="25">25–29</option>
+            <option value="32" selected>30–39</option>
+            <option value="45">40–49</option>
+            <option value="55">50–59</option>
+            <option value="65">60–69</option>
+            <option value="72">70+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select id="life-gender">
+            <option value="M">Male</option>
+            <option value="F" selected>Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Policy type</label>
+          <select id="life-type">
+            <option value="term10">Term 10 years</option>
+            <option value="term20" selected>Term 20 years</option>
+            <option value="term30">Term 30 years</option>
+            <option value="whole">Whole life</option>
+            <option value="universal">Universal life</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Coverage amount</label>
+          <select id="life-amount">
+            <option value="100k">$100,000</option>
+            <option value="250k">$250,000</option>
+            <option value="500k" selected>$500,000</option>
+            <option value="1m">$1,000,000</option>
+            <option value="2m">$2,000,000+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Health class</label>
+          <select id="life-health">
+            <option value="preferred_plus">Preferred Plus (top health)</option>
+            <option value="preferred" selected>Preferred (good health)</option>
+            <option value="standard_plus">Standard Plus</option>
+            <option value="standard">Standard</option>
+            <option value="substandard">Substandard (health issues)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Smoker?</label>
+          <select id="life-smoker">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>BMI range</label>
+          <select id="life-bmi">
+            <option value="normal" selected>18.5–24.9 (Normal)</option>
+            <option value="overweight">25–29.9 (Overweight)</option>
+            <option value="obese">30–34.9 (Obese I)</option>
+            <option value="obese2">35+ (Obese II)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hazardous occupation?</label>
+          <select id="life-occupation">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes (mining, logging, etc.)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Extreme hobbies?</label>
+          <select id="life-hobbies">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes (skydiving, racing, etc.)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div id="form-home" class="ins-form" style="display:none">
+      <div class="section-title">🏠 Homeowners Insurance — Your Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>State</label>
+          <select id="home-state"></select>
+        </div>
+        <div class="form-group">
+          <label>Home value</label>
+          <select id="home-value">
+            <option value="150k">$100k–$200k</option>
+            <option value="275k" selected>$200k–$350k</option>
+            <option value="450k">$350k–$550k</option>
+            <option value="700k">$550k–$850k</option>
+            <option value="1m">$850k–$1.2M</option>
+            <option value="1.5m">Over $1.2M</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Home age</label>
+          <select id="home-age">
+            <option value="new">0–10 years (new)</option>
+            <option value="mid" selected>11–30 years</option>
+            <option value="old">31–50 years</option>
+            <option value="older">50+ years</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Construction type</label>
+          <select id="home-construction">
+            <option value="frame" selected>Wood frame</option>
+            <option value="masonry">Masonry / brick</option>
+            <option value="steel">Steel frame</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Roof type</label>
+          <select id="home-roof">
+            <option value="asphalt" selected>Asphalt shingles</option>
+            <option value="metal">Metal roof</option>
+            <option value="tile">Tile / slate</option>
+            <option value="flat">Flat / TPO</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Roof age</label>
+          <select id="home-roof-age">
+            <option value="new" selected>Under 10 years</option>
+            <option value="mid">10–20 years</option>
+            <option value="old">20–30 years</option>
+            <option value="older">Over 30 years</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Claims in last 5 years</label>
+          <select id="home-claims">
+            <option value="0" selected>None</option>
+            <option value="1">1 claim</option>
+            <option value="2">2 claims</option>
+            <option value="3">3+ claims</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Deductible</label>
+          <select id="home-deductible">
+            <option value="500">$500</option>
+            <option value="1000" selected>$1,000</option>
+            <option value="2500">$2,500</option>
+            <option value="5000">$5,000</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Coverage level</label>
+          <select id="home-coverage">
+            <option value="basic">Basic (dwelling only)</option>
+            <option value="standard" selected>Standard (HO-3)</option>
+            <option value="premium">Premium (HO-5 open peril)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Security system?</label>
+          <select id="home-security">
+            <option value="none">None</option>
+            <option value="basic" selected>Basic alarm</option>
+            <option value="monitored">Monitored system</option>
+            <option value="smart">Smart home + monitoring</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pool or trampoline?</label>
+          <select id="home-pool">
+            <option value="no" selected>No</option>
+            <option value="pool">Pool</option>
+            <option value="trampoline">Trampoline</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Flood zone?</label>
+          <select id="home-flood">
+            <option value="no" selected>No / low risk</option>
+            <option value="moderate">Moderate risk</option>
+            <option value="high">High risk (FEMA zone A/V)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- RENTERS -->
+    <div id="form-renters" class="ins-form" style="display:none">
+      <div class="section-title">🔑 Renters Insurance — Your Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>State</label>
+          <select id="renters-state"></select>
+        </div>
+        <div class="form-group">
+          <label>Personal property value</label>
+          <select id="renters-property">
+            <option value="5k">Under $10,000</option>
+            <option value="15k" selected>$10k–$20k</option>
+            <option value="30k">$20k–$40k</option>
+            <option value="50k">$40k–$60k</option>
+            <option value="75k">Over $60k</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Liability coverage</label>
+          <select id="renters-liability">
+            <option value="25k">$25,000</option>
+            <option value="100k" selected>$100,000</option>
+            <option value="300k">$300,000</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Deductible</label>
+          <select id="renters-deductible">
+            <option value="250">$250</option>
+            <option value="500" selected>$500</option>
+            <option value="1000">$1,000</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Building type</label>
+          <select id="renters-building">
+            <option value="apartment" selected>Apartment (high-rise)</option>
+            <option value="low">Low-rise / garden</option>
+            <option value="condo">Condo</option>
+            <option value="house">Rented house</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prior claims?</label>
+          <select id="renters-claims">
+            <option value="0" selected>None</option>
+            <option value="1">1 claim (last 3y)</option>
+            <option value="2">2+ claims</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>High-value items?</label>
+          <select id="renters-hv">
+            <option value="no" selected>No</option>
+            <option value="jewelry">Jewelry / watches</option>
+            <option value="electronics">Electronics / camera</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pet (dog breed risk)?</label>
+          <select id="renters-pet">
+            <option value="no" selected>No dog / low-risk breed</option>
+            <option value="yes">High-risk breed (pit bull, etc.)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- UMBRELLA -->
+    <div id="form-umbrella" class="ins-form" style="display:none">
+      <div class="section-title">☂️ Umbrella Insurance — Your Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>State</label>
+          <select id="umbrella-state"></select>
+        </div>
+        <div class="form-group">
+          <label>Coverage amount</label>
+          <select id="umbrella-amount">
+            <option value="1m" selected>$1,000,000</option>
+            <option value="2m">$2,000,000</option>
+            <option value="3m">$3,000,000</option>
+            <option value="5m">$5,000,000</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assets to protect</label>
+          <select id="umbrella-assets">
+            <option value="low">Under $500k</option>
+            <option value="mid" selected>$500k–$1.5M</option>
+            <option value="high">$1.5M–$3M</option>
+            <option value="vhigh">Over $3M</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Underlying policies</label>
+          <select id="umbrella-underlying">
+            <option value="auto_home" selected>Auto + Home</option>
+            <option value="auto">Auto only</option>
+            <option value="home">Home only</option>
+            <option value="auto_home_boat">Auto + Home + Boat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Drivers in household</label>
+          <select id="umbrella-drivers">
+            <option value="1">1 driver</option>
+            <option value="2" selected>2 drivers</option>
+            <option value="3">3+ drivers</option>
+            <option value="teen">Include teen driver</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Rental properties owned?</label>
+          <select id="umbrella-rental">
+            <option value="no" selected>No</option>
+            <option value="1">1 rental</option>
+            <option value="2plus">2+ rentals</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Public profile? (social media, business)</label>
+          <select id="umbrella-profile">
+            <option value="low" selected>Low profile</option>
+            <option value="mid">Moderate (local business)</option>
+            <option value="high">High (executive, celebrity)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prior claims?</label>
+          <select id="umbrella-claims">
+            <option value="0" selected>None</option>
+            <option value="1">1 liability claim</option>
+            <option value="2">2+ claims</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-amber" onclick="calculate()">Get My Estimate →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3: Results ═══ -->
+  <div class="step-panel" id="panel3">
+    <div id="results-content"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(2)">← Adjust</button>
+      <button class="btn btn-primary" onclick="goStep(1)">New Estimate</button>
+    </div>
+  </div>
+
+</div><!-- card-body -->
+</div><!-- card -->
+</div><!-- tool-wrap -->
+
+<script>
+// ── State list ──
+const STATES = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
+
+// ── State base rate multipliers (avg monthly auto) ──
+const STATE_AUTO = {"Alabama":120,"Alaska":105,"Arizona":140,"Arkansas":118,"California":185,"Colorado":152,"Connecticut":170,"Delaware":155,"Florida":210,"Georgia":160,"Hawaii":95,"Idaho":90,"Illinois":130,"Indiana":100,"Iowa":88,"Kansas":110,"Kentucky":138,"Louisiana":225,"Maine":82,"Maryland":158,"Massachusetts":145,"Michigan":248,"Minnesota":112,"Mississippi":115,"Missouri":128,"Montana":98,"Nebraska":102,"Nevada":175,"New Hampshire":88,"New Jersey":195,"New Mexico":120,"New York":215,"North Carolina":108,"North Dakota":82,"Ohio":98,"Oklahoma":132,"Oregon":130,"Pennsylvania":150,"Rhode Island":195,"South Carolina":135,"South Dakota":85,"Tennessee":125,"Texas":168,"Utah":118,"Vermont":88,"Virginia":115,"Washington":138,"West Virginia":105,"Wisconsin":95,"Wyoming":92};
+const STATE_HEALTH = {"Alabama":520,"Alaska":780,"Arizona":450,"Arkansas":490,"California":560,"Colorado":510,"Connecticut":580,"Delaware":540,"Florida":510,"Georgia":480,"Hawaii":430,"Idaho":440,"Illinois":510,"Indiana":470,"Iowa":460,"Kansas":480,"Kentucky":490,"Louisiana":500,"Maine":540,"Maryland":510,"Massachusetts":590,"Michigan":475,"Minnesota":500,"Mississippi":490,"Missouri":465,"Montana":510,"Nebraska":490,"Nevada":475,"New Hampshire":580,"New Jersey":610,"New Mexico":460,"New York":620,"North Carolina":470,"North Dakota":475,"Ohio":460,"Oklahoma":480,"Oregon":510,"Pennsylvania":530,"Rhode Island":560,"South Carolina":465,"South Dakota":495,"Tennessee":475,"Texas":500,"Utah":420,"Vermont":590,"Virginia":490,"Washington":520,"West Virginia":480,"Wisconsin":490,"Wyoming":510};
+const STATE_HOME = {"Alabama":1650,"Alaska":1100,"Arizona":1250,"Arkansas":1700,"California":1850,"Colorado":2200,"Connecticut":1550,"Delaware":1200,"Florida":2800,"Georgia":1750,"Hawaii":1200,"Idaho":1100,"Illinois":1450,"Indiana":1400,"Iowa":1600,"Kansas":2100,"Kentucky":1500,"Louisiana":2600,"Maine":1050,"Maryland":1350,"Massachusetts":1500,"Michigan":1250,"Minnesota":1900,"Mississippi":1850,"Missouri":1700,"Montana":1800,"Nebraska":2000,"Nevada":1200,"New Hampshire":1050,"New Jersey":1550,"New Mexico":1350,"New York":1650,"North Carolina":1550,"North Dakota":2000,"Ohio":1300,"Oklahoma":2500,"Oregon":1100,"Pennsylvania":1250,"Rhode Island":1500,"South Carolina":1600,"South Dakota":1900,"Tennessee":1550,"Texas":2400,"Utah":1050,"Vermont":1000,"Virginia":1300,"Washington":1150,"West Virginia":1100,"Wisconsin":1200,"Wyoming":1600};
+
+let selectedType = null;
+let currentStep = 1;
+
+// Populate state dropdowns
+function populateStates() {
+  document.querySelectorAll('select[id$="-state"]').forEach(sel => {
+    STATES.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      if (s === 'Florida') o.selected = true;
+      sel.appendChild(o);
+    });
+  });
+}
+populateStates();
+
+function selectType(el) {
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+}
+
+function toggleChip(el) { el.classList.toggle('selected'); }
+
+function showForm(type) {
+  document.querySelectorAll('.ins-form').forEach(f => f.style.display = 'none');
+  const f = document.getElementById('form-' + type);
+  if (f) f.style.display = '';
+}
+
+function goStep(n) {
+  if (n === 2 && !selectedType) { alert('Please select a coverage type first.'); return; }
+  currentStep = n;
+  // Update stepper
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('s' + i);
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  });
+  // Show panel
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel' + n).classList.add('active');
+  if (n === 2) showForm(selectedType);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── Calculation engine ──
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+function calculate() {
+  const type = selectedType;
+  let base, low, high, factors = [], savings = [], tiers = [];
+
+  if (type === 'auto') {
+    const state = val('auto-state');
+    base = STATE_AUTO[state] || 130;
+    let m = 1.0;
+
+    const age = parseInt(val('auto-age'));
+    if (age === 16) { m *= 2.4; factors.push({l:'Teen driver (16–19)',i:'↑ +140%',t:'neg'}); }
+    else if (age === 22) { m *= 1.55; factors.push({l:'Young driver (20–24)',i:'↑ +55%',t:'neg'}); }
+    else if (age === 27) { m *= 1.15; factors.push({l:'Driver age 25–29',i:'↑ +15%',t:'neg'}); }
+    else if (age === 34) { m *= 1.0; factors.push({l:'Driver age 30–39',i:'Best rate range',t:'pos'}); }
+    else if (age === 45) { m *= 0.97; factors.push({l:'Driver age 40–49',i:'↓ -3%',t:'pos'}); }
+    else if (age === 55) { m *= 1.0; factors.push({l:'Driver age 50–64',i:'Stable',t:'neu'}); }
+    else { m *= 1.18; factors.push({l:'Senior driver (65+)',i:'↑ +18%',t:'neg'}); }
+
+    const gender = val('auto-gender');
+    if (gender === 'M' && age <= 25) { m *= 1.15; factors.push({l:'Male under 25',i:'↑ +15%',t:'neg'}); }
+    else if (gender === 'F') { factors.push({l:'Female driver',i:'Slight advantage',t:'pos'}); }
+
+    const marital = val('auto-marital');
+    if (marital === 'married') { m *= 0.92; factors.push({l:'Married',i:'↓ -8%',t:'pos'}); }
+
+    const record = val('auto-record');
+    if (record === 'clean') { factors.push({l:'Clean driving record',i:'Best rates',t:'pos'}); }
+    else if (record === 'minor') { m *= 1.22; factors.push({l:'Minor violation',i:'↑ +22%',t:'neg'}); }
+    else if (record === 'major') { m *= 1.52; factors.push({l:'Major violation / at-fault',i:'↑ +52%',t:'neg'}); }
+    else if (record === 'dui') { m *= 2.10; factors.push({l:'DUI/DWI',i:'↑ +110%',t:'neg'}); }
+    else if (record === 'multiple') { m *= 1.85; factors.push({l:'Multiple incidents',i:'↑ +85%',t:'neg'}); }
+
+    const credit = val('auto-credit');
+    if (credit === 'excellent') { m *= 0.85; factors.push({l:'Excellent credit',i:'↓ -15%',t:'pos'}); }
+    else if (credit === 'vgood') { m *= 0.92; factors.push({l:'Very good credit',i:'↓ -8%',t:'pos'}); }
+    else if (credit === 'good') { factors.push({l:'Good credit',i:'Average rate',t:'neu'}); }
+    else if (credit === 'fair') { m *= 1.22; factors.push({l:'Fair credit',i:'↑ +22%',t:'neg'}); }
+    else { m *= 1.55; factors.push({l:'Poor credit',i:'↑ +55%',t:'neg'}); savings.push('Improving your credit score by 50+ points can save $30–$60/month'); }
+
+    const vehicle = val('auto-vehicle');
+    if (vehicle === 'sports') { m *= 1.35; factors.push({l:'Sports car',i:'↑ +35%',t:'neg'}); }
+    else if (vehicle === 'luxury') { m *= 1.45; factors.push({l:'Luxury vehicle',i:'↑ +45%',t:'neg'}); }
+    else if (vehicle === 'electric') { m *= 1.22; factors.push({l:'Electric vehicle',i:'↑ +22% (repair cost)',t:'neg'}); }
+    else if (vehicle === 'suv') { m *= 1.08; }
+    else if (vehicle === 'minivan') { m *= 0.92; factors.push({l:'Minivan',i:'↓ -8%',t:'pos'}); }
+
+    const yr = val('auto-year');
+    if (yr === 'new') { m *= 1.18; factors.push({l:'New vehicle (2022–2025)',i:'↑ +18% (higher value)',t:'neg'}); }
+    else if (yr === 'older') { m *= 0.75; factors.push({l:'Older vehicle (pre-2010)',i:'↓ -25%',t:'pos'}); savings.push('Dropping comprehensive/collision on older cars worth under $4k can save significantly'); }
+
+    const mileage = val('auto-mileage');
+    if (mileage === 'low') { m *= 0.88; factors.push({l:'Low mileage (<7,500/yr)',i:'↓ -12%',t:'pos'}); savings.push('Ask about a pay-per-mile program — you may save 20–30%'); }
+    else if (mileage === 'vhigh') { m *= 1.18; factors.push({l:'High mileage (25k+/yr)',i:'↑ +18%',t:'neg'}); }
+
+    const cov = val('auto-coverage');
+    if (cov === 'liability') { m *= 0.35; factors.push({l:'Liability only',i:'Minimum coverage',t:'neu'}); }
+    else if (cov === 'basic') { m *= 0.65; }
+    else if (cov === 'premium') { m *= 1.28; }
+
+    if (val('auto-homeowner') === 'yes') { m *= 0.88; factors.push({l:'Homeowner bundle discount',i:'↓ -12%',t:'pos'}); savings.push('Bundle auto + home with same insurer for 10–15% multi-policy discount'); }
+
+    const ded = val('auto-deductible');
+    if (ded === '250') { m *= 1.12; }
+    else if (ded === '1000') { m *= 0.90; factors.push({l:'$1,000 deductible',i:'↓ -10%',t:'pos'}); }
+    else if (ded === '2000') { m *= 0.82; factors.push({l:'$2,000 deductible',i:'↓ -18%',t:'pos'}); savings.push('Raise deductible to $1,000–$2,000 if you have emergency savings — saves $15–$40/mo'); }
+
+    const monthly = Math.round(base * m);
+    low = Math.round(monthly * 0.85);
+    high = Math.round(monthly * 1.18);
+
+    savings.push('Ask about telematics / safe-driver apps (up to 30% discount)');
+    savings.push('Shop quotes every 6–12 months — loyalty rarely pays with auto insurance');
+    if (record === 'clean') savings.push('Maintain your clean record — rates drop further after 3+ clean years');
+
+    tiers = [
+      {label:'Basic', desc:'Liability + collision only', low: Math.round(low*0.52), high: Math.round(low*0.65), badge:'badge-basic'},
+      {label:'Standard', desc:'Full coverage (our estimate)', low: low, high: high, badge:'badge-standard'},
+      {label:'Premium', desc:'Full + GAP + rental + roadside', low: Math.round(high*1.15), high: Math.round(high*1.35), badge:'badge-premium'},
+    ];
+
+  } else if (type === 'health') {
+    const state = val('health-state');
+    base = STATE_HEALTH[state] || 480;
+    let m = 1.0;
+
+    const age = parseInt(val('health-age'));
+    if (age === 25) { m *= 0.65; factors.push({l:'Age 18–25',i:'↓ -35%',t:'pos'}); }
+    else if (age === 30) { m *= 0.80; factors.push({l:'Age 26–35',i:'Favorable rates',t:'pos'}); }
+    else if (age === 40) { m *= 1.05; }
+    else if (age === 50) { m *= 1.45; factors.push({l:'Age 46–55',i:'↑ +45%',t:'neg'}); }
+    else { m *= 1.85; factors.push({l:'Age 56–64',i:'↑ +85%',t:'neg'}); savings.push('At 65 you qualify for Medicare — compare with private coverage now'); }
+
+    const plan = val('health-plan');
+    if (plan === 'bronze') { m *= 0.60; factors.push({l:'Bronze plan',i:'Low premium, high OOP',t:'neu'}); savings.push('Bronze works if you rarely use healthcare — watch deductibles of $7k+'); }
+    else if (plan === 'silver') { m *= 1.0; }
+    else if (plan === 'gold') { m *= 1.35; factors.push({l:'Gold plan',i:'Higher premium, lower OOP',t:'neu'}); }
+    else if (plan === 'platinum') { m *= 1.65; factors.push({l:'Platinum plan',i:'Maximum coverage',t:'neg'}); }
+    else { m *= 0.40; factors.push({l:'Catastrophic plan',i:'Lowest premium — emergency only',t:'neu'}); }
+
+    const network = val('health-network');
+    if (network === 'hmo') { m *= 0.88; factors.push({l:'HMO network',i:'↓ -12% vs PPO',t:'pos'}); }
+    else if (network === 'ppo') { m *= 1.15; factors.push({l:'PPO network',i:'↑ +15%',t:'neg'}); }
+    else if (network === 'hdhp') { m *= 0.72; factors.push({l:'HDHP + HSA',i:'↓ -28% premium',t:'pos'}); savings.push('Max your HSA contribution ($4,150 single / $8,300 family 2024) — triple tax advantage'); }
+
+    const hh = parseInt(val('health-household'));
+    if (hh > 1) { m *= (1 + (hh-1)*0.7); factors.push({l:'Family coverage ('+hh+' people)',i:'↑ per additional member',t:'neg'}); }
+
+    if (val('health-smoker') === 'yes') { m *= 1.50; factors.push({l:'Tobacco surcharge',i:'↑ +50% (ACA allows)',t:'neg'}); savings.push('Quitting tobacco saves 50% on premiums — many plans cover cessation programs'); }
+
+    const emp = val('health-employment');
+    if (emp === 'employer') { m *= 0.50; factors.push({l:'Employer contribution',i:'~50% typically paid by employer',t:'pos'}); }
+    else if (emp === 'medicaid') { m *= 0.05; factors.push({l:'Medicaid eligible',i:'Minimal or $0 premium',t:'pos'}); }
+
+    const income = val('health-income');
+    if (income === 'sub100') { m *= 0.35; factors.push({l:'ACA subsidy (income <200% FPL)',i:'Large subsidy',t:'pos'}); }
+    else if (income === '100-200') { m *= 0.60; factors.push({l:'Partial ACA subsidy',i:'↓ moderate',t:'pos'}); savings.push('Check healthcare.gov — you may qualify for enhanced subsidies under the IRA'); }
+
+    const rx = val('health-rx');
+    if (rx === 'specialty') { factors.push({l:'Specialty drugs needed',i:'Check formulary tier',t:'neg'}); savings.push('Specialty drugs can cost $500–$5k/mo out-of-pocket — verify formulary before enrolling'); }
+    else if (rx === 'brand') { factors.push({l:'Brand-name prescriptions',i:'Higher cost-sharing',t:'neg'}); savings.push('Ask your doctor about generic alternatives — often identical efficacy'); }
+
+    const monthly = Math.round(base * m);
+    low = Math.round(monthly * 0.88);
+    high = Math.round(monthly * 1.15);
+    savings.push('Compare on your state exchange during Open Enrollment (Nov 1 – Jan 15)');
+    savings.push('Check if your employer plan beats marketplace options — even with subsidies');
+
+    tiers = [
+      {label:'Bronze', desc:'60/40 split, high deductible', low: Math.round(low*0.58), high: Math.round(low*0.68), badge:'badge-basic'},
+      {label:'Silver', desc:'70/30 split (our estimate)', low: low, high: high, badge:'badge-standard'},
+      {label:'Gold', desc:'80/20 split, lower deductible', low: Math.round(high*1.32), high: Math.round(high*1.45), badge:'badge-premium'},
+    ];
+
+  } else if (type === 'life') {
+    const state = val('life-state');
+    base = 35; // base monthly for 35yo female $500k 20yr term preferred
+    let m = 1.0;
+
+    const age = parseInt(val('life-age'));
+    if (age === 25) { m *= 0.45; factors.push({l:'Age 25–29',i:'↓ -55% vs baseline',t:'pos'}); }
+    else if (age === 32) { m *= 1.0; }
+    else if (age === 45) { m *= 2.8; factors.push({l:'Age 40–49',i:'↑ +180%',t:'neg'}); savings.push('Rates lock in at purchase — buy while young and healthy'); }
+    else if (age === 55) { m *= 6.5; factors.push({l:'Age 50–59',i:'↑ +550%',t:'neg'}); }
+    else if (age === 65) { m *= 15; factors.push({l:'Age 60–69',i:'Significant increase',t:'neg'}); }
+    else { m *= 35; factors.push({l:'Age 70+',i:'Very high premium',t:'neg'}); }
+
+    if (val('life-gender') === 'M') { m *= 1.32; factors.push({l:'Male (actuarial tables)',i:'↑ +32%',t:'neg'}); }
+
+    const ptype = val('life-type');
+    if (ptype === 'term10') { m *= 0.55; factors.push({l:'10-year term',i:'↓ -45%',t:'pos'}); }
+    else if (ptype === 'term20') { }
+    else if (ptype === 'term30') { m *= 1.55; factors.push({l:'30-year term',i:'↑ +55%',t:'neg'}); }
+    else if (ptype === 'whole') { m *= 8.5; factors.push({l:'Whole life policy',i:'↑ +750% (builds cash value)',t:'neg'}); savings.push('For pure protection, term is 5–10x cheaper than whole life — compare carefully'); }
+    else if (ptype === 'universal') { m *= 6.0; }
+
+    const amount = val('life-amount');
+    if (amount === '100k') { m *= 0.28; factors.push({l:'$100k coverage',i:'Smaller face amount',t:'pos'}); }
+    else if (amount === '250k') { m *= 0.55; }
+    else if (amount === '500k') { }
+    else if (amount === '1m') { m *= 1.85; factors.push({l:'$1M coverage',i:'↑ +85%',t:'neg'}); }
+    else { m *= 3.2; factors.push({l:'$2M+ coverage',i:'↑ +220%',t:'neg'}); }
+
+    const health = val('life-health');
+    if (health === 'preferred_plus') { m *= 0.80; factors.push({l:'Preferred Plus health class',i:'↓ -20%',t:'pos'}); }
+    else if (health === 'preferred') { }
+    else if (health === 'standard_plus') { m *= 1.20; }
+    else if (health === 'standard') { m *= 1.50; factors.push({l:'Standard health class',i:'↑ +50%',t:'neg'}); }
+    else { m *= 2.80; factors.push({l:'Substandard (rated)',i:'↑ +180%',t:'neg'}); savings.push('Some insurers specialize in impaired risk — shop multiple underwriters'); }
+
+    if (val('life-smoker') === 'yes') { m *= 2.50; factors.push({l:'Tobacco user',i:'↑ +150%',t:'neg'}); savings.push('Quit smoking for 12 months and retake exam — could cut rates in half'); }
+
+    const bmi = val('life-bmi');
+    if (bmi === 'overweight') { m *= 1.08; }
+    else if (bmi === 'obese') { m *= 1.35; factors.push({l:'BMI 30–34.9',i:'↑ +35%',t:'neg'}); }
+    else if (bmi === 'obese2') { m *= 1.80; factors.push({l:'BMI 35+ (Obese II)',i:'↑ +80%',t:'neg'}); }
+
+    if (val('life-occupation') === 'yes') { m *= 1.40; factors.push({l:'Hazardous occupation',i:'↑ +40%',t:'neg'}); }
+    if (val('life-hobbies') === 'yes') { m *= 1.30; factors.push({l:'High-risk hobbies',i:'↑ +30%',t:'neg'}); }
+
+    const monthly = Math.round(base * m);
+    low = Math.max(8, Math.round(monthly * 0.82));
+    high = Math.round(monthly * 1.22);
+    savings.push('Get quotes from at least 5 carriers — pricing can vary 40%+ for same coverage');
+    savings.push('Apply when healthy — health changes can lock you into higher rates permanently');
+
+    tiers = [
+      {label:'Term 10yr', desc:'Lowest cost, shorter protection', low: Math.round(low*0.55), high: Math.round(low*0.65), badge:'badge-basic'},
+      {label:'Term 20yr', desc:'Best value (our estimate)', low: low, high: high, badge:'badge-standard'},
+      {label:'Whole Life', desc:'Permanent + cash value', low: Math.round(high*7), high: Math.round(high*10), badge:'badge-premium'},
+    ];
+
+  } else if (type === 'home') {
+    const state = val('home-state');
+    base = (STATE_HOME[state] || 1500) / 12;
+    let m = 1.0;
+
+    const hval = val('home-value');
+    if (hval === '150k') { m *= 0.60; }
+    else if (hval === '275k') { }
+    else if (hval === '450k') { m *= 1.55; factors.push({l:'Home $350k–$550k',i:'↑ +55%',t:'neg'}); }
+    else if (hval === '700k') { m *= 2.30; factors.push({l:'Home $550k–$850k',i:'↑ +130%',t:'neg'}); }
+    else if (hval === '1m') { m *= 3.20; }
+    else { m *= 4.80; }
+
+    const hage = val('home-age');
+    if (hage === 'new') { m *= 0.85; factors.push({l:'New home (0–10yr)',i:'↓ -15%',t:'pos'}); }
+    else if (hage === 'old') { m *= 1.18; factors.push({l:'Home 31–50 years old',i:'↑ +18%',t:'neg'}); }
+    else if (hage === 'older') { m *= 1.42; factors.push({l:'Home 50+ years',i:'↑ +42%',t:'neg'}); savings.push('Update electrical/plumbing to lower rates significantly'); }
+
+    const roof = val('home-roof');
+    if (roof === 'metal') { m *= 0.88; factors.push({l:'Metal roof',i:'↓ -12%',t:'pos'}); }
+    else if (roof === 'flat') { m *= 1.22; factors.push({l:'Flat roof',i:'↑ +22%',t:'neg'}); }
+
+    const roofage = val('home-roof-age');
+    if (roofage === 'mid') { m *= 1.08; }
+    else if (roofage === 'old') { m *= 1.28; factors.push({l:'Roof 20–30 years',i:'↑ +28%',t:'neg'}); savings.push('A new roof can save 5–10% on premium and prevent claim denials'); }
+    else if (roofage === 'older') { m *= 1.55; factors.push({l:'Roof over 30 years',i:'↑ +55%',t:'neg'}); }
+
+    const claims = parseInt(val('home-claims'));
+    if (claims === 1) { m *= 1.25; factors.push({l:'1 prior claim',i:'↑ +25%',t:'neg'}); }
+    else if (claims === 2) { m *= 1.55; factors.push({l:'2 prior claims',i:'↑ +55%',t:'neg'}); savings.push('Pay small claims out-of-pocket — multiple claims can make you uninsurable'); }
+    else if (claims >= 3) { m *= 2.0; }
+
+    const ded = val('home-deductible');
+    if (ded === '500') { m *= 1.10; }
+    else if (ded === '2500') { m *= 0.88; factors.push({l:'$2,500 deductible',i:'↓ -12%',t:'pos'}); }
+    else if (ded === '5000') { m *= 0.78; factors.push({l:'$5,000 deductible',i:'↓ -22%',t:'pos'}); }
+
+    const sec = val('home-security');
+    if (sec === 'basic') { m *= 0.95; factors.push({l:'Basic alarm',i:'↓ -5%',t:'pos'}); }
+    else if (sec === 'monitored') { m *= 0.90; factors.push({l:'Monitored security',i:'↓ -10%',t:'pos'}); }
+    else if (sec === 'smart') { m *= 0.85; factors.push({l:'Smart home monitoring',i:'↓ -15%',t:'pos'}); }
+
+    if (val('home-pool') !== 'no') { m *= 1.08; factors.push({l:'Pool / trampoline',i:'↑ +8% (liability)',t:'neg'}); }
+
+    const flood = val('home-flood');
+    if (flood === 'moderate') { factors.push({l:'Moderate flood risk',i:'Consider separate NFIP policy',t:'neu'}); savings.push('Standard HO-3 does NOT cover flooding — get NFIP or private flood policy'); }
+    else if (flood === 'high') { factors.push({l:'High flood zone (FEMA A/V)',i:'Separate flood required',t:'neg'}); savings.push('NFIP flood policies avg $700–$1,200/yr in high-risk zones — required by most lenders'); }
+
+    const monthly = Math.round(base * m);
+    low = Math.round(monthly * 0.85);
+    high = Math.round(monthly * 1.20);
+    savings.push('Bundle with auto insurance for 10–20% multi-policy discount');
+    savings.push('Install smoke detectors, deadbolts, and carbon monoxide detectors for discounts');
+
+    tiers = [
+      {label:'Basic (HO-1)', desc:'Named perils, dwelling only', low: Math.round(low*0.60), high: Math.round(low*0.72), badge:'badge-basic'},
+      {label:'Standard (HO-3)', desc:'Open perils on dwelling (our est.)', low: low, high: high, badge:'badge-standard'},
+      {label:'Premium (HO-5)', desc:'Open perils dwelling + contents', low: Math.round(high*1.20), high: Math.round(high*1.40), badge:'badge-premium'},
+    ];
+
+  } else if (type === 'renters') {
+    const state = val('renters-state');
+    base = 18; // avg monthly
+    let m = 1.0;
+
+    // State factor
+    const stateMulti = {'California':1.15,'New York':1.12,'Florida':1.20,'Louisiana':1.25,'Texas':1.10,'Hawaii':1.18,'New Jersey':1.10,'Mississippi':0.88,'North Dakota':0.85,'South Dakota':0.87};
+    m *= (stateMulti[state] || 1.0);
+
+    const prop = val('renters-property');
+    if (prop === '5k') { m *= 0.70; }
+    else if (prop === '30k') { m *= 1.30; factors.push({l:'$20k–$40k property',i:'↑ more coverage',t:'neg'}); }
+    else if (prop === '50k') { m *= 1.70; factors.push({l:'$40k–$60k property',i:'↑ +70%',t:'neg'}); }
+    else if (prop === '75k') { m *= 2.20; }
+
+    const liab = val('renters-liability');
+    if (liab === '300k') { m *= 1.08; }
+
+    const ded = val('renters-deductible');
+    if (ded === '250') { m *= 1.12; }
+    else if (ded === '1000') { m *= 0.88; factors.push({l:'$1,000 deductible',i:'↓ -12%',t:'pos'}); }
+
+    const claims = parseInt(val('renters-claims'));
+    if (claims === 1) { m *= 1.30; factors.push({l:'1 prior claim',i:'↑ +30%',t:'neg'}); }
+    else if (claims >= 2) { m *= 1.65; }
+
+    const hv = val('renters-hv');
+    if (hv === 'jewelry') { m *= 1.15; factors.push({l:'Jewelry / watches rider',i:'Scheduled endorsement needed',t:'neu'}); savings.push('Schedule high-value items (jewelry, cameras) separately — standard policy limits apply'); }
+    else if (hv === 'both') { m *= 1.25; }
+
+    if (val('renters-pet') === 'yes') { m *= 1.12; factors.push({l:'High-risk breed dog',i:'↑ +12% or exclusion',t:'neg'}); savings.push('Some insurers exclude certain breeds — verify liability coverage before signing'); }
+
+    const monthly = Math.round(base * m);
+    low = Math.max(9, Math.round(monthly * 0.82));
+    high = Math.round(monthly * 1.25);
+    factors.push({l:'Renters insurance',i:'Excellent value for coverage',t:'pos'});
+    savings.push('Bundle with auto for $5–$10/month off (often free with some carriers)');
+    savings.push('Renters insurance also covers theft away from home (e.g., car break-in)');
+    savings.push('$100k liability for a dollar or two more per month — always choose it');
+
+    tiers = [
+      {label:'Basic', desc:'$10k property, $25k liability', low: Math.round(low*0.55), high: Math.round(low*0.70), badge:'badge-basic'},
+      {label:'Standard', desc:'$20k property, $100k liability (est.)', low: low, high: high, badge:'badge-standard'},
+      {label:'Premium', desc:'$40k+ property, $300k liability', low: Math.round(high*1.50), high: Math.round(high*1.90), badge:'badge-premium'},
+    ];
+
+  } else if (type === 'umbrella') {
+    base = 28; // avg monthly $1M
+    let m = 1.0;
+
+    const amount = val('umbrella-amount');
+    if (amount === '1m') { }
+    else if (amount === '2m') { m *= 1.55; factors.push({l:'$2M coverage',i:'↑ +55% vs $1M',t:'neg'}); }
+    else if (amount === '3m') { m *= 2.00; }
+    else { m *= 2.90; factors.push({l:'$5M coverage',i:'↑ +190%',t:'neg'}); }
+
+    const assets = val('umbrella-assets');
+    if (assets === 'low') { m *= 0.88; }
+    else if (assets === 'high') { m *= 1.12; }
+    else if (assets === 'vhigh') { m *= 1.28; factors.push({l:'High net worth',i:'More assets to protect',t:'neg'}); }
+
+    const underlying = val('umbrella-underlying');
+    if (underlying === 'auto_home') { factors.push({l:'Auto + home underlying',i:'Standard configuration',t:'neu'}); }
+    else if (underlying === 'auto_home_boat') { m *= 1.22; factors.push({l:'Auto + home + boat',i:'↑ +22% (more exposure)',t:'neg'}); }
+
+    const drivers = val('umbrella-drivers');
+    if (drivers === 'teen') { m *= 1.55; factors.push({l:'Teen driver',i:'↑ +55%',t:'neg'}); savings.push('Umbrella is especially valuable with teen drivers — lawsuits from accidents can exceed auto limits'); }
+    else if (drivers === '3') { m *= 1.15; }
+
+    if (val('umbrella-rental') === '1') { m *= 1.18; factors.push({l:'1 rental property',i:'↑ +18%',t:'neg'}); }
+    else if (val('umbrella-rental') === '2plus') { m *= 1.45; }
+
+    if (val('umbrella-profile') === 'high') { m *= 1.30; factors.push({l:'High public profile',i:'↑ +30% (lawsuit target)',t:'neg'}); }
+
+    const claims = parseInt(val('umbrella-claims'));
+    if (claims === 1) { m *= 1.35; }
+    else if (claims >= 2) { m *= 1.80; }
+
+    const monthly = Math.round(base * m);
+    low = Math.max(18, Math.round(monthly * 0.82));
+    high = Math.round(monthly * 1.25);
+    factors.push({l:'Umbrella coverage',i:'Best value in insurance',t:'pos'});
+    savings.push('$1M umbrella costs ~$150–$300/year — remarkable value for the protection');
+    savings.push('Must have underlying auto + home with required minimum limits (usually $300k liability)');
+    savings.push('Same insurer as auto/home often offers lower umbrella rates');
+
+    tiers = [
+      {label:'$1M', desc:'Most common — covers most lawsuits', low: Math.round(low*0.55), high: Math.round(low*0.75), badge:'badge-basic'},
+      {label:'$2M', desc:'Recommended (our estimate base)', low: low, high: high, badge:'badge-standard'},
+      {label:'$5M', desc:'High net worth / business owner', low: Math.round(high*2.2), high: Math.round(high*3.0), badge:'badge-premium'},
+    ];
+  }
+
+  renderResults(type, low, high, tiers, factors, savings);
+  goStep(3);
+}
+
+function renderResults(type, low, high, tiers, factors, savings) {
+  const typeNames = {auto:'Auto',health:'Health',life:'Life',home:'Homeowners',renters:'Renters',umbrella:'Umbrella'};
+  const state = val(type + '-state');
+
+  const annLow = low*12, annHigh = high*12;
+  const midLow = Math.round((low+high)/2);
+
+  let html = `
+  <div class="result-hero">
+    <div class="result-range">
+      <div class="label">Estimated monthly premium</div>
+      <div class="amount">$${low}–$${high}</div>
+      <div class="sub">$${annLow.toLocaleString()}–$${annHigh.toLocaleString()} per year · ${typeNames[type]} Insurance</div>
+    </div>
+    <div class="result-meta">
+      State: <strong>${state}</strong><br>
+      Based on your profile inputs<br>
+      <em style="opacity:.6;font-size:.75rem">Estimate only — get real quotes to confirm</em>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:12px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    Coverage tier comparison
+  </div>
+  <table class="tier-table">
+    <thead><tr><th>Tier</th><th>Description</th><th>Monthly est.</th><th>Annual est.</th></tr></thead>
+    <tbody>`;
+
+  tiers.forEach(t => {
+    html += `<tr>
+      <td><span class="tier-badge ${t.badge}">${t.label}</span></td>
+      <td>${t.desc}</td>
+      <td class="price">$${t.low}–$${t.high}</td>
+      <td class="annual">$${(t.low*12).toLocaleString()}–$${(t.high*12).toLocaleString()}/yr</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+
+  if (factors.length) {
+    html += `<div class="section-title" style="margin-bottom:12px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Key rate factors
+    </div>
+    <div class="factor-grid">`;
+    factors.forEach(f => {
+      const cls = f.t === 'pos' ? 'impact-pos' : (f.t === 'neg' ? 'impact-neg' : 'impact-neu');
+      html += `<div class="factor-chip ${cls}"><div class="fc-label">${f.l}</div><div class="fc-impact">${f.i}</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (savings.length) {
+    html += `<div class="savings-box">
+      <h4>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a017" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Ways to lower your rate
+      </h4>
+      <ul>`;
+    savings.slice(0,5).forEach(s => { html += `<li>${s}</li>`; });
+    html += `</ul></div>`;
+  }
+
+  html += `<p class="disclaimer">* These are estimates based on industry averages and your profile selections. Actual premiums depend on insurer underwriting, your full application history, credit report, claims history, and other factors. Always obtain real quotes from licensed insurers. Rates shown are for informational purposes only and do not constitute an insurance offer.</p>`;
+
+  document.getElementById('results-content').innerHTML = html;
+}
+</script>
+</body>
+</html>
