@@ -41,6 +41,23 @@ export default {
       error_file: '/var/log/content-network/health-check-error.log',
       out_file: '/var/log/content-network/health-check-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss'
+    },
+    // ── Niche Guardians ──────────────────────────────────────────────────────
+    // Un agent dedicato per nicchia: monitoring, SEO auto-fix, pipeline health.
+    // Aggiungi una entry per ogni nuova nicchia spawned.
+    {
+      name: 'chip',   // CHIP — home-improvement-costs guardian
+      script: 'packages/vps/src/niche-guardian.js',
+      args: '--niche home-improvement-costs',
+      cron_restart: '*/30 * * * *',  // ogni 30 minuti
+      watch: false,
+      autorestart: false,
+      env: {
+        NODE_ENV: 'production'
+      },
+      error_file: '/var/log/content-network/chip-error.log',
+      out_file: '/var/log/content-network/chip-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
     }
   ]
 };
