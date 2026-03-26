@@ -46,9 +46,12 @@ async function buildSiteConfig(site, nicheSlug) {
     authorTitle: author?.title || 'Editor',
     authorBio: author?.bio || '',
     categories,
-    adsenseId: process.env.ADSENSE_ID || '',
+    adsenseId:        process.env.ADSENSE_ID || '',
     ga4MeasurementId: site.ga4_measurement_id || '',
-    ezoicId: process.env.EZOIC_SITE_ID || '',
+    ezoicId:          process.env.EZOIC_SITE_ID || '',
+    mgidSiteId:       site.mgid_site_id || process.env.MGID_SITE_ID || '',
+    mgidInArticleId:  site.mgid_in_article_id || process.env.MGID_IN_ARTICLE_WIDGET_ID || '',
+    mgidSmartId:      site.mgid_smart_id || process.env.MGID_SMART_WIDGET_ID || '',
     toolSlug,
   };
 }
