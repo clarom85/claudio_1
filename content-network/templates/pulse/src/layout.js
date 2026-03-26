@@ -403,7 +403,8 @@ ${renderFooter(site)}`;
     siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: heroImg ? `${site.url}${heroImg}` : '',
     schemas: [orgSchema, webSiteSchema],
-    lcpImage: heroImg ? `${site.url}${heroImg}` : ''
+    lcpImage: heroImg ? `${site.url}${heroImg}` : '',
+    mgidSiteId: site.mgidSiteId || ''
   });
 }
 
