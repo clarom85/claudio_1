@@ -32,8 +32,9 @@ if (!ALL_MODE && !nicheArg) {
   process.exit(1);
 }
 
-const AGENT     = 'CHIP';
-const WWW_ROOT  = process.env.WWW_ROOT || '/var/www';
+const AGENT          = 'CHIP';
+const WWW_ROOT       = process.env.WWW_ROOT || '/var/www';
+const CHANGELOG_PATH = join(__dirname, 'chip-changelog.json');
 
 // ── Claude Haiku — intelligent content fixes ──────────────────────────────────
 
@@ -163,6 +164,9 @@ async function run() {
       );
     } catch { /* non critico */ }
   }
+
+  // Salva changelog su disco e pusha su GitHub
+  await saveChangelogAndPush();
 
   process.exit(0);
 }
@@ -979,6 +983,87 @@ async function sendDailyReport(sites) {
   } catch (e) {
     log(`Daily report failed: ${e.message}`);
   }
+}
+
+// ── 8. Changelog + GitHub Push ────────────────────────────────────────────────
+
+/**
+ * Scrive un'entry nel changelog JSON locale e fa git commit + push.
+ * Chiamato alla fine di ogni run solo se ci sono fix o issue.
+ * Mantiene le ultime 50 entry (circa 25 giorni di run 2×/giorno).
+ */
+async function saveChangelogAndPush() {
+  if (report.fixes.length === 0 && report.issues.length === 0) {
+    log('  [changelog] Nothing to record — skipping');
+    return;
+  }
+
+  // Leggi storico esistente
+  let history = [];
+  try {
+    if (existsSync(CHANGELOG_PATH)) {
+      const raw = readFileSync(CHANGELOG_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) history = parsed;
+    }
+  } catch { history = []; }
+
+  // Nuova entry strutturata
+  const entry = {
+    date:     new Date().toISOString(),
+    niche:    ALL_MODE ? 'ALL' : nicheArg,
+    fixes:    report.fixes,
+    issues:   report.issues,
+    warnings: report.warnings.slice(0, 10),
+    stats:    report.stats,
+    summary:  `${report.fixes.length} fix${report.fixes.length !== 1 ? 'es' : ''}, ${report.issues.length} issue${report.issues.length !== 1 ? 's' : ''}`,
+  };
+
+  history.unshift(entry);
+  if (history.length > 50) history = history.slice(0, 50);
+
+  // Scrivi su disco
+  try {
+    writeFileSync(CHANGELOG_PATH, JSON.stringify(history, null, 2), 'utf-8');
+    log(`  [changelog] Saved: ${entry.summary}`);
+  } catch (e) {
+    warn(`changelog write failed: ${e.message}`);
+    return;
+  }
+
+  // git add → commit → push
+  const commitMsg = `CHIP ${entry.date.slice(0, 10)}: ${entry.summary}`;
+
+  const addResult = spawnSync('git', ['-C', ROOT, 'add', 'packages/vps/src/chip-changelog.json'], {
+    timeout: 10000, encoding: 'utf-8',
+  });
+  if (addResult.status !== 0) {
+    warn(`git add failed: ${(addResult.stderr || '').slice(0, 200)}`);
+    return;
+  }
+
+  const commitResult = spawnSync('git', ['-C', ROOT, 'commit', '-m', commitMsg], {
+    timeout: 15000, encoding: 'utf-8',
+  });
+  if (commitResult.status !== 0) {
+    const out = (commitResult.stdout || '') + (commitResult.stderr || '');
+    if (out.includes('nothing to commit')) {
+      log('  [changelog] git: nothing new to commit');
+    } else {
+      warn(`git commit failed: ${out.slice(0, 200)}`);
+    }
+    return;
+  }
+
+  const pushResult = spawnSync('git', ['-C', ROOT, 'push', 'origin', 'main'], {
+    timeout: 30000, encoding: 'utf-8',
+  });
+  if (pushResult.status !== 0) {
+    warn(`git push failed: ${(pushResult.stderr || '').slice(0, 200)}`);
+    return;
+  }
+
+  fix(`[CHIP] Changelog committed & pushed to GitHub (${commitMsg})`);
 }
 
 // ── Run ───────────────────────────────────────────────────────────────────────
