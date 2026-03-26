@@ -41,6 +41,30 @@ const AGENT_NAMES = {
 const AGENT = AGENT_NAMES[nicheSlug] || nicheSlug.split('-').map(w => w[0]).join('').toUpperCase();
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Tronca un titolo articolo in modo intelligente entro maxLen caratteri.
+ * Strategia:
+ *  1. Se ha separatore naturale (: — – | ·) e la prima parte è ≥ 35 chars → usa quella
+ *  2. Altrimenti tronca all'ultimo spazio prima di maxLen-3 e aggiunge "..."
+ */
+function truncateTitleSmart(title, maxLen = 62) {
+  if (title.length <= maxLen) return title;
+  // Tenta separatori naturali
+  const separators = [/\s*:\s*/, /\s*[—–]\s*/, /\s*\|\s*/, /\s*·\s*/];
+  for (const sep of separators) {
+    const parts = title.split(sep);
+    if (parts.length >= 2 && parts[0].trim().length >= 35 && parts[0].trim().length <= maxLen) {
+      return parts[0].trim();
+    }
+  }
+  // Tronca all'ultimo word boundary
+  const cut = title.slice(0, maxLen - 3);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 30 ? cut.slice(0, lastSpace) : cut).trimEnd() + '...';
+}
+
 // ── Logging ───────────────────────────────────────────────────────────────────
 
 const report = { fixes: [], issues: [], warnings: [], stats: {} };
@@ -80,6 +104,7 @@ async function run() {
     await checkContentQuality(site);
     await checkArticleSeo(site);
     await checkSiteLevel(site);
+    await checkMonetization(site);
     await checkKeywordPipeline(site);
   }
 
@@ -299,9 +324,36 @@ async function checkArticleSeo(site) {
       issue(`[${site.domain}/${article.slug}] Missing <title> tag`);
       seoStats.titleBad++;
     } else {
-      const len = titleMatch[1].trim().length;
-      if (len < 30)  { warn(`[${site.domain}/${article.slug}] Title too short (${len} chars)`); seoStats.titleBad++; }
-      if (len > 65)  { warn(`[${site.domain}/${article.slug}] Title too long (${len} chars)`);  seoStats.titleBad++; }
+      const fullTitle = titleMatch[1].trim();
+      const len = fullTitle.length;
+      if (len < 30) {
+        warn(`[${site.domain}/${article.slug}] Title too short (${len} chars)`);
+        seoStats.titleBad++;
+      } else if (len > 65) {
+        // AUTO-FIX: estrai parte articolo (prima del " | SiteName"), tronca intelligente
+        const pipeIdx = fullTitle.lastIndexOf(' | ');
+        const articlePart = pipeIdx > 0 ? fullTitle.slice(0, pipeIdx) : fullTitle;
+        const siteSuffix  = pipeIdx > 0 ? fullTitle.slice(pipeIdx) : '';
+        const truncated   = truncateTitleSmart(articlePart, 65 - siteSuffix.length);
+        const newTitle    = truncated + siteSuffix;
+
+        // Patch HTML: <title>, og:title, twitter:title
+        html = html.replace(/<title>[^<]*<\/title>/i, `<title>${newTitle}</title>`);
+        html = html.replace(/(property="og:title"\s+content=")[^"]*(")/i,   `$1${truncated}$2`);
+        html = html.replace(/(content=")[^"]*("\s+property="og:title")/i,   `$1${truncated}$2`);
+        html = html.replace(/(name="twitter:title"\s+content=")[^"]*(")/i,  `$1${truncated}$2`);
+        html = html.replace(/(content=")[^"]*("\s+name="twitter:title")/i,  `$1${truncated}$2`);
+
+        // Aggiorna DB (solo la parte articolo, senza " | SiteName")
+        try {
+          await sql`UPDATE articles SET title = ${truncated} WHERE id = ${article.id}`;
+        } catch (e) { warn(`title DB update failed for ${article.slug}: ${e.message}`); }
+
+        fix(`[${site.domain}/${article.slug}] Title truncated: "${articlePart.slice(0,50)}..." → ${truncated.length} chars`);
+        seoStats.titleBad++;
+        seoStats.autoFixed++;
+        modified = true;
+      }
     }
 
     // ── 3b. Meta description ──────────────────────────────────────────────
@@ -614,6 +666,145 @@ async function checkKeywordPipeline(site) {
     report.stats[site.domain] = { ...report.stats[site.domain], publishedToday: parseInt(today[0].count) };
     log(`  [keywords] Articles published today: ${today[0].count}`);
   } catch { /* non bloccante */ }
+}
+
+// ── 5b. Monetization & Broken Links ──────────────────────────────────────────
+
+async function checkMonetization(site) {
+  log('  [money] Checking monetization & links...');
+  const siteDir  = join(WWW_ROOT, site.domain);
+  const homePath = join(siteDir, 'index.html');
+  const monStats = { brokenLinks: 0, missingAds: 0, clsIssues: 0, fixedCls: 0 };
+
+  // ── a. AdSense ──────────────────────────────────────────────────────────
+  const adsenseId = process.env.ADSENSE_ID;
+  if (adsenseId && existsSync(homePath)) {
+    const homeHtml = readFileSync(homePath, 'utf-8');
+    if (!homeHtml.includes('pagead2.googlesyndication.com')) {
+      issue(`[${site.domain}] AdSense script missing from homepage — check layout.js`);
+      monStats.missingAds++;
+    } else if (!homeHtml.includes(adsenseId)) {
+      issue(`[${site.domain}] AdSense publisher ID (${adsenseId}) not found in homepage`);
+      monStats.missingAds++;
+    }
+    // ads.txt
+    if (!existsSync(join(siteDir, 'ads.txt'))) {
+      issue(`[${site.domain}] ads.txt missing despite ADSENSE_ID — run generate-ads-txt`);
+      monStats.missingAds++;
+    } else {
+      const adsTxt = readFileSync(join(siteDir, 'ads.txt'), 'utf-8');
+      if (!adsTxt.includes(adsenseId.replace('ca-pub-', ''))) {
+        warn(`[${site.domain}] ads.txt does not contain publisher ID`);
+      }
+    }
+  }
+
+  // ── b. MGID ─────────────────────────────────────────────────────────────
+  const mgidSiteId = process.env.MGID_SITE_ID || site.mgid_site_id;
+  if (mgidSiteId && existsSync(homePath)) {
+    const homeHtml = readFileSync(homePath, 'utf-8');
+    if (!homeHtml.includes('jsc.mgid.com') && !homeHtml.includes('cm.mgid.com')) {
+      issue(`[${site.domain}] MGID loader script missing from homepage`);
+      monStats.missingAds++;
+    }
+  }
+
+  // ── c. Ad container min-height (CLS prevention) ──────────────────────
+  // Campiona fino a 5 articoli per verifica CLS
+  let articles;
+  try {
+    articles = await sql`
+      SELECT slug FROM articles WHERE site_id = ${site.id} AND status = 'published'
+      ORDER BY published_at DESC LIMIT 5
+    `;
+  } catch { articles = []; }
+
+  for (const a of articles) {
+    const htmlPath = join(siteDir, a.slug, 'index.html');
+    if (!existsSync(htmlPath)) continue;
+    try {
+      let html = readFileSync(htmlPath, 'utf-8');
+      let changed = false;
+
+      // Inline ads senza min-height → CLS
+      const adInlineNoHeight = html.match(/class="ad[^"]*ad-inline[^"]*"(?![^>]*min-height)[^>]*style="(?![^"]*min-height)[^"]*"/);
+      if (adInlineNoHeight) {
+        warn(`[${site.domain}/${a.slug}] Ad inline container missing min-height (CLS risk)`);
+        monStats.clsIssues++;
+      }
+
+      // Controlla che i data-ad-slot abbiano formato valido (solo cifre)
+      const adSlots = html.match(/data-ad-slot="([^"]*)"/g) || [];
+      for (const slot of adSlots) {
+        const val = slot.match(/data-ad-slot="([^"]*)"/)?.[1];
+        if (val && !/^\d+$/.test(val)) {
+          issue(`[${site.domain}/${a.slug}] Invalid data-ad-slot value: "${val}"`);
+          monStats.missingAds++;
+        }
+      }
+
+      if (changed) writeFileSync(htmlPath, html, 'utf-8');
+    } catch { /* skip */ }
+  }
+
+  // ── d. Broken internal links (file existence check) ──────────────────
+  let allArticles;
+  try {
+    allArticles = await sql`
+      SELECT slug FROM articles WHERE site_id = ${site.id} AND status = 'published'
+    `;
+  } catch { allArticles = []; }
+
+  const publishedSlugs = new Set(allArticles.map(a => a.slug));
+  const brokenDetails  = [];
+
+  for (const a of allArticles) {
+    const htmlPath = join(siteDir, a.slug, 'index.html');
+    if (!existsSync(htmlPath)) continue;
+    try {
+      const html     = readFileSync(htmlPath, 'utf-8');
+      // Solo link interni relativi (href="/slug/") — esclude ancore, api, external
+      const linkRe   = /href="\/([a-z0-9][a-z0-9\-\/]*)\/?"/gi;
+      let m;
+      while ((m = linkRe.exec(html)) !== null) {
+        const target = m[1].replace(/\/$/, '').split('/')[0]; // prendi solo il primo segmento
+        if (!target || target === 'api' || target === 'category' || target === 'tag'
+            || target === 'tools' || target === 'authors' || target === 'images') continue;
+        // Verifica che la pagina target esista su disco
+        if (!existsSync(join(siteDir, target, 'index.html')) && !existsSync(join(siteDir, target))) {
+          if (!brokenDetails.find(b => b.slug === a.slug && b.target === target)) {
+            brokenDetails.push({ slug: a.slug, target });
+            monStats.brokenLinks++;
+          }
+        }
+      }
+    } catch { /* skip */ }
+  }
+
+  if (brokenDetails.length > 0) {
+    const preview = brokenDetails.slice(0, 5).map(b => `/${b.slug}/ → /${b.target}/`).join(', ');
+    issue(`[${site.domain}] ${monStats.brokenLinks} broken internal links: ${preview}${brokenDetails.length > 5 ? ` +${brokenDetails.length - 5} more` : ''}`);
+  }
+
+  // ── e. Orphan articles (nessun link in entrata) ───────────────────────
+  const linkedTargets = new Set();
+  for (const a of allArticles) {
+    const htmlPath = join(siteDir, a.slug, 'index.html');
+    if (!existsSync(htmlPath)) continue;
+    try {
+      const html   = readFileSync(htmlPath, 'utf-8');
+      const linkRe = /href="\/([a-z0-9][a-z0-9\-]*)\/?"/gi;
+      let m;
+      while ((m = linkRe.exec(html)) !== null) linkedTargets.add(m[1].replace(/\/$/, ''));
+    } catch { /* skip */ }
+  }
+  const orphans = allArticles.filter(a => !linkedTargets.has(a.slug));
+  if (orphans.length > 3) {
+    warn(`[${site.domain}] ${orphans.length} orphan articles (no inbound links) — run relink pass`);
+  }
+
+  log(`  [money] Broken links: ${monStats.brokenLinks} | CLS issues: ${monStats.clsIssues} | Ad issues: ${monStats.missingAds}`);
+  report.stats[site.domain] = { ...report.stats[site.domain], monetization: monStats };
 }
 
 // ── Helper: rigenera sitemap ──────────────────────────────────────────────────
