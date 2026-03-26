@@ -14,9 +14,7 @@ import { spawnSync } from 'child_process';
 import { createHash } from 'crypto';
 
 const PEXELS_API = 'https://api.pexels.com/v1/search';
-const PEXELS_KEY = process.env.PEXELS_API_KEY;
 const PIXABAY_API = 'https://pixabay.com/api/';
-const PIXABAY_KEY = process.env.PIXABAY_API_KEY;
 const USED_IDS_FILE = '.pexels-used.json';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
 const POLLINATIONS_TIMEOUT_MS = 35000;
@@ -558,7 +556,7 @@ async function searchPexels(query, usedIds, pages = 2) {
   for (let page = 1; page <= pages; page++) {
     const res = await fetch(
       `${PEXELS_API}?query=${encodeURIComponent(query)}&per_page=15&page=${page}&orientation=landscape`,
-      { headers: { Authorization: PEXELS_KEY } }
+      { headers: { Authorization: process.env.PEXELS_API_KEY } }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -570,7 +568,7 @@ async function searchPexels(query, usedIds, pages = 2) {
 }
 
 async function searchPixabay(query, usedIds) {
-  const url = `${PIXABAY_API}?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&per_page=20&safesearch=true&min_width=1000`;
+  const url = `${PIXABAY_API}?key=${process.env.PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&per_page=20&safesearch=true&min_width=1000`;
   const res = await fetch(url);
   if (!res.ok) return null;
   const data = await res.json();
@@ -614,7 +612,7 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
   if (!existsSync(imagesDir)) mkdirSync(imagesDir, { recursive: true });
 
   // 1. Try Pexels first (primary — reliable stock photos)
-  if (PEXELS_KEY) {
+  if (process.env.PEXELS_API_KEY) {
     const usedIds = loadUsedIds(imagesDir);
     const existingMd5s = loadExistingMd5s(imagesDir);
     const queries = buildQueries(keyword, title, nicheSlug);
@@ -653,7 +651,7 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
   }
 
   // 2. Fallback: Pixabay (100 req/min, nessun limite mensile)
-  if (PIXABAY_KEY) {
+  if (process.env.PIXABAY_API_KEY) {
     const queries = buildQueries(keyword, title, nicheSlug);
     const usedIds = loadUsedIds(imagesDir);
     const existingMd5s = loadExistingMd5s(imagesDir);
