@@ -162,7 +162,7 @@ async function publishDueArticles(stats) {
       stats.published++;
       console.log(`  ✅ ${article.title?.slice(0, 60)}`);
     } catch (err) {
-      await updateQueueItem(item.id, 'failed', err.message);
+      try { await updateQueueItem(item.id, 'failed', err.message); } catch (e) { /* DB unavailable — item stays processing, recovery resets it next run */ }
       stats.failed++;
       console.log(`  ❌ ${err.message}`);
     }
