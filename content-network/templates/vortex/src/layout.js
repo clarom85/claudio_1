@@ -153,7 +153,8 @@ function adUnit(type){
 
 export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl='',lcpImage='',ga4MeasurementId='',mgidSiteId=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
-  const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
+  const fixedSchemas=schemas.map(s=>s['@type']!=='BreadcrumbList'?s:{...s,itemListElement:(s.itemListElement||[]).map(item=>({...item,item:item.item&&!item.item.endsWith('/')?item.item+'/':item.item}))});
+  const schemasHtml=fixedSchemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
   const robots=noindex?'noindex, follow':'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
   const ga4Id=ga4MeasurementId||process.env.GA4_MEASUREMENT_ID||'';
   const gscKeys=(process.env.GOOGLE_SITE_VERIFICATION||'').split(',').map(s=>s.trim()).filter(Boolean);
