@@ -349,6 +349,14 @@ E-E-A-T LANGUAGE REQUIREMENTS (Google's quality signals — every article must d
 ABSOLUTE RULES:
 - BANNED PHRASES — never use any of these: "${AI_PHRASE_BLACKLIST}"
 - Write like a human expert, not an AI assistant — use contractions, direct opinions, specific numbers
+- HUMAN WRITING PATTERNS — these are non-negotiable structural rules to prevent AI fingerprinting:
+  • Vary sentence length deliberately: mix short punchy sentences (under 10 words) with longer ones. Never write 3+ consecutive sentences of similar length.
+  • Break parallel structure: if one paragraph starts with a noun phrase, the next should start differently — a verb, a number, a direct observation, even "And" or "But".
+  • Vary paragraph depth per section: one section can have 2 short paragraphs, the next one long one, another three medium ones. Never make every section feel the same weight.
+  • Opinions and micro-imperfections: state a direct opinion ("Honestly, this is where most people go wrong"), acknowledge limits ("I can't give you an exact number here — too many variables"), notice patterns ("Every time I see this estimate, it's padded by at least 15%").
+  • Do NOT start consecutive sentences with "This", "These", "The" or "It". Break the pattern every time.
+  • Transitions: use the natural ones ("Here's the thing", "Worth knowing:", "Quick note:") not the formal ones. Or skip transition words entirely — just move to the next point.
+  • At least one section per article must have a paragraph that's a single short sentence standing alone for emphasis.
 - Use keyword naturally — max 3-4 times total
 - FAQ: 4-6 questions people genuinely search, with direct answers
 - Citations: 1-2 REAL sources only — government agencies, major institutions, established industry bodies. Real URLs. Never invent a source.
