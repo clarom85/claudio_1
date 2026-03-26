@@ -10,6 +10,23 @@ As you complete work, commit changes to Git and push them to GitHub frequently s
 - Write clean, descriptive commit messages in the imperative mood (e.g., "Add login endpoint", "Fix null check in parser").
 - Push to GitHub after every commit (or logical group of commits) — never leave finished work only in the local working tree.
 
+## DEPLOY OBBLIGATORIO — VPS 178.104.17.161
+
+**REGOLA ASSOLUTA: dopo ogni commit/push, esegui SEMPRE il deploy sul VPS.**
+
+Comando deploy (eseguire via SSH o webhook):
+```bash
+ssh root@178.104.17.161 "cd /opt/content-network && git pull origin main && cd content-network && npm install --silent && pm2 restart content-scheduler email-api && echo 'DEPLOY OK'"
+```
+
+Se SSH non è disponibile nell'ambiente (client SSH assente), usa il webhook deploy:
+```bash
+curl -s -X POST http://178.104.17.161:9000/deploy -H "Authorization: Bearer $DEPLOY_TOKEN"
+```
+
+**Non lasciare MAI modifiche pushate senza averle deployate sul VPS.**
+Se il deploy fallisce, riportalo all'utente con l'errore completo.
+
 ## Progetti in questo repo
 
 ### AURA (dating app)
