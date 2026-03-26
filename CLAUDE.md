@@ -14,14 +14,19 @@ As you complete work, commit changes to Git and push them to GitHub frequently s
 
 **REGOLA ASSOLUTA: dopo ogni commit/push, esegui SEMPRE il deploy sul VPS.**
 
-Comando deploy (eseguire via SSH o webhook):
-```bash
-ssh root@178.104.17.161 "cd /opt/content-network && git pull origin main && cd content-network && npm install --silent && pm2 restart content-scheduler email-api && echo 'DEPLOY OK'"
-```
+### Credenziali VPS
+- IP: `178.104.17.161`
+- Utente: `root`
+- Password: `dRvWCcwXgLH3`
+- Chiave SSH pubblica Claude: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMbkRes4mIBBc7n5dUQZjWTk/olMNb0L2a0YYFaL8f9y claude-code-auto-deploy`
 
-Se SSH non è disponibile nell'ambiente (client SSH assente), usa il webhook deploy:
+### Deploy automatico
+Il file `.github/workflows/deploy-vps.yml` fa deploy automatico ad ogni push su `main`.
+Richiede secret `VPS_SSH_KEY` su GitHub (chiave privata Claude).
+
+### Deploy manuale (da eseguire dopo ogni push)
 ```bash
-curl -s -X POST http://178.104.17.161:9000/deploy -H "Authorization: Bearer $DEPLOY_TOKEN"
+sshpass -p 'dRvWCcwXgLH3' ssh -o StrictHostKeyChecking=no root@178.104.17.161 "cd /opt/content-network && git pull origin main && cd content-network && npm install --silent && pm2 restart content-scheduler email-api && echo 'DEPLOY OK'"
 ```
 
 **Non lasciare MAI modifiche pushate senza averle deployate sul VPS.**
