@@ -68,6 +68,9 @@ async function run() {
         template:         site.template,
         adsenseId:        process.env.ADSENSE_ID || '',
         ga4MeasurementId: site.ga4_measurement_id || '',
+        mgidSiteId:       site.mgid_site_id || process.env.MGID_SITE_ID || '',
+        mgidInArticleId:  site.mgid_in_article_id || process.env.MGID_IN_ARTICLE_WIDGET_ID || '',
+        mgidSmartId:      site.mgid_smart_id || process.env.MGID_SMART_WIDGET_ID || '',
         categories:       getCategoriesForNiche(site.niche_slug).slice(0, 7),
         color,
         niche:            site.niche_slug,
@@ -85,6 +88,7 @@ async function run() {
         body,
         adsenseId:        process.env.ADSENSE_ID || '',
         ga4MeasurementId: site.ga4_measurement_id || '',
+        mgidSiteId:       toolSite.mgidSiteId,
       });
 
       const toolDir = join(WWW_ROOT, site.domain, 'tools', toolConfig.slug);

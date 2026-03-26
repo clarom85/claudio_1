@@ -18,10 +18,12 @@ export function generateToolBody(config, site = {}) {
     ctaText, inputs, formula, outputs, disclaimer
   } = config;
 
-  const siteUrl   = site.url   || '';
-  const color     = site.color || '#c0392b';
-  const colorDark = darkenColor(color);
-  const adsenseId = site.adsenseId || '';
+  const siteUrl          = site.url   || '';
+  const color            = site.color || '#c0392b';
+  const colorDark        = darkenColor(color);
+  const adsenseId        = site.adsenseId || '';
+  const mgidInArticleId  = site.mgidInArticleId || '';
+  const mgidSmartId      = site.mgidSmartId || '';
 
   const inputsHTML = inputs.map(renderInput).join('\n');
   const formulaJSON = JSON.stringify(formula.trim());
@@ -31,6 +33,16 @@ export function generateToolBody(config, site = {}) {
   function adDiv() {
     if (!adsenseId) return '';
     return `<div class="ad ad-inline" style="text-align:center;margin:28px 0;min-height:280px"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>`;
+  }
+
+  function mgidInArticle() {
+    if (!mgidInArticleId) return '';
+    return `<div data-type="_mgwidget" data-widget-id="${mgidInArticleId}" style="margin:32px 0"></div>`;
+  }
+
+  function mgidSmart() {
+    if (!mgidSmartId) return '';
+    return `<div data-type="_mgwidget" data-widget-id="${mgidSmartId}" style="margin:32px 0"></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
   }
 
   return `<style>
@@ -141,11 +153,14 @@ export function generateToolBody(config, site = {}) {
         </div>
 
         ${adDiv()}
+        ${mgidInArticle()}
 
         <div class="tool-related">
           <h3>Related Articles</h3>
           <div id="related-articles"></div>
         </div>
+
+        ${mgidSmart()}
 
       </div>
     </div>
