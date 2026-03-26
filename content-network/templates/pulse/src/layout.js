@@ -142,7 +142,7 @@ img{max-width:100%;height:auto;display:block}
 
 /* Footer */
 .site-footer{background:var(--navy);color:rgba(255,255,255,.8);padding:40px 0 20px;margin-top:48px}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-bottom:32px}
+.footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;margin-bottom:32px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}}
 .footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:20px;margin-bottom:10px}
 .footer-about p{font-size:14px;line-height:1.7}
@@ -235,6 +235,8 @@ ${ezoicId ? '' : COOKIE_BANNER_HTML}
 ${ezoicId ? '' : COOKIE_BANNER_JS}
 ${EMAIL_FORM_JS}
 ${NATIVE_ADS_JS}
+// Collapse empty ad containers after AdSense has had time to fill them
+setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(ins&&!ins.innerHTML.trim()){d.style.minHeight='0';d.style.padding='0';}});},3000);
 // Trending ticker
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{
   const el=document.getElementById('ticker-inner');
@@ -333,6 +335,9 @@ export function renderHomePage(articles, site) {
   const featured = articles.slice(1, 5);
   const latest = articles.slice(5, 25);
 
+  const rightColFiller = site.toolSlug
+    ? `<div style="background:var(--red);padding:16px;margin-top:12px;border-radius:3px;text-align:center"><strong style="color:#fff;font-size:13px;display:block;margin-bottom:6px">Free Cost Calculator</strong><p style="color:rgba(255,255,255,.85);font-size:12px;margin:0 0 10px;line-height:1.4">Get an instant estimate in 60 seconds.</p><a href="/tools/${site.toolSlug}/" style="display:block;background:#fff;color:var(--red);padding:9px 12px;border-radius:2px;font-weight:700;font-size:13px;text-decoration:none">Calculate My Cost →</a></div>`
+    : `<div style="background:#f0f4f8;padding:16px;margin-top:12px;border-radius:3px;text-align:center;border:1px solid #dde3ea"><p style="font-size:13px;font-weight:700;color:#1a1a2e;margin:0 0 8px">Get Expert Tips by Email</p><p style="font-size:12px;color:#666;margin:0 0 10px">Join readers who get our best guides weekly.</p><form class="nl-form" onsubmit="return submitEmail(this,event)" style="display:flex;flex-direction:column;gap:8px"><input type="email" name="email" placeholder="your@email.com" required style="padding:8px 10px;border:1px solid #dde3ea;border-radius:3px;font-size:13px"/><button type="submit" style="background:var(--red);color:#fff;border:none;padding:9px;border-radius:3px;font-size:13px;font-weight:700;cursor:pointer">Subscribe Free</button></form></div>`;
   const featuredHtml = featured.length ? `<div>${featured.map(a => `
         <div class="compact-card">
           <img class="compact-img" src="${a.image||'/images/'+a.slug+'.jpg'}" alt="${esc(a.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/>
@@ -341,6 +346,7 @@ export function renderHomePage(articles, site) {
             <a href="/${a.slug}/" style="font-family:'Merriweather',serif;font-size:14px;font-weight:700;color:#1a1a2e;text-decoration:none;line-height:1.3;display:block">${esc(a.title)}</a>
           </div>
         </div>`).join('')}
+      ${featured.length < 3 ? rightColFiller : ''}
       </div>` : '';
   const heroCard = hero ? `<article class="card">
         <div class="card-img"><img src="${hero.image||'/images/'+hero.slug+'.jpg'}" alt="${esc(hero.title)}" loading="eager" onerror="this.style.display='none'"/></div>
@@ -569,17 +575,18 @@ export function renderFooter(site) {
   ${adUnit('footer')}
   <div class="wrap">
     <div class="footer-grid">
-      <div class="footer-about">
-        <h3>${esc(site.name)}</h3>
-        <p>Your trusted source for expert guides, how-to articles, and actionable information.</p>
-      </div>
       <div class="footer-col">
-        <h4>Company</h4>
+        <h4>Navigate</h4>
         <ul>
+          <li><a href="/">Home</a></li>
           <li><a href="/about/">About Us</a></li>
           <li><a href="/contact/">Contact</a></li>
           <li><a href="/advertise/">Advertise</a></li>
         </ul>
+      </div>
+      <div class="footer-about">
+        <h3>${esc(site.name)}</h3>
+        <p>Your trusted source for expert guides, how-to articles, and actionable information.</p>
       </div>
       <div class="footer-col">
         <h4>Legal</h4>
@@ -587,6 +594,7 @@ export function renderFooter(site) {
           <li><a href="/privacy/">Privacy Policy</a></li>
           <li><a href="/terms/">Terms of Service</a></li>
           <li><a href="/disclaimer/">Disclaimer</a></li>
+          <li><a href="/editorial-guidelines/">Editorial Guidelines</a></li>
         </ul>
       </div>
     </div>

@@ -257,7 +257,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       <div class="article-author" itemprop="author" itemscope itemtype="https://schema.org/Person">
         <a href="/author/${author.avatar}/" style="flex-shrink:0; display:block;">
           <img src="/images/author-${author.avatar}.jpg" alt="${author.name}" class="author-avatar" loading="lazy" decoding="async"
-            width="48" height="48" style="width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:top;" onerror="this.style.display='none'" />
+            width="48" height="48" style="width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:top;" onerror="this.parentElement.style.display='none'" />
         </a>
         <div class="author-info">
           <a href="/author/${author.avatar}" style="text-decoration:none; color:inherit;" itemprop="url">
@@ -374,7 +374,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
             width="80" height="80"
             style="width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #eee;"
             loading="lazy" decoding="async"
-            onerror="this.style.display='none'" />
+            onerror="this.parentElement.style.display='none'" />
         </a>
         <div>
           <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin:0 0 4px;">Written by</p>

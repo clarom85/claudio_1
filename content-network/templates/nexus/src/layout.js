@@ -180,7 +180,8 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
-${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}</script></body></html>`}
+${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
+setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(ins&&!ins.innerHTML.trim()){d.style.minHeight='0';d.style.padding='0';}});},3000);</script></body></html>`}
 
 export function renderHeader(site){return`
 <div class="hdr-bar"></div>

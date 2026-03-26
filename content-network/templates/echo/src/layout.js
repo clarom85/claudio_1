@@ -175,7 +175,8 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@400;700&display=swap"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
-${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}</script></body></html>`}
+${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
+setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(ins&&!ins.innerHTML.trim()){d.style.minHeight='0';d.style.padding='0';}});},3000);</script></body></html>`}
 
 export function renderHeader(site){return`
 <div class="hdr-top">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
