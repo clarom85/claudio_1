@@ -1,14 +1,17 @@
 /**
  * CHIP — Content Health & Improvement Processor
  * Niche Guardian: monitors, diagnoses and auto-fixes publishing pipeline + SEO.
+ * Uses Claude Haiku for intelligent content fixes (title rewrite, meta, alt text).
  *
- * Usage : node packages/vps/src/niche-guardian.js --niche home-improvement-costs
- * PM2   : cron every 30 min
+ * Usage : node packages/vps/src/niche-guardian.js --all
+ *         node packages/vps/src/niche-guardian.js --niche home-improvement-costs
+ * PM2   : cron every 12 hours
  */
 import 'dotenv/config';
 import { readFileSync, writeFileSync, existsSync, statSync } from 'fs';
-import { join } from 'path';
-import { spawnSync } from 'child_process';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { spawnSync, execSync } from 'child_process';
 import { sql } from '@content-network/db';
 import { alertWarning, alertReport } from '@content-network/vps/src/alert.js';
 import { generateSitemap, generateRssFeed } from '@content-network/vps';
@@ -16,30 +19,51 @@ import { getCategoriesForNiche } from '@content-network/content-engine/src/categ
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const args = process.argv.slice(2);
-const nicheSlug = args.find(a => a.startsWith('--niche='))?.split('=')[1]
-  || args[args.indexOf('--niche') + 1];
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT      = join(__dirname, '../../..');
 
-if (!nicheSlug) {
-  console.error('Usage: node niche-guardian.js --niche <slug>');
+const args     = process.argv.slice(2);
+const ALL_MODE = args.includes('--all');
+const nicheArg = args.find(a => a.startsWith('--niche='))?.split('=')[1]
+  || (!ALL_MODE && args[args.indexOf('--niche') + 1]);
+
+if (!ALL_MODE && !nicheArg) {
+  console.error('Usage: node niche-guardian.js --all  OR  --niche <slug>');
   process.exit(1);
 }
 
-const AGENT_NAMES = {
-  'home-improvement-costs': 'CHIP',
-  'insurance-guide':        'IRIS',
-  'legal-advice':           'LEX',
-  'solar-energy':           'SOL',
-  'senior-care-medicare':   'SAGE',
-  'personal-finance':       'FIN',
-  'health-symptoms':        'MEDI',
-  'weight-loss-fitness':    'FIT',
-  'automotive-guide':       'REV',
-  'cybersecurity-privacy':  'SHIELD',
-};
+const AGENT     = 'CHIP';
+const WWW_ROOT  = process.env.WWW_ROOT || '/var/www';
 
-const AGENT = AGENT_NAMES[nicheSlug] || nicheSlug.split('-').map(w => w[0]).join('').toUpperCase();
-const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
+// ── Claude Haiku — intelligent content fixes ──────────────────────────────────
+
+/**
+ * Calls Claude Haiku for simple text-generation tasks.
+ * Used only for content quality fixes: title rewrite, meta description, alt text.
+ * Returns null silently if API key not set or call fails.
+ */
+async function claudeFix(prompt, maxTokens = 120) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.content?.[0]?.text?.trim() || null;
+  } catch { return null; }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -79,33 +103,46 @@ function warn(msg) { report.warnings.push(msg); log(`💡 ${msg}`); }
 async function run() {
   const t0 = Date.now();
   log(`\n${'─'.repeat(60)}`);
-  log(`Starting health check — ${new Date().toISOString()}`);
+  log(`${ALL_MODE ? 'ALL niches' : nicheArg} — ${new Date().toISOString()}`);
   log(`${'─'.repeat(60)}`);
 
   let sites;
   try {
-    sites = await sql`
-      SELECT s.*, n.slug as niche_slug, n.name as niche_name, n.id as niche_id
-      FROM sites s
-      JOIN niches n ON s.niche_id = n.id
-      WHERE n.slug = ${nicheSlug} AND s.status = 'live'
-      ORDER BY s.id
-    `;
+    sites = ALL_MODE
+      ? await sql`
+          SELECT s.*, n.slug as niche_slug, n.name as niche_name, n.id as niche_id
+          FROM sites s JOIN niches n ON s.niche_id = n.id
+          WHERE s.status = 'live'
+          ORDER BY s.id
+        `
+      : await sql`
+          SELECT s.*, n.slug as niche_slug, n.name as niche_name, n.id as niche_id
+          FROM sites s JOIN niches n ON s.niche_id = n.id
+          WHERE n.slug = ${nicheArg} AND s.status = 'live'
+          ORDER BY s.id
+        `;
   } catch (e) {
     log(`❌ DB error fetching sites: ${e.message}`);
     process.exit(1);
   }
 
-  if (!sites.length) { log('No live sites for this niche — exiting'); process.exit(0); }
+  if (!sites.length) {
+    log(ALL_MODE ? 'No live sites found' : `No live sites for niche "${nicheArg}"`);
+    process.exit(0);
+  }
+
+  log(`Found ${sites.length} live site(s) across ${new Set(sites.map(s => s.niche_slug)).size} niche(s)`);
 
   for (const site of sites) {
-    log(`\n📍 ${site.domain}`);
-    await checkPublishingPipeline(site);
-    await checkContentQuality(site);
-    await checkArticleSeo(site);
-    await checkSiteLevel(site);
-    await checkMonetization(site);
-    await checkKeywordPipeline(site);
+    log(`\n${'─'.repeat(40)}`);
+    log(`📍 ${site.domain} [${site.niche_slug}]`);
+    try { await checkPublishingPipeline(site); }   catch (e) { warn(`pipeline check failed: ${e.message}`); }
+    try { await checkContentQuality(site); }       catch (e) { warn(`content check failed: ${e.message}`); }
+    try { await checkArticleSeo(site); }           catch (e) { warn(`seo check failed: ${e.message}`); }
+    try { await checkSiteLevel(site); }            catch (e) { warn(`site check failed: ${e.message}`); }
+    try { await checkMonetization(site); }         catch (e) { warn(`monetization check failed: ${e.message}`); }
+    try { await checkKeywordPipeline(site); }      catch (e) { warn(`keyword check failed: ${e.message}`); }
+    try { await autoTriggerRegen(site); }          catch (e) { warn(`auto-regen failed: ${e.message}`); }
   }
 
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
@@ -117,14 +154,14 @@ async function run() {
     await sendDailyReport(sites);
   }
 
-  // Alert if too many critical issues
+  // Alert se ci sono issue critiche
   if (report.issues.length >= 5) {
     try {
       await alertWarning(
-        `[${AGENT}] ${report.issues.length} issues on ${nicheSlug}`,
+        `[${AGENT}] ${report.issues.length} issues across ${sites.length} sites`,
         report.issues.join('\n')
       );
-    } catch (e) { /* alert non critico */ }
+    } catch { /* non critico */ }
   }
 
   process.exit(0);
@@ -330,12 +367,21 @@ async function checkArticleSeo(site) {
         warn(`[${site.domain}/${article.slug}] Title too short (${len} chars)`);
         seoStats.titleBad++;
       } else if (len > 65) {
-        // AUTO-FIX: estrai parte articolo (prima del " | SiteName"), tronca intelligente
+        // AUTO-FIX: estrai parte articolo (prima del " | SiteName"), poi prova Claude → fallback truncation
         const pipeIdx = fullTitle.lastIndexOf(' | ');
         const articlePart = pipeIdx > 0 ? fullTitle.slice(0, pipeIdx) : fullTitle;
         const siteSuffix  = pipeIdx > 0 ? fullTitle.slice(pipeIdx) : '';
-        const truncated   = truncateTitleSmart(articlePart, 65 - siteSuffix.length);
-        const newTitle    = truncated + siteSuffix;
+        const maxArticleLen = 65 - siteSuffix.length;
+
+        let truncated = await claudeFix(
+          `Rewrite this article title to be under ${maxArticleLen} characters, keeping the main keyword and topic. Return ONLY the rewritten title, no quotes, no explanation:\n${articlePart}`,
+          80
+        );
+        // Se Claude non risponde o il risultato è ancora troppo lungo → fallback smart truncation
+        if (!truncated || truncated.length > maxArticleLen || truncated.length < 20) {
+          truncated = truncateTitleSmart(articlePart, maxArticleLen);
+        }
+        const newTitle = truncated + siteSuffix;
 
         // Patch HTML: <title>, og:title, twitter:title
         html = html.replace(/<title>[^<]*<\/title>/i, `<title>${newTitle}</title>`);
@@ -590,7 +636,7 @@ async function checkSiteLevel(site) {
   // 4f. Tool/calculator page — per nicchie con tool config
   try {
     const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
-    const toolConfig = TOOL_CONFIGS[nicheSlug];
+    const toolConfig = TOOL_CONFIGS[site.niche_slug];
     if (toolConfig) {
       const toolPath = join(siteDir, 'tools', toolConfig.slug, 'index.html');
       if (!existsSync(toolPath)) {
@@ -823,7 +869,88 @@ async function regenerateSitemap(site) {
   }
 }
 
-// ── 6. Daily Report ───────────────────────────────────────────────────────────
+// ── 6. Auto Trigger Regen ─────────────────────────────────────────────────────
+
+/**
+ * Esegue automaticamente gli script di rigenerazione per i problemi strutturali rilevati.
+ * Chiamato dopo tutti i check: agisce solo se ci sono issue che richiedono regen.
+ */
+async function autoTriggerRegen(site) {
+  const siteDir  = join(WWW_ROOT, site.domain);
+  const siteRoot = ROOT;   // ROOT = content-network/ (monorepo root)
+  const nodeCmd  = 'node';
+
+  // Funzione helper per eseguire uno script VPS e loggare il risultato
+  function runScript(scriptName, extraArgs = []) {
+    const scriptPath = join(ROOT, 'content-network', 'packages', 'vps', 'src', scriptName);
+    try {
+      const result = spawnSync(
+        nodeCmd,
+        [scriptPath, '--site-id', String(site.id), ...extraArgs],
+        { cwd: siteRoot, timeout: 120000, encoding: 'utf-8', env: { ...process.env } }
+      );
+      if (result.status === 0) {
+        fix(`[${site.domain}] auto-regen: ${scriptName} OK`);
+        return true;
+      } else {
+        warn(`[${site.domain}] auto-regen: ${scriptName} failed — ${(result.stderr || '').slice(0, 200)}`);
+        return false;
+      }
+    } catch (e) {
+      warn(`[${site.domain}] auto-regen: ${scriptName} exception — ${e.message}`);
+      return false;
+    }
+  }
+
+  let needsHomepage   = false;
+  let needsStaticPages = false;
+  let needsCSS        = false;
+
+  // Controlla se homepage manca o è troppo piccola
+  const homePath = join(siteDir, 'index.html');
+  if (!existsSync(homePath) || statSync(homePath).size < 5000) {
+    needsHomepage = true;
+  }
+
+  // Controlla se pagine editoriali mancano
+  const editorialPages = ['about', 'privacy', 'contact'];
+  for (const page of editorialPages) {
+    if (!existsSync(join(siteDir, page, 'index.html'))) {
+      needsStaticPages = true;
+      break;
+    }
+  }
+
+  // Controlla se CSS esiste
+  const cssPath = join(siteDir, 'styles.css');
+  const cssPathAlt = join(siteDir, 'assets', 'styles.css');
+  if (!existsSync(cssPath) && !existsSync(cssPathAlt)) {
+    needsCSS = true;
+  }
+
+  // Esegui regen solo se necessario
+  if (needsCSS) {
+    log(`  [regen] ${site.domain}: CSS missing → regenerating CSS`);
+    runScript('regenerate-css.js');
+  }
+
+  if (needsHomepage) {
+    log(`  [regen] ${site.domain}: Homepage missing/broken → regenerating homepage`);
+    runScript('regenerate-homepage.js');
+  }
+
+  if (needsStaticPages) {
+    log(`  [regen] ${site.domain}: Static pages missing → regenerating static pages`);
+    runScript('regenerate-static-pages.js');
+  }
+
+  // Se nessuna regen necessaria → log OK
+  if (!needsCSS && !needsHomepage && !needsStaticPages) {
+    log(`  [regen] ${site.domain}: No structural regen needed`);
+  }
+}
+
+// ── 7. Daily Report ───────────────────────────────────────────────────────────
 
 async function sendDailyReport(sites) {
   try {
@@ -839,7 +966,7 @@ async function sendDailyReport(sites) {
     }
 
     await alertReport({
-      [`[${AGENT}] Daily Report — ${nicheSlug}`]: '',
+      [`[${AGENT}] Daily Report — ${ALL_MODE ? 'ALL niches' : nicheArg}`]: '',
       ...lines,
       'Issues': report.issues.length ? report.issues.join('\n') : 'None ✅',
       'Warnings': report.warnings.length ? report.warnings.slice(0, 10).join('\n') : 'None ✅',
