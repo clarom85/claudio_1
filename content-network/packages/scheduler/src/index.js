@@ -34,6 +34,27 @@ const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 // Questo valore è usato solo come cap assoluto di sicurezza
 const MAX_ARTICLES_PER_DAY = parseInt(process.env.MAX_ARTICLES_PER_DAY || '35');
 
+/**
+ * Retry wrapper per query DB — gestisce cold start Neon (prima connessione ~1-2s).
+ * Riprova fino a 3 volte con backoff esponenziale prima di lanciare l'errore.
+ */
+async function withDbRetry(fn, retries = 3, delayMs = 1500) {
+  let lastErr;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const isTransient = /timeout|connection|ECONNRESET|ETIMEDOUT|NeonDbError/i.test(e.message);
+      if (!isTransient || i === retries - 1) throw e;
+      const wait = delayMs * Math.pow(2, i);
+      console.warn(`  ⚠️  DB transient error (attempt ${i + 1}/${retries}), retrying in ${wait}ms: ${e.message?.slice(0, 80)}`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
 async function run() {
   const now = new Date();
   console.log(`\n⏰ Scheduler: ${now.toISOString()}`);
@@ -41,50 +62,50 @@ async function run() {
   const stats = { published: 0, failed: 0, rebuilt: 0 };
 
   // 1. Pubblica articoli in coda
-  await publishDueArticles(stats);
+  try { await publishDueArticles(stats); } catch (e) { console.error(`  ❌ publishDueArticles: ${e.message}`); }
 
   // 2. Genera nuovi articoli (ogni giorno alle 06:xx UTC = 01:00 EST, pre-alba)
   // A quest'ora getPublishTime() schedula gli slot dalle 08:00 EST in poi — zero pubblicazioni notturne
   if (now.getHours() === 6) {
-    await triggerDailyGeneration();
+    try { await triggerDailyGeneration(); } catch (e) { console.error(`  ❌ triggerDailyGeneration: ${e.message}`); }
   }
 
   // 3. Content freshness refresh (ogni domenica alle 03:xx — max 3 articoli per sito)
   if (now.getHours() === 3 && now.getDay() === 0) {
-    await refreshStaleArticles(stats);
+    try { await refreshStaleArticles(stats); } catch (e) { console.error(`  ❌ refreshStaleArticles: ${e.message}`); }
   }
 
   // 4. Aggiorna homepage + sitemap dei siti con nuovi articoli
-  await rebuildAffectedSites(stats);
+  try { await rebuildAffectedSites(stats); } catch (e) { console.error(`  ❌ rebuildAffectedSites: ${e.message}`); }
 
   // 5. GSC auto-submit degli articoli non ancora sottomessi (ogni giorno alle 02:xx)
   if (now.getHours() === 2) {
-    await submitNewArticlesToGSC();
+    try { await submitNewArticlesToGSC(); } catch (e) { console.error(`  ❌ submitNewArticlesToGSC: ${e.message}`); }
   }
 
   // 6. Ranking tracker (ogni domenica alle 04:xx)
   if (now.getHours() === 4 && now.getDay() === 0) {
-    await runWeeklyRankingCheck(stats);
+    try { await runWeeklyRankingCheck(stats); } catch (e) { console.error(`  ❌ runWeeklyRankingCheck: ${e.message}`); }
   }
 
   // 7. Smart content refresh basato su ranking (ogni domenica alle 05:xx)
   if (now.getHours() === 5 && now.getDay() === 0) {
-    await smartContentRefresh(stats);
+    try { await smartContentRefresh(stats); } catch (e) { console.error(`  ❌ smartContentRefresh: ${e.message}`); }
   }
 
   // 8. Link graph analysis (ogni domenica alle 06:xx)
   if (now.getHours() === 6 && now.getDay() === 0) {
-    await runWeeklyLinkGraphAnalysis();
+    try { await runWeeklyLinkGraphAnalysis(); } catch (e) { console.error(`  ❌ runWeeklyLinkGraphAnalysis: ${e.message}`); }
   }
 
   // Report domenicale completo (ogni domenica alle 07:xx)
   if (now.getHours() === 7 && now.getDay() === 0) {
-    await sendWeeklyReport(stats);
+    try { await sendWeeklyReport(stats); } catch (e) { console.error(`  ❌ sendWeeklyReport: ${e.message}`); }
   }
 
   // Backup settimanale DB + WWW (ogni domenica alle 08:xx)
   if (now.getHours() === 8 && now.getDay() === 0) {
-    await runBackup();
+    try { await runBackup(); } catch (e) { console.error(`  ❌ runBackup: ${e.message}`); }
   }
 
   console.log(`\n📊 Done — published: ${stats.published}, failed: ${stats.failed}, rebuilt: ${stats.rebuilt}`);
@@ -101,11 +122,15 @@ async function publishDueArticles(stats) {
   // Recovery: articoli bloccati in 'processing' → rimetti in pending
   // (lo scheduler fa process.exit(0) dopo ogni run, quindi qualunque item
   //  in 'processing' all'avvio è necessariamente rimasto bloccato da un crash precedente)
-  await sql`UPDATE publish_queue SET status = 'pending' WHERE status = 'processing'`;
+  try {
+    await withDbRetry(() => sql`UPDATE publish_queue SET status = 'pending' WHERE status = 'processing'`);
+  } catch (e) {
+    console.warn(`  ⚠️  Recovery query failed: ${e.message}`);
+  }
 
   // Pubblica max articoli per questa ora (finestra 15 ore / ~2 per ora in warm-up)
   const BATCH_PER_HOUR = Math.ceil(MAX_ARTICLES_PER_DAY / 15);
-  const due = await getDueItems(BATCH_PER_HOUR);
+  const due = await withDbRetry(() => getDueItems(BATCH_PER_HOUR));
   if (!due.length) { console.log('  No articles due'); return; }
 
   console.log(`  Publishing ${due.length} articles...`);
@@ -183,16 +208,22 @@ async function writeArticlePage(article, siteConfig, template) {
 
 async function rebuildAffectedSites(stats) {
   // Siti che hanno avuto nuove pubblicazioni nelle ultime 2 ore
-  const affected = await sql`
-    SELECT DISTINCT s.id, s.domain, s.template, s.niche_id,
-           n.slug as niche_slug, n.name as niche_name
-    FROM sites s
-    JOIN articles a ON a.site_id = s.id
-    JOIN niches n ON s.niche_id = n.id
-    WHERE s.status = 'live'
-      AND a.status = 'published'
-      AND a.published_at > NOW() - INTERVAL '2 hours'
-  `;
+  let affected;
+  try {
+    affected = await sql`
+      SELECT DISTINCT s.id, s.domain, s.template, s.niche_id,
+             n.slug as niche_slug, n.name as niche_name
+      FROM sites s
+      JOIN articles a ON a.site_id = s.id
+      JOIN niches n ON s.niche_id = n.id
+      WHERE s.status = 'live'
+        AND a.status = 'published'
+        AND a.published_at > NOW() - INTERVAL '2 hours'
+    `;
+  } catch (e) {
+    console.error(`  ❌ rebuildAffectedSites query failed: ${e.message}`);
+    return;
+  }
 
   if (!affected.length) return;
   console.log(`  🏗️  Rebuilding ${affected.length} sites...`);
@@ -258,7 +289,14 @@ async function rebuildAffectedSites(stats) {
 
 async function triggerDailyGeneration() {
   console.log('  🌅 Daily generation...');
-  const liveSites = await getSitesByStatus('live');
+
+  let liveSites;
+  try {
+    liveSites = await withDbRetry(() => getSitesByStatus('live'));
+  } catch (e) {
+    console.error(`  ❌ Failed to fetch live sites: ${e.message}`);
+    return;
+  }
 
   for (const site of liveSites) {
     // Giorno STOP? Siti diversi hanno stop diversificati (seeded su siteId + data)
@@ -276,21 +314,33 @@ async function triggerDailyGeneration() {
 
     // Controlla keyword rimanenti — soglia 200 = ~6 giorni di buffer a ritmo max
     const KEYWORD_REFILL_THRESHOLD = 200;
-    const remainingCount = await getUnusedKeywordCount(site.niche_id);
+    let remainingCount = 0;
+    try {
+      remainingCount = await getUnusedKeywordCount(site.niche_id);
+    } catch (e) {
+      console.warn(`  ⚠️  getUnusedKeywordCount failed: ${e.message}`);
+    }
     console.log(`  🔑 Keywords remaining: ${remainingCount}`);
 
     if (remainingCount < KEYWORD_REFILL_THRESHOLD) {
-      const [niche] = await sql`SELECT slug FROM niches WHERE id = ${site.niche_id}`;
-      // --expand aggiunge i pillar già nel DB come seed aggiuntivi per massimizzare varietà
-      const expandFlag = remainingCount < 50 ? '' : '--expand';
-      console.log(`  📡 Replenishing keywords for ${site.domain} (${remainingCount} left)...`);
+      let niche = null;
       try {
-        execSync(
-          `node packages/keyword-engine/src/index.js --niche ${niche.slug} ${expandFlag}`.trim(),
-          { cwd: ROOT, stdio: 'pipe', timeout: 300000 }
-        );
+        [niche] = await sql`SELECT slug FROM niches WHERE id = ${site.niche_id}`;
       } catch (e) {
-        console.log(`  ⚠️  Keyword engine: ${e.message?.slice(0, 80)}`);
+        console.warn(`  ⚠️  Niche query failed: ${e.message}`);
+      }
+      if (niche) {
+        // --expand aggiunge i pillar già nel DB come seed aggiuntivi per massimizzare varietà
+        const expandFlag = remainingCount < 50 ? '' : '--expand';
+        console.log(`  📡 Replenishing keywords for ${site.domain} (${remainingCount} left)...`);
+        try {
+          execSync(
+            `node packages/keyword-engine/src/index.js --niche ${niche.slug} ${expandFlag}`.trim(),
+            { cwd: ROOT, stdio: 'pipe', timeout: 300000 }
+          );
+        } catch (e) {
+          console.log(`  ⚠️  Keyword engine: ${e.message?.slice(0, 80)}`);
+        }
       }
     }
 
@@ -305,7 +355,11 @@ async function triggerDailyGeneration() {
     }
 
     // Re-linking pass cross-batch — aggiorna link interni su tutto il sito
-    await relinkSite(site);
+    try {
+      await relinkSite(site);
+    } catch (e) {
+      console.warn(`  ⚠️  relinkSite failed for ${site.domain}: ${e.message}`);
+    }
   }
 }
 
@@ -319,60 +373,74 @@ async function triggerDailyGeneration() {
 async function refreshStaleArticles(stats) {
   console.log('\n♻️  Content freshness refresh...');
 
-  const liveSites = await getSitesByStatus('live');
+  let liveSites;
+  try {
+    liveSites = await withDbRetry(() => getSitesByStatus('live'));
+  } catch (e) {
+    console.error(`  ❌ Failed to fetch live sites: ${e.message}`);
+    return;
+  }
 
   for (const site of liveSites) {
-    const stale = await sql`
-      SELECT id, slug, title
-      FROM articles
-      WHERE site_id = ${site.id}
-        AND status = 'published'
-        AND published_at < NOW() - INTERVAL '90 days'
-        AND (updated_at IS NULL OR updated_at < NOW() - INTERVAL '90 days')
-      ORDER BY updated_at ASC NULLS FIRST
-      LIMIT 3
-    `;
+    try {
+      const stale = await sql`
+        SELECT id, slug, title
+        FROM articles
+        WHERE site_id = ${site.id}
+          AND status = 'published'
+          AND published_at < NOW() - INTERVAL '90 days'
+          AND (updated_at IS NULL OR updated_at < NOW() - INTERVAL '90 days')
+        ORDER BY updated_at ASC NULLS FIRST
+        LIMIT 3
+      `;
 
-    if (!stale.length) continue;
+      if (!stale.length) continue;
 
-    const newDate = new Date().toLocaleDateString('en-US', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    });
+      const newDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
 
-    for (const article of stale) {
-      // 1. Aggiorna DB
-      await sql`UPDATE articles SET updated_at = NOW() WHERE id = ${article.id}`;
-
-      // 2. Aggiorna "Last reviewed" + dateModified schema nell'HTML su disco
-      const htmlPath = join(WWW_ROOT, site.domain, article.slug, 'index.html');
-      if (existsSync(htmlPath)) {
+      for (const article of stale) {
         try {
-          let html = readFileSync(htmlPath, 'utf-8');
-          // Update visible "Last reviewed" date
-          html = html.replace(
-            /(<strong[^>]*>Last reviewed:<\/strong>\s*)([^<]+)/,
-            `$1 ${newDate}`
-          );
-          // Update dateModified in JSON-LD schema
-          html = html.replace(
-            /"dateModified":"[^"]*"/g,
-            `"dateModified":"${new Date().toISOString()}"`
-          );
-          writeFileSync(htmlPath, html, 'utf-8');
-        } catch (e) { /* non bloccare */ }
+          // 1. Aggiorna DB
+          await sql`UPDATE articles SET updated_at = NOW() WHERE id = ${article.id}`;
+
+          // 2. Aggiorna "Last reviewed" + dateModified schema nell'HTML su disco
+          const htmlPath = join(WWW_ROOT, site.domain, article.slug, 'index.html');
+          if (existsSync(htmlPath)) {
+            try {
+              let html = readFileSync(htmlPath, 'utf-8');
+              // Update visible "Last reviewed" date
+              html = html.replace(
+                /(<strong[^>]*>Last reviewed:<\/strong>\s*)([^<]+)/,
+                `$1 ${newDate}`
+              );
+              // Update dateModified in JSON-LD schema
+              html = html.replace(
+                /"dateModified":"[^"]*"/g,
+                `"dateModified":"${new Date().toISOString()}"`
+              );
+              writeFileSync(htmlPath, html, 'utf-8');
+            } catch (e) { /* non bloccare */ }
+          }
+
+          stats.refreshed = (stats.refreshed || 0) + 1;
+          console.log(`  ♻️  Refreshed: ${article.slug} (${site.domain})`);
+        } catch (e) {
+          console.warn(`  ⚠️  Refresh failed for ${article.slug}: ${e.message}`);
+        }
       }
 
-      stats.refreshed = (stats.refreshed || 0) + 1;
-      console.log(`  ♻️  Refreshed: ${article.slug} (${site.domain})`);
-    }
-
-    // Purge cache CF per gli articoli aggiornati
-    if (stale.length && process.env.CLOUDFLARE_API_TOKEN) {
-      try {
-        const urls = stale.map(a => `https://${site.domain}/${a.slug}/`);
-        const { purgeUrls } = await import('@content-network/vps/src/cloudflare.js');
-        await purgeUrls(site.domain, urls);
-      } catch (e) { /* non bloccare */ }
+      // Purge cache CF per gli articoli aggiornati
+      if (stale.length && process.env.CLOUDFLARE_API_TOKEN) {
+        try {
+          const urls = stale.map(a => `https://${site.domain}/${a.slug}/`);
+          const { purgeUrls } = await import('@content-network/vps/src/cloudflare.js');
+          await purgeUrls(site.domain, urls);
+        } catch (e) { /* non bloccare */ }
+      }
+    } catch (e) {
+      console.warn(`  ⚠️  Freshness refresh failed for ${site.domain}: ${e.message}`);
     }
   }
 
@@ -438,11 +506,16 @@ async function relinkSite(site) {
     if (result.content === original.content) continue;
 
     // 1. Aggiorna DB
-    await sql`
-      UPDATE articles
-      SET content = ${result.content}, updated_at = NOW()
-      WHERE id = ${original.id}
-    `;
+    try {
+      await sql`
+        UPDATE articles
+        SET content = ${result.content}, updated_at = NOW()
+        WHERE id = ${original.id}
+      `;
+    } catch (e) {
+      console.warn(`  ⚠️  DB update failed for article ${original.id}: ${e.message}`);
+      continue;
+    }
 
     // 2. Riscrivi HTML su disco
     const dir = join(WWW_ROOT, site.domain, result.slug);
