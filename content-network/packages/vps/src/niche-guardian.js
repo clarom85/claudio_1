@@ -882,7 +882,7 @@ async function autoTriggerRegen(site) {
 
   // Funzione helper per eseguire uno script VPS e loggare il risultato
   function runScript(scriptName, extraArgs = []) {
-    const scriptPath = join(ROOT, 'content-network', 'packages', 'vps', 'src', scriptName);
+    const scriptPath = join(ROOT, 'packages', 'vps', 'src', scriptName);
     try {
       const result = spawnSync(
         nodeCmd,
@@ -921,10 +921,14 @@ async function autoTriggerRegen(site) {
     }
   }
 
-  // Controlla se CSS esiste
-  const cssPath = join(siteDir, 'styles.css');
-  const cssPathAlt = join(siteDir, 'assets', 'styles.css');
-  if (!existsSync(cssPath) && !existsSync(cssPathAlt)) {
+  // Controlla se CSS esiste (template usa assets/style.css o styles.css)
+  const cssCandidates = [
+    join(siteDir, 'assets', 'style.css'),
+    join(siteDir, 'assets', 'styles.css'),
+    join(siteDir, 'styles.css'),
+    join(siteDir, 'style.css'),
+  ];
+  if (!cssCandidates.some(p => existsSync(p))) {
     needsCSS = true;
   }
 
