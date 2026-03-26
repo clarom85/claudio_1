@@ -44,12 +44,14 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .art-byline{font-size:13px;color:var(--muted);line-height:1.4}
 .art-byline strong{color:var(--dark)}
 
-/* Ad units */
-.ad{background:#f0ede8;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb}
+/* Ad units — background removed: avoids gray boxes when ad network not configured */
+.ad{display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb}
 .ad-leader{width:100%;min-height:90px;margin:16px 0}
 .ad-inline{width:100%;min-height:250px;margin:28px 0}
 .ad-sidebar{width:100%;min-height:250px;margin-bottom:20px}
 .ad-footer{width:100%;min-height:90px;text-align:center;padding:8px 0}
+/* MGID empty widget suppression */
+[data-type="_mgwidget"]{min-height:0;overflow:hidden}
 
 /* Content */
 .art-body{background:var(--white);padding:28px;border-radius:2px;box-shadow:var(--shadow)}
@@ -204,7 +206,9 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Serif+4:wght@400;600&display=swap"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
-${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}</script></body></html>`}
+${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
+// Hide MGID widget containers that remain empty after 3s (placeholder suppression)
+setTimeout(function(){document.querySelectorAll('[data-type="_mgwidget"]').forEach(function(w){if(!w.innerHTML.trim()||w.offsetHeight<10){w.style.display='none';w.style.margin='0';}});},3000);</script></body></html>`}
 
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
