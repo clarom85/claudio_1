@@ -110,9 +110,87 @@ server {
     error_page 404 /404.html;
     access_log /var/log/nginx/${domain}.access.log;
     error_log /var/log/nginx/${domain}.error.log;
+}
+
+# HTTPS — Origin SSL (self-signed, Cloudflare Full mode)
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name ${domain} www.${domain};
+
+    ssl_certificate     /etc/ssl/certs/${domain}.crt;
+    ssl_certificate_key /etc/ssl/private/${domain}.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    root /var/www/${domain};
+    index index.html;
+
+    if ($host = www.${domain}) {
+        return 301 https://${domain}$request_uri;
+    }
+
+    location = /api/subscribe {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    location / {
+        try_files $uri $uri/ $uri/index.html =404;
+        add_header Cache-Control "public, max-age=3600, stale-while-revalidate=86400";
+    }
+
+    location ~* \\.(css|js)$ {
+        expires 1d;
+        add_header Cache-Control "public, max-age=86400";
+        access_log off;
+    }
+
+    location ~* \\.(png|webp|ico|svg|woff2|jpg|jpeg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    location ~* \\.(xml|txt)$ {
+        expires 1d;
+        add_header Cache-Control "public";
+    }
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    gzip on;
+    gzip_types text/html text/css application/javascript application/json;
+
+    error_page 404 /404.html;
+    access_log /var/log/nginx/${domain}.access.log;
+    error_log /var/log/nginx/${domain}.error.log;
 }`;
 
   writeFileSync(join(NGINX_AVAILABLE, domain), config, 'utf-8');
+
+  // Self-signed SSL cert per Cloudflare Full mode (genera solo se non esiste già)
+  const certPath = `/etc/ssl/certs/${domain}.crt`;
+  const keyPath  = `/etc/ssl/private/${domain}.key`;
+  if (!existsSync(certPath)) {
+    try {
+      execSync(
+        `openssl req -x509 -nodes -days 3650 -newkey rsa:2048 ` +
+        `-keyout ${keyPath} -out ${certPath} ` +
+        `-subj "/CN=${domain}/O=ContentNetwork/C=US"`,
+        { stdio: 'pipe' }
+      );
+    } catch (e) {
+      console.warn(`[nginx] SSL cert generation failed for ${domain}:`, e.message);
+    }
+  }
 
   // Enable
   const enabledPath = join(NGINX_ENABLED, domain);
