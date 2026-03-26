@@ -357,7 +357,7 @@ ABSOLUTE RULES:
   • Do NOT start consecutive sentences with "This", "These", "The" or "It". Break the pattern every time.
   • Transitions: use the natural ones ("Here's the thing", "Worth knowing:", "Quick note:") not the formal ones. Or skip transition words entirely — just move to the next point.
   • At least one section per article must have a paragraph that's a single short sentence standing alone for emphasis.
-- Use keyword naturally — max 3-4 times total
+- Use keyword naturally — max 3-4 times total; it MUST appear within the first 100 words (intro or opening of first section)
 - FAQ: 4-6 questions people genuinely search, with direct answers
 - Citations: 1-2 REAL sources only — government agencies, major institutions, established industry bodies. Real URLs. Never invent a source.
 - Every section must add new information — zero repetition across sections

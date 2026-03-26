@@ -178,7 +178,7 @@ function adUnit(type){
 export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl='',lcpImage='',ga4MeasurementId='',mgidSiteId=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
   const schemasHtml=schemas.map(s=>`<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n');
-  const robots=noindex?'noindex, follow':'index, follow, max-image-preview:large';
+  const robots=noindex?'noindex, follow':'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
   const ga4Id=ga4MeasurementId||process.env.GA4_MEASUREMENT_ID||'';
   const gscVerification=process.env.GOOGLE_SITE_VERIFICATION||'';
   const ezoicId=process.env.EZOIC_SITE_ID||'';
@@ -220,7 +220,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <div class="art-deck">${esc(article.metaDescription)}</div>
       <div class="art-author-row">
         <img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="44" height="44" onerror="this.style.display='none'"/>
-        <div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time></div>
+        <div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</div>
       </div>
       ${adUnit('leaderboard')}
     </header>

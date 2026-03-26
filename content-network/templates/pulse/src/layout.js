@@ -181,7 +181,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
   const schemasHtml = schemas.map(s =>
     `<script type="application/ld+json">${JSON.stringify(s)}</script>`
   ).join('\n');
-  const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
+  const robots = noindex ? 'noindex, follow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
   const ga4Id = ga4MeasurementId || process.env.GA4_MEASUREMENT_ID || '';
   const gscVerification = process.env.GOOGLE_SITE_VERIFICATION || '';
   const ezoicId = process.env.EZOIC_SITE_ID || '';
@@ -273,7 +273,7 @@ ${renderHeader(site)}
             <span class="author-title">${esc(site.authorTitle)}</span>
           </div>
         </div>
-        <time class="art-date" datetime="${dateIso}">${dateStr}</time>
+        <time class="art-date" datetime="${dateIso}">${dateStr}</time><span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
       </div>
       ${adUnit('leaderboard')}
     </header>
