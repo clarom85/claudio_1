@@ -141,7 +141,7 @@ img{max-width:100%;height:auto;display:block}
 .compact-img{width:80px;height:60px;object-fit:cover;border-radius:3px;flex-shrink:0}
 
 /* Footer */
-.site-footer{background:var(--navy);color:rgba(255,255,255,.8);padding:40px 0 20px;margin-top:48px}
+.site-footer{background:var(--navy);color:rgba(255,255,255,.8);padding:52px 0 24px;margin-top:48px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-bottom:32px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}}
 .footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:20px;margin-bottom:10px}

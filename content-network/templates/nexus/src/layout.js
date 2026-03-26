@@ -111,7 +111,7 @@ a{color:inherit}
 .section-title span{background:linear-gradient(90deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 /* Footer */
-.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:36px 0 16px;margin-top:56px}
+.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:52px 0 24px;margin-top:56px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:28px;margin-bottom:24px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}}
 .footer-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);margin-bottom:12px;font-family:var(--ff-mono)}

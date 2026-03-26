@@ -117,7 +117,7 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .section-title span{color:var(--orange)}
 
 /* Footer */
-.site-footer{background:var(--near-black);border-top:1px solid var(--border);padding:40px 0 20px;margin-top:56px}
+.site-footer{background:var(--near-black);border-top:1px solid var(--border);padding:52px 0 24px;margin-top:56px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-bottom:28px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}}
 .footer-logo{font-family:var(--ff-head);font-size:28px;letter-spacing:3px;color:var(--orange);margin-bottom:8px}

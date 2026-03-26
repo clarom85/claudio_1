@@ -105,7 +105,7 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .section-title{font-family:var(--ff-head);font-size:28px;font-weight:400;color:var(--warm);margin-bottom:24px;padding-bottom:10px;border-bottom:1px solid var(--border);letter-spacing:2px;text-transform:uppercase}
 
 /* Footer */
-.site-footer{background:var(--warm);color:rgba(255,255,255,.75);padding:40px 0 20px;margin-top:56px}
+.site-footer{background:var(--warm);color:rgba(255,255,255,.75);padding:52px 0 24px;margin-top:56px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-bottom:28px}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:20px}}
 .footer-logo{font-family:var(--ff-head);font-size:28px;font-weight:400;color:#fff;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}

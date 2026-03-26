@@ -121,7 +121,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .section-title{font-family:var(--ff-head);font-size:24px;color:var(--dark);margin-bottom:20px;padding-bottom:8px;border-bottom:3px double var(--border)}
 
 /* Footer */
-.site-footer{background:var(--dark);color:rgba(255,255,255,.75);padding:36px 0 16px;margin-top:56px}
+.site-footer{background:var(--dark);color:rgba(255,255,255,.75);padding:52px 0 24px;margin-top:56px}
 .footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px;margin-bottom:24px;align-items:start}
 @media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}.footer-col{padding-left:4px}}
 .footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:18px;margin-bottom:10px}
