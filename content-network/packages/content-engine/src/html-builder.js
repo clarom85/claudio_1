@@ -164,7 +164,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     ? `<div style="background:#f0f9f4;border:2px solid #c3e6d0;border-left:5px solid #1a5c3a;border-radius:6px;padding:20px 24px;margin:0 0 28px;">
       <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1a5c3a;margin:0 0 12px;">💰 Quick Cost Summary</p>
       <ul style="list-style:none;padding:0;margin:0;">
-        ${articleData.keyTakeaways.slice(0,4).map(t=>`<li style="font-size:15px;line-height:1.7;padding:5px 0 5px 20px;position:relative;color:#1a1a1a;border-bottom:1px solid #d5ead9;"><span style="position:absolute;left:0;color:#1a5c3a;font-weight:700;">$</span>${escapeHtml(t)}</li>`).join('')}
+        ${articleData.keyTakeaways.slice(0,4).map(t=>`<li style="font-size:15px;line-height:1.7;padding:5px 0 5px 20px;position:relative;color:#1a1a1a;border-bottom:1px solid #d5ead9;"><span style="position:absolute;left:0;color:#1a5c3a;font-weight:700;">$</span>${t}</li>`).join('')}
       </ul>
     </div>` : '';
 
@@ -237,7 +237,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
       <h3 class="faq-question" itemprop="name">${escapeHtml(item.question)}</h3>
       <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-        <p itemprop="text">${escapeHtml(item.answer)}</p>
+        <p itemprop="text">${item.answer}</p>
       </div>
     </div>`).join('');
 
@@ -295,12 +295,12 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
           ✓ Key Takeaways
         </h2>
         <ul style="list-style:none;padding:0;margin:0;">
-          ${articleData.keyTakeaways.map(t => `<li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;color:#1a1a1a;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>${escapeHtml(t)}</li>`).join('')}
+          ${articleData.keyTakeaways.map(t => `<li style="font-size:15px;line-height:1.7;padding:4px 0 4px 20px;position:relative;color:#1a1a1a;"><span style="position:absolute;left:0;color:#27ae60;font-weight:700;">✓</span>${t}</li>`).join('')}
         </ul>
       </div>` : ''}
 
       <div class="article-intro">
-        <p class="intro-text">${escapeHtml(intro)}</p>
+        <p class="intro-text">${intro}</p>
       </div>
 
       ${howtoHeaderHTML}
@@ -314,13 +314,13 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       ${expertTip ? `
       <div class="expert-tip-box" style="margin:28px 0;padding:20px 24px;background:#fff8e1;border-left:4px solid #f39c12;border-radius:4px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f39c12;margin-bottom:8px;">Expert Tip</div>
-        <p style="font-size:15px;line-height:1.75;color:#333;margin:0;">${escapeHtml(expertTip)}</p>
+        <p style="font-size:15px;line-height:1.75;color:#333;margin:0;">${expertTip}</p>
         <div style="font-size:13px;color:#888;margin-top:10px;">— ${escapeHtml(author.name)}, ${escapeHtml(author.title)}</div>
       </div>` : ''}
 
       <div class="article-author-note">
         <blockquote class="author-experience">
-          <p>${escapeHtml(authorNote)}</p>
+          <p>${authorNote}</p>
           <cite>— ${author.name}, ${author.title}</cite>
         </blockquote>
       </div>
