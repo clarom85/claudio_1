@@ -8,7 +8,7 @@
  * PM2   : cron every 12 hours
  */
 import 'dotenv/config';
-import { readFileSync, writeFileSync, existsSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync, execSync } from 'child_process';
@@ -925,14 +925,12 @@ async function autoTriggerRegen(site) {
     }
   }
 
-  // Controlla se CSS esiste (template usa assets/style.css o styles.css)
-  const cssCandidates = [
-    join(siteDir, 'assets', 'style.css'),
-    join(siteDir, 'assets', 'styles.css'),
-    join(siteDir, 'styles.css'),
-    join(siteDir, 'style.css'),
-  ];
-  if (!cssCandidates.some(p => existsSync(p))) {
+  // Controlla se CSS esiste — supporta nomi versioned (style.v2.css, styles.min.css, ecc.)
+  const assetsDir = join(siteDir, 'assets');
+  const hasCss = (existsSync(assetsDir) && readdirSync(assetsDir).some(f => f.endsWith('.css')))
+    || existsSync(join(siteDir, 'styles.css'))
+    || existsSync(join(siteDir, 'style.css'));
+  if (!hasCss) {
     needsCSS = true;
   }
 
