@@ -46,7 +46,8 @@ for (const a of articles) {
     const generated = await generateArticle(a.keyword, niche, site, 3, null, []);
     if (!generated?.content) throw new Error('content vuoto dal generator');
 
-    await sql`UPDATE articles SET content = ${generated.content} WHERE id = ${a.id}`;
+    const schemaMarkup = JSON.stringify(generated.schemaMarkup || generated.schemas || []);
+    await sql`UPDATE articles SET content = ${generated.content}, schema_markup = ${schemaMarkup} WHERE id = ${a.id}`;
     process.stdout.write(`✅\n`);
     ok++;
   } catch (err) {

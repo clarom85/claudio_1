@@ -9,6 +9,7 @@ import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { sql } from '@content-network/db';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
+import { generateRssFeed } from './index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..', '..', '..');
@@ -87,6 +88,16 @@ async function regenerateHomepage(site) {
 
   const homeHtml = renderHomePage(articlesData, siteConfig);
   writeFileSync(join(WWW_ROOT, site.domain, 'index.html'), homeHtml, 'utf-8');
+
+  const feedArticles = articlesData.map(a => ({
+    slug: a.slug,
+    title: a.title,
+    meta_description: a.metaDescription,
+    excerpt: a.excerpt,
+    published_at: a.date,
+    category: a.category,
+  }));
+  generateRssFeed(site.domain, feedArticles, { siteName: siteConfig.name });
 }
 
 async function run() {

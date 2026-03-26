@@ -252,7 +252,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     <div class="article-breadcrumb">
       <a href="/">Home</a>${categorySlug ? ` › <a href="/category/${categorySlug}">${escapeHtml(articleData.category)}</a>` : ''} › <span>${escapeHtml(title)}</span>
     </div>
-    <h1 class="article-title" itemprop="headline">${escapeHtml(title)}</h1>
+    <div class="article-title" itemprop="headline">${escapeHtml(title)}</div>
     <div class="article-meta">
       <div class="article-author" itemprop="author" itemscope itemtype="https://schema.org/Person">
         <a href="/author/${author.avatar}/" style="flex-shrink:0; display:block;">
