@@ -263,15 +263,45 @@ async function checkContentQuality(site) {
     }
   } catch (e) { warn(`content empty-check failed: ${e.message}`); }
 
-  // 2b. Articoli senza immagine
+  // 2b. Articoli senza immagine — AUTO-FIX via fetchArticleImage
   try {
     const noImg = await sql`
-      SELECT COUNT(*) as count FROM articles
-      WHERE site_id = ${site.id} AND status = 'published' AND (image IS NULL OR image = '')
+      SELECT a.id, a.slug, a.title, COALESCE(k.keyword, a.slug) as keyword
+      FROM articles a
+      LEFT JOIN keywords k ON a.keyword_id = k.id
+      WHERE a.site_id = ${site.id} AND a.status = 'published'
+      AND (a.image IS NULL OR a.image = '')
     `;
-    const count = parseInt(noImg[0].count);
-    if (count > 0) {
-      issue(`[${site.domain}] ${count} published articles missing image`);
+    if (noImg.length > 0) {
+      const { fetchArticleImage } = await import('@content-network/content-engine/src/image-fetcher.js');
+      const destDir = join(WWW_ROOT, site.domain);
+      let imgFixed = 0;
+      for (const art of noImg) {
+        try {
+          const imagePath = await fetchArticleImage(
+            art.keyword || art.title,
+            art.slug,
+            destDir,
+            { nicheSlug: site.niche_slug, title: art.title }
+          );
+          if (imagePath) {
+            await sql`UPDATE articles SET image = ${imagePath} WHERE id = ${art.id}`;
+            fix(`[${site.domain}/${art.slug}] Fetched missing image: ${imagePath}`);
+            imgFixed++;
+          } else {
+            issue(`[${site.domain}/${art.slug}] Image fetch failed (all sources exhausted)`);
+          }
+        } catch (e) {
+          issue(`[${site.domain}/${art.slug}] Image fetch error: ${e.message}`);
+        }
+      }
+      if (imgFixed > 0) {
+        const rerenderScript = join(ROOT, 'packages/vps/src/rerender-articles.js');
+        spawnSync('node', [rerenderScript, '--site-id', String(site.id)], {
+          stdio: 'pipe', timeout: 300000, cwd: ROOT
+        });
+        fix(`[${site.domain}] Re-rendered ${imgFixed} article(s) after image fix`);
+      }
     }
   } catch (e) { warn(`content image-check failed: ${e.message}`); }
 
