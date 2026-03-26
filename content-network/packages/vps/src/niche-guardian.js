@@ -267,10 +267,12 @@ async function checkArticleSeo(site) {
   let articles;
   try {
     articles = await sql`
-      SELECT id, slug, title, meta_description, keyword, published_at
-      FROM articles
-      WHERE site_id = ${site.id} AND status = 'published'
-      ORDER BY published_at DESC
+      SELECT a.id, a.slug, a.title, a.meta_description, a.published_at,
+             COALESCE(k.keyword, a.slug) as keyword
+      FROM articles a
+      LEFT JOIN keywords k ON a.keyword_id = k.id
+      WHERE a.site_id = ${site.id} AND a.status = 'published'
+      ORDER BY a.published_at DESC
       LIMIT 150
     `;
   } catch (e) { warn(`seo article-fetch failed: ${e.message}`); return; }
@@ -517,7 +519,8 @@ async function checkSiteLevel(site) {
       writeFileSync(robotsPath, updated, 'utf-8');
       fix(`[${site.domain}] Added Sitemap reference to robots.txt`);
     }
-    if (robots.includes('Disallow: /') && !robots.includes('Disallow: /wp-')) {
+    // Controlla solo "Disallow: /" esatto su riga propria (non /api/ o /wp-admin/)
+    if (/^Disallow:\s*\/\s*$/m.test(robots)) {
       issue(`[${site.domain}] robots.txt blocks all crawlers (Disallow: /) — check immediately`);
     }
   }
