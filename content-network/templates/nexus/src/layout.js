@@ -50,12 +50,13 @@ a{color:inherit}
 .author-title{font-size:12px;color:var(--muted)}
 .art-date{font-size:13px;color:var(--muted);font-family:var(--ff-mono)}
 
-/* Ad */
-.ad{background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);border-radius:var(--r)}
-.ad-leader{width:100%;min-height:90px;margin:16px 0}
-.ad-inline{width:100%;min-height:250px;margin:28px 0}
-.ad-sidebar{width:100%;min-height:250px;margin-bottom:20px}
-.ad-footer{width:100%;min-height:90px;text-align:center;padding:8px 0}
+/* Ad units — hidden until AdSense fills them */
+.ad{overflow:hidden}
+.ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
+.ad-leader{width:100%;margin:16px 0}
+.ad-inline{width:100%;margin:28px 0}
+.ad-sidebar{width:100%;margin-bottom:20px}
+.ad-footer{width:100%;text-align:center;padding:8px 0}
 
 /* Content */
 .art-body{background:var(--surface);padding:28px;border-radius:var(--r);border:1px solid var(--border)}
