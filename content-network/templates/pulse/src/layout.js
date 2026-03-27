@@ -159,6 +159,8 @@ img{max-width:100%;height:auto;display:block}
   .logo-name{font-size:28px}
   .hdr-ad{display:none}
   .art-body{padding:16px}
+  .trust-box{padding:14px 16px}
+  .trust-box-hdr{flex-direction:column;align-items:flex-start}
 }
 /* Article hero + cost table */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0;border-radius:var(--r)}
@@ -670,12 +672,14 @@ function esc(str = '') {
 
 function injectCalcCtaMidArticle(html,ctaHtml){
   if(!ctaHtml)return html;
-  const marker='<div class="article-section"';
+  const marker='class="article-section"';
   const idx=html.indexOf(marker);
   if(idx===-1)return html;
   const idx2=html.indexOf(marker,idx+marker.length);
   if(idx2===-1)return html;
-  return html.slice(0,idx2)+ctaHtml+html.slice(idx2);
+  // step back to the opening tag '<'
+  const tagStart=html.lastIndexOf('<',idx2);
+  return html.slice(0,tagStart)+ctaHtml+html.slice(tagStart);
 }
 
 function buildTrustBlock(article,site){

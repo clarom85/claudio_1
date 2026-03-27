@@ -126,7 +126,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 /* Footer */
 .site-footer{background:var(--dark);color:rgba(255,255,255,.75);padding:52px 0 24px;margin-top:56px}
 .footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px;margin-bottom:24px;align-items:start}
-@media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}.footer-col{padding-left:4px}}
+@media(max-width:600px){.footer-grid{grid-template-columns:1fr}.art-body{padding:16px}.footer-col{padding-left:4px}.trust-box{padding:14px 16px}.trust-box-hdr{flex-direction:column;align-items:flex-start}}
 .footer-about{text-align:center}.footer-about h3{color:#fff;font-family:var(--ff-head);font-size:18px;margin-bottom:10px}
 .footer-col h4{color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
 .footer-col ul{list-style:none;padding-left:0}
@@ -148,12 +148,14 @@ function esc(str=''){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;
 
 function injectCalcCtaMidArticle(html,ctaHtml){
   if(!ctaHtml)return html;
-  const marker='<div class="article-section"';
+  const marker='class="article-section"';
   const idx=html.indexOf(marker);
   if(idx===-1)return html;
   const idx2=html.indexOf(marker,idx+marker.length);
   if(idx2===-1)return html;
-  return html.slice(0,idx2)+ctaHtml+html.slice(idx2);
+  // step back to the opening tag '<'
+  const tagStart=html.lastIndexOf('<',idx2);
+  return html.slice(0,tagStart)+ctaHtml+html.slice(tagStart);
 }
 
 function buildTrustBlock(article,site){
