@@ -18,8 +18,9 @@ import { topicFingerprint, classifyIntent } from '@content-network/keyword-engin
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const nicheIdx = args.indexOf('--niche');
 const nicheFilter = args.find(a => a.startsWith('--niche='))?.split('=')[1]
-  || args[args.indexOf('--niche') + 1] || null;
+  || (nicheIdx !== -1 ? args[nicheIdx + 1] : null) || null;
 
 function stem(w) {
   return w.replace(/(?<=\w{3})(ing|tion|ment|ness|ful|less|er|es|s)$/i, '');
