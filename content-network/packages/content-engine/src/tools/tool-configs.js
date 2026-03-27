@@ -982,13 +982,13 @@ export const TOOL_CONFIGS = {
      Tool: Life Insurance Needs Calculator
   ───────────────────────────────────────────────────────── */
   'insurance-guide': {
-    slug: 'insurance-cost-estimator',
-    title: 'Insurance Cost Estimator',
-    headline: 'What Should You Be Paying for Insurance?',
-    description: 'Estimate your annual premium for auto, home, health, or life insurance based on your profile. Compare your costs to national averages and find out if you\'re overpaying.',
-    seoDescription: 'Free insurance cost estimator. Find out what auto, home, health, and life insurance should cost for your situation — based on real market data.',
+    slug: 'insurance-calculator',
+    title: 'Insurance Premium Calculator',
+    headline: 'How Much Should You Pay for Insurance in Your State?',
+    description: 'Get a data-driven estimate of your auto, home, health, or life insurance premium — adjusted for your state, coverage profile, and risk factors. Compare to national and state averages.',
+    seoDescription: 'Free insurance premium calculator by state. Estimate auto, home, health, and life insurance costs based on your profile, location, and coverage needs. Updated with 2025 rate data.',
     type: 'calculator',
-    ctaText: 'Estimate My Insurance Cost',
+    ctaText: 'Calculate My Premium',
     inputs: [
       {
         id: 'insuranceType',
@@ -997,33 +997,59 @@ export const TOOL_CONFIGS = {
         options: [
           { value: 'auto',   label: 'Auto Insurance' },
           { value: 'home',   label: 'Homeowners Insurance' },
-          { value: 'health', label: 'Health Insurance' },
-          { value: 'life',   label: 'Life Insurance (Term)' },
+          { value: 'health', label: 'Health Insurance (ACA)' },
+          { value: 'life',   label: 'Term Life Insurance' },
         ],
         default: 'auto',
       },
-      // AUTO inputs
       {
-        id: 'driverAge',
-        label: 'Driver Age',
+        id: 'state',
+        label: 'Your State',
         type: 'select',
         options: [
-          { value: '16',  label: '16–24 (young driver)' },
-          { value: '25',  label: '25–34' },
-          { value: '35',  label: '35–54' },
-          { value: '55',  label: '55–64' },
-          { value: '65',  label: '65+' },
+          {value:'AL',label:'Alabama'},{value:'AK',label:'Alaska'},{value:'AZ',label:'Arizona'},
+          {value:'AR',label:'Arkansas'},{value:'CA',label:'California'},{value:'CO',label:'Colorado'},
+          {value:'CT',label:'Connecticut'},{value:'DE',label:'Delaware'},{value:'FL',label:'Florida'},
+          {value:'GA',label:'Georgia'},{value:'HI',label:'Hawaii'},{value:'ID',label:'Idaho'},
+          {value:'IL',label:'Illinois'},{value:'IN',label:'Indiana'},{value:'IA',label:'Iowa'},
+          {value:'KS',label:'Kansas'},{value:'KY',label:'Kentucky'},{value:'LA',label:'Louisiana'},
+          {value:'ME',label:'Maine'},{value:'MD',label:'Maryland'},{value:'MA',label:'Massachusetts'},
+          {value:'MI',label:'Michigan'},{value:'MN',label:'Minnesota'},{value:'MS',label:'Mississippi'},
+          {value:'MO',label:'Missouri'},{value:'MT',label:'Montana'},{value:'NE',label:'Nebraska'},
+          {value:'NV',label:'Nevada'},{value:'NH',label:'New Hampshire'},{value:'NJ',label:'New Jersey'},
+          {value:'NM',label:'New Mexico'},{value:'NY',label:'New York'},{value:'NC',label:'North Carolina'},
+          {value:'ND',label:'North Dakota'},{value:'OH',label:'Ohio'},{value:'OK',label:'Oklahoma'},
+          {value:'OR',label:'Oregon'},{value:'PA',label:'Pennsylvania'},{value:'RI',label:'Rhode Island'},
+          {value:'SC',label:'South Carolina'},{value:'SD',label:'South Dakota'},{value:'TN',label:'Tennessee'},
+          {value:'TX',label:'Texas'},{value:'UT',label:'Utah'},{value:'VT',label:'Vermont'},
+          {value:'VA',label:'Virginia'},{value:'WA',label:'Washington'},{value:'WV',label:'West Virginia'},
+          {value:'WI',label:'Wisconsin'},{value:'WY',label:'Wyoming'},{value:'DC',label:'Washington D.C.'},
         ],
-        default: '35',
+        default: 'TX',
+        hint: 'State is a major pricing factor — rates can vary by 200%+ across states.',
+      },
+      // ── AUTO ──────────────────────────────────────────────────────────────
+      {
+        id: 'driverAge',
+        label: 'Primary Driver Age',
+        type: 'select',
+        options: [
+          { value: '18', label: '16–24 (young driver)' },
+          { value: '30', label: '25–34' },
+          { value: '40', label: '35–54' },
+          { value: '58', label: '55–64' },
+          { value: '68', label: '65+' },
+        ],
+        default: '40',
         showWhen: { input: 'insuranceType', value: 'auto' },
       },
       {
         id: 'drivingRecord',
-        label: 'Driving Record',
+        label: 'Driving Record (past 3 years)',
         type: 'select',
         options: [
-          { value: 'clean',    label: 'Clean (no incidents)' },
-          { value: 'minor',    label: 'Minor violation (speeding)' },
+          { value: 'clean',    label: 'Clean — no violations or claims' },
+          { value: 'minor',    label: 'Minor violation (speeding, etc.)' },
           { value: 'accident', label: 'At-fault accident' },
           { value: 'dui',      label: 'DUI / Major violation' },
         ],
@@ -1031,89 +1057,242 @@ export const TOOL_CONFIGS = {
         showWhen: { input: 'insuranceType', value: 'auto' },
       },
       {
-        id: 'coverage',
+        id: 'vehicleType',
+        label: 'Vehicle Type',
+        type: 'select',
+        options: [
+          { value: 'economy',  label: 'Economy / Compact (Honda Civic, Toyota Corolla)' },
+          { value: 'midsize',  label: 'Mid-size Sedan (Camry, Accord)' },
+          { value: 'suv',      label: 'SUV / Crossover (RAV4, CR-V)' },
+          { value: 'truck',    label: 'Pickup Truck (F-150, Silverado)' },
+          { value: 'luxury',   label: 'Luxury / Sports (BMW, Mercedes, Corvette)' },
+          { value: 'ev',       label: 'Electric Vehicle (Tesla, EV models)' },
+        ],
+        default: 'suv',
+        showWhen: { input: 'insuranceType', value: 'auto' },
+      },
+      {
+        id: 'vehicleAge',
+        label: 'Vehicle Age',
+        type: 'select',
+        options: [
+          { value: 'new',  label: '0–3 years (new)' },
+          { value: 'mid',  label: '4–8 years' },
+          { value: 'old',  label: '9–15 years' },
+          { value: 'aged', label: '15+ years' },
+        ],
+        default: 'mid',
+        showWhen: { input: 'insuranceType', value: 'auto' },
+      },
+      {
+        id: 'autoCoverage',
         label: 'Coverage Level',
         type: 'select',
         options: [
-          { value: 'min',   label: 'Minimum required' },
-          { value: 'basic', label: 'Basic (liability + collision)' },
-          { value: 'full',  label: 'Full coverage' },
+          { value: 'min',   label: 'State minimum (liability only)' },
+          { value: 'basic', label: 'Liability + collision' },
+          { value: 'full',  label: 'Full coverage (liability + collision + comprehensive)' },
         ],
         default: 'full',
+        hint: 'Full coverage required by most lenders on financed vehicles.',
         showWhen: { input: 'insuranceType', value: 'auto' },
       },
-      // HOME inputs
+      {
+        id: 'creditTier',
+        label: 'Credit Score Tier',
+        type: 'select',
+        options: [
+          { value: 'excellent', label: 'Excellent (750+)' },
+          { value: 'good',      label: 'Good (670–749)' },
+          { value: 'fair',      label: 'Fair (580–669)' },
+          { value: 'poor',      label: 'Poor (below 580)' },
+        ],
+        default: 'good',
+        hint: 'Used in most states. CA, HI, MA, MI prohibit credit-based pricing.',
+        showWhen: { input: 'insuranceType', value: 'auto' },
+      },
+      // ── HOME ─────────────────────────────────────────────────────────────
       {
         id: 'homeValue',
-        label: 'Home Value ($)',
+        label: 'Home Replacement Value ($)',
         type: 'number',
         placeholder: 'e.g. 350000',
-        min: 50000, max: 2000000, default: 350000,
+        min: 50000, max: 3000000, default: 350000,
+        hint: 'Use replacement cost (rebuild cost), not market value.',
         showWhen: { input: 'insuranceType', value: 'home' },
       },
       {
         id: 'homeAge',
-        label: 'Home Age',
+        label: 'Year Built',
         type: 'select',
         options: [
-          { value: 'new',    label: 'Under 10 years' },
-          { value: 'mid',    label: '10–30 years' },
-          { value: 'old',    label: '30–50 years' },
-          { value: 'vold',   label: '50+ years' },
+          { value: 'new',  label: 'After 2010 (new)' },
+          { value: 'mid',  label: '1990–2010' },
+          { value: 'old',  label: '1970–1989' },
+          { value: 'vold', label: 'Before 1970' },
         ],
         default: 'mid',
         showWhen: { input: 'insuranceType', value: 'home' },
       },
-      // HEALTH inputs
       {
-        id: 'healthAge',
-        label: 'Your Age',
+        id: 'roofAge',
+        label: 'Roof Age',
         type: 'select',
         options: [
-          { value: '25', label: '18–34' },
-          { value: '40', label: '35–44' },
-          { value: '50', label: '45–54' },
-          { value: '60', label: '55–64' },
+          { value: 'new',  label: 'Under 5 years' },
+          { value: 'mid',  label: '5–15 years' },
+          { value: 'old',  label: '15–25 years' },
+          { value: 'aged', label: '25+ years (replacement may be required)' },
         ],
-        default: '40',
+        default: 'mid',
+        showWhen: { input: 'insuranceType', value: 'home' },
+      },
+      {
+        id: 'constructionType',
+        label: 'Construction Type',
+        type: 'select',
+        options: [
+          { value: 'masonry', label: 'Masonry / Brick / Concrete block' },
+          { value: 'frame',   label: 'Wood frame (most common)' },
+          { value: 'superior',label: 'Fire-resistive / Steel frame' },
+        ],
+        default: 'frame',
+        showWhen: { input: 'insuranceType', value: 'home' },
+      },
+      {
+        id: 'homeCoverage',
+        label: 'Coverage Type',
+        type: 'select',
+        options: [
+          { value: 'rcv', label: 'Replacement Cost Value (full rebuild)' },
+          { value: 'acv', label: 'Actual Cash Value (depreciated)' },
+        ],
+        default: 'rcv',
+        hint: 'RCV costs ~10% more but pays full rebuild cost after a loss.',
+        showWhen: { input: 'insuranceType', value: 'home' },
+      },
+      // ── HEALTH ───────────────────────────────────────────────────────────
+      {
+        id: 'healthAge',
+        label: 'Age of Primary Enrollee',
+        type: 'select',
+        options: [
+          { value: '27', label: '18–30' },
+          { value: '35', label: '31–40' },
+          { value: '45', label: '41–50' },
+          { value: '55', label: '51–60' },
+          { value: '62', label: '61–64' },
+        ],
+        default: '35',
         showWhen: { input: 'insuranceType', value: 'health' },
       },
       {
         id: 'planTier',
-        label: 'Plan Tier',
+        label: 'Metal Tier',
         type: 'select',
         options: [
-          { value: 'bronze',   label: 'Bronze (low premium, high deductible)' },
-          { value: 'silver',   label: 'Silver (moderate)' },
-          { value: 'gold',     label: 'Gold (higher premium, lower deductible)' },
-          { value: 'platinum', label: 'Platinum (max coverage)' },
+          { value: 'bronze',   label: 'Bronze — lowest premium, 40% cost-share' },
+          { value: 'silver',   label: 'Silver — moderate, 30% cost-share (CSR eligible)' },
+          { value: 'gold',     label: 'Gold — higher premium, 20% cost-share' },
+          { value: 'platinum', label: 'Platinum — max premium, 10% cost-share' },
         ],
         default: 'silver',
+        hint: 'Silver is required for Cost-Sharing Reduction (CSR) subsidies.',
         showWhen: { input: 'insuranceType', value: 'health' },
       },
-      // LIFE inputs
+      {
+        id: 'healthCoverage',
+        label: 'Coverage Scope',
+        type: 'select',
+        options: [
+          { value: 'individual', label: 'Individual only' },
+          { value: 'couple',     label: 'Individual + spouse / partner' },
+          { value: 'parent',     label: 'Individual + children' },
+          { value: 'family',     label: 'Full family' },
+        ],
+        default: 'individual',
+        showWhen: { input: 'insuranceType', value: 'health' },
+      },
+      {
+        id: 'tobaccoHealth',
+        label: 'Tobacco Use',
+        type: 'radio',
+        options: [
+          { value: 'no',  label: 'Non-smoker' },
+          { value: 'yes', label: 'Tobacco user' },
+        ],
+        default: 'no',
+        hint: 'ACA allows up to 1.5x surcharge for tobacco users in most states.',
+        showWhen: { input: 'insuranceType', value: 'health' },
+      },
+      // ── LIFE ─────────────────────────────────────────────────────────────
       {
         id: 'lifeAge',
         label: 'Your Age',
         type: 'select',
         options: [
-          { value: '25', label: '25–34' },
-          { value: '35', label: '35–44' },
-          { value: '45', label: '45–54' },
-          { value: '55', label: '55–64' },
+          { value: '25', label: '25–29' },
+          { value: '30', label: '30–34' },
+          { value: '35', label: '35–39' },
+          { value: '40', label: '40–44' },
+          { value: '45', label: '45–49' },
+          { value: '50', label: '50–54' },
+          { value: '55', label: '55–59' },
+          { value: '60', label: '60–64' },
         ],
         default: '35',
         showWhen: { input: 'insuranceType', value: 'life' },
       },
       {
-        id: 'coverageAmount',
-        label: 'Coverage Amount',
+        id: 'lifeGender',
+        label: 'Gender',
+        type: 'radio',
+        options: [
+          { value: 'male',   label: 'Male' },
+          { value: 'female', label: 'Female' },
+        ],
+        default: 'male',
+        hint: 'Females pay 20–30% less on average due to longer life expectancy.',
+        showWhen: { input: 'insuranceType', value: 'life' },
+      },
+      {
+        id: 'healthClass',
+        label: 'Health Classification',
         type: 'select',
         options: [
+          { value: 'preferred_plus', label: 'Preferred Plus — excellent health, no issues' },
+          { value: 'preferred',      label: 'Preferred — very good health, minor issues' },
+          { value: 'standard_plus',  label: 'Standard Plus — good health, controlled conditions' },
+          { value: 'standard',       label: 'Standard — average health' },
+          { value: 'substandard',    label: 'Substandard — significant health history' },
+        ],
+        default: 'preferred',
+        hint: 'Insurers assign class after medical underwriting. Use your best estimate.',
+        showWhen: { input: 'insuranceType', value: 'life' },
+      },
+      {
+        id: 'tobaccoLife',
+        label: 'Tobacco / Nicotine Use',
+        type: 'radio',
+        options: [
+          { value: 'no',  label: 'Non-user (5+ years)' },
+          { value: 'yes', label: 'Current user or quit <5 years' },
+        ],
+        default: 'no',
+        hint: 'Tobacco roughly doubles life insurance premiums.',
+        showWhen: { input: 'insuranceType', value: 'life' },
+      },
+      {
+        id: 'coverageAmount',
+        label: 'Death Benefit',
+        type: 'select',
+        options: [
+          { value: '100000',  label: '$100,000' },
           { value: '250000',  label: '$250,000' },
           { value: '500000',  label: '$500,000' },
           { value: '750000',  label: '$750,000' },
           { value: '1000000', label: '$1,000,000' },
+          { value: '2000000', label: '$2,000,000' },
         ],
         default: '500000',
         showWhen: { input: 'insuranceType', value: 'life' },
@@ -1124,7 +1303,9 @@ export const TOOL_CONFIGS = {
         type: 'select',
         options: [
           { value: '10', label: '10 years' },
+          { value: '15', label: '15 years' },
           { value: '20', label: '20 years' },
+          { value: '25', label: '25 years' },
           { value: '30', label: '30 years' },
         ],
         default: '20',
@@ -1132,71 +1313,167 @@ export const TOOL_CONFIGS = {
       },
     ],
     formula: `
-      const type = inputs.insuranceType || 'auto';
-      let annualPremium = 0, monthlyPremium = 0, nationalAvg = 0, insight = '', breakdown = {};
+      const type  = inputs.insuranceType || 'auto';
+      const state = inputs.state || 'TX';
 
+      // State multipliers by insurance type (source: NAIC 2024, KFF, IIHS)
+      const AUTO_STATE  = {AL:0.96,AK:0.95,AZ:1.12,AR:0.88,CA:1.33,CO:1.30,CT:1.42,DE:1.43,FL:1.84,GA:1.18,HI:0.94,ID:0.80,IL:1.10,IN:0.85,IA:0.81,KS:1.22,KY:0.86,LA:2.12,ME:0.77,MD:1.48,MA:1.15,MI:2.31,MN:1.14,MS:0.89,MO:0.97,MT:0.82,NE:0.87,NV:1.72,NH:0.78,NJ:1.19,NM:0.91,NY:1.61,NC:1.03,ND:0.92,OH:1.02,OK:1.15,OR:1.08,PA:1.05,RI:1.16,SC:1.44,SD:0.84,TN:0.98,TX:1.21,UT:0.90,VT:0.79,VA:1.01,WA:1.38,WV:1.00,WI:0.99,WY:0.83,DC:1.55};
+      const HOME_STATE  = {AL:1.60,AK:0.80,AZ:0.88,AR:1.50,CA:0.78,CO:1.28,CT:0.88,DE:0.80,FL:3.50,GA:1.32,HI:0.58,ID:0.82,IL:1.10,IN:1.00,IA:1.05,KS:1.90,KY:1.12,LA:2.90,ME:0.72,MD:0.80,MA:0.90,MI:1.00,MN:1.15,MS:1.70,MO:1.22,MT:0.90,NE:1.40,NV:0.88,NH:0.70,NJ:0.90,NM:0.88,NY:0.92,NC:1.18,ND:1.02,OH:0.92,OK:2.20,OR:0.80,PA:0.80,RI:0.92,SC:1.32,SD:1.10,TN:1.22,TX:2.10,UT:0.80,VT:0.70,VA:0.90,WA:0.82,WV:0.90,WI:0.80,WY:0.80,DC:0.90};
+      const HEALTH_STATE= {AL:1.30,AK:2.10,AZ:1.00,AR:1.20,CA:0.90,CO:0.95,CT:1.10,DE:1.15,FL:1.10,GA:1.18,HI:0.80,ID:1.00,IL:1.00,IN:1.10,IA:1.15,KS:1.20,KY:1.10,LA:1.28,ME:1.10,MD:0.85,MA:0.85,MI:0.95,MN:0.95,MS:1.40,MO:1.20,MT:1.30,NE:1.50,NV:1.00,NH:1.00,NJ:0.90,NM:0.95,NY:0.95,NC:1.10,ND:1.15,OH:1.00,OK:1.30,OR:0.90,PA:0.90,RI:0.85,SC:1.15,SD:1.40,TN:1.15,TX:1.20,UT:1.00,VT:1.00,VA:0.95,WA:0.85,WV:1.30,WI:1.00,WY:1.80,DC:0.75};
+
+      let annualPremium = 0, monthlyPremium = 0, nationalAvg = 0, stateAvg = 0;
+      let insight = '', savingsTip = '', stateNote = '';
+
+      // ── AUTO ────────────────────────────────────────────────────────────
       if (type === 'auto') {
-        const BASE = { '16':3200, '25':1650, '35':1420, '55':1280, '65':1450 };
-        const RECORD = { clean:1.0, minor:1.32, accident:1.65, dui:2.20 };
-        const COV = { min:0.55, basic:0.85, full:1.0 };
-        const age = inputs.driverAge || '35';
-        const rec = inputs.drivingRecord || 'clean';
-        const cov = inputs.coverage || 'full';
-        annualPremium = Math.round((BASE[age] || 1420) * (RECORD[rec] || 1.0) * (COV[cov] || 1.0));
-        nationalAvg = 1760;
-        breakdown = { liability: Math.round(annualPremium*0.45), collision: Math.round(annualPremium*0.32), comprehensive: Math.round(annualPremium*0.23) };
-        insight = annualPremium > nationalAvg
-          ? 'Your estimate is above average. Shopping 3+ quotes at renewal typically saves $300–$600/year.'
-          : 'Your estimate is at or below the national average — a clean record is your biggest asset.';
+        const AGE_BASE   = {18:3200,30:1680,40:1420,58:1280,68:1460};
+        const RECORD     = {clean:1.00,minor:1.32,accident:1.68,dui:2.28};
+        const VEHICLE    = {economy:0.88,midsize:1.00,suv:1.10,truck:1.08,luxury:1.52,ev:1.22};
+        const VEH_AGE    = {new:1.15,mid:1.00,old:0.85,aged:0.72};
+        const COV        = {min:0.48,basic:0.80,full:1.00};
+        const CREDIT     = {excellent:0.88,good:1.00,fair:1.24,poor:1.52};
+        // States where credit scoring is prohibited
+        const NO_CREDIT  = ['CA','HI','MA','MI'];
+
+        const ageBase    = AGE_BASE[parseInt(inputs.driverAge)] || 1420;
+        const recFactor  = RECORD[inputs.drivingRecord] || 1.00;
+        const vehFactor  = VEHICLE[inputs.vehicleType] || 1.00;
+        const vehAgeFac  = VEH_AGE[inputs.vehicleAge] || 1.00;
+        const covFactor  = COV[inputs.autoCoverage] || 1.00;
+        const creditFac  = NO_CREDIT.includes(state) ? 1.00 : (CREDIT[inputs.creditTier] || 1.00);
+        const stateFac   = AUTO_STATE[state] || 1.00;
+
+        nationalAvg      = 1760;
+        const baseNational = ageBase * recFactor * vehFactor * vehAgeFac * covFactor * creditFac;
+        annualPremium    = Math.round(baseNational * stateFac);
+        stateAvg         = Math.round(nationalAvg * stateFac);
+
+        const liability    = Math.round(annualPremium * 0.44);
+        const collision    = inputs.autoCoverage !== 'min' ? Math.round(annualPremium * 0.33) : 0;
+        const comprehensive= inputs.autoCoverage === 'full' ? Math.round(annualPremium * 0.23) : 0;
+
+        if (NO_CREDIT.includes(state)) stateNote = state + ' prohibits credit-based auto insurance pricing.';
+        else if (['MI','LA','FL'].includes(state)) stateNote = state + ' is among the most expensive auto insurance states in the U.S.';
+        else if (['ME','VT','NH','ID'].includes(state)) stateNote = state + ' is among the most affordable auto insurance states.';
+
+        insight    = recFactor > 1.3 ? 'A violation/accident typically affects rates for 3–5 years. Consider a defensive driving course — many insurers offer a 5–10% discount.' : 'Your clean record is your biggest pricing asset. Request a loyalty discount if you\'ve been with your insurer 3+ years.';
+        savingsTip = 'Shopping 3+ carriers at renewal saves an average of $412/year. Bundle auto + home for an additional 10–25% discount.';
       }
 
+      // ── HOME ────────────────────────────────────────────────────────────
       else if (type === 'home') {
-        const value = parseFloat(inputs.homeValue) || 350000;
-        const AGE_FACTOR = { new:0.0028, mid:0.0032, old:0.0038, vold:0.0045 };
-        const age = inputs.homeAge || 'mid';
-        annualPremium = Math.round(value * (AGE_FACTOR[age] || 0.0032));
-        nationalAvg = 1428;
-        breakdown = { dwelling: Math.round(annualPremium*0.65), liability: Math.round(annualPremium*0.15), personalProperty: Math.round(annualPremium*0.20) };
-        insight = 'Bundling home + auto with the same insurer saves 10–25% on average. Ask for discounts on new roof, security system, and smoke detectors.';
+        const value       = parseFloat(inputs.homeValue) || 350000;
+        const YEAR_FACTOR = {new:0.0026,mid:0.0032,old:0.0040,vold:0.0048};
+        const ROOF_FACTOR = {new:0.90,mid:1.00,old:1.18,aged:1.42};
+        const CONSTR      = {masonry:0.88,frame:1.00,superior:0.80};
+        const COV_FACTOR  = {rcv:1.00,acv:0.88};
+        const stateFac    = HOME_STATE[state] || 1.00;
+
+        const perDollarRate = (YEAR_FACTOR[inputs.homeAge] || 0.0032)
+          * (ROOF_FACTOR[inputs.roofAge] || 1.00)
+          * (CONSTR[inputs.constructionType] || 1.00)
+          * (COV_FACTOR[inputs.homeCoverage] || 1.00)
+          * stateFac;
+
+        nationalAvg   = 1428;
+        annualPremium = Math.round(value * perDollarRate);
+        stateAvg      = Math.round(nationalAvg * stateFac);
+
+        if (['FL','LA','TX','OK','KS'].includes(state)) stateNote = state + ' has elevated rates due to high catastrophic weather risk (hurricane/tornado/hail). Many carriers require separate windstorm or flood policies.';
+        else if (state === 'CA') stateNote = 'California: wildfire risk has driven many major carriers to exit the state — FAIR Plan may be the only option in high-risk areas.';
+
+        insight    = inputs.roofAge === 'aged' ? 'A roof over 25 years old may trigger non-renewal or require replacement. New roof typically reduces premium by 15–25% and qualifies for discounts.' : 'Raising your deductible from $1,000 to $2,500 typically reduces premiums by 10–15% with minimal real-world risk to most homeowners.';
+        savingsTip = 'Bundling home + auto with one carrier saves 10–25%. Install monitored security/smoke detectors for an additional 5–15% discount.';
       }
 
+      // ── HEALTH ──────────────────────────────────────────────────────────
       else if (type === 'health') {
-        const BASE = { '25':440, '40':612, '50':798, '60':1020 };
-        const TIER = { bronze:0.75, silver:1.0, gold:1.35, platinum:1.65 };
-        const age = inputs.healthAge || '40';
+        const AGE_BASE    = {27:388,35:512,45:698,55:920,62:1180};
+        const TIER_FACTOR = {bronze:0.72,silver:1.00,gold:1.38,platinum:1.68};
+        const SCOPE_FACTOR= {individual:1.00,couple:1.90,parent:1.70,family:2.40};
+        const TOBACCO_FAC = inputs.tobaccoHealth === 'yes' ? 1.50 : 1.00;
+        // States that ban tobacco surcharge
+        const NO_TOBACCO  = ['CA','CT','DC','MA','NJ','NY','RI','VT','WA'];
+        const tobaccoAdj  = NO_TOBACCO.includes(state) ? 1.00 : TOBACCO_FAC;
+        const stateFac    = HEALTH_STATE[state] || 1.00;
+
+        nationalAvg     = 621; // monthly individual silver
+        const base      = (AGE_BASE[parseInt(inputs.healthAge)] || 512)
+          * (TIER_FACTOR[inputs.planTier] || 1.00)
+          * (SCOPE_FACTOR[inputs.healthCoverage] || 1.00)
+          * tobaccoAdj
+          * stateFac;
+        monthlyPremium  = Math.round(base);
+        annualPremium   = monthlyPremium * 12;
+        const stateMonthly = Math.round(nationalAvg * stateFac);
+        stateAvg        = stateMonthly * 12;
+
         const tier = inputs.planTier || 'silver';
-        monthlyPremium = Math.round((BASE[age] || 612) * (TIER[tier] || 1.0));
-        annualPremium = monthlyPremium * 12;
-        nationalAvg = 7739;
-        breakdown = { premium: annualPremium, deductible: tier==='bronze'?7000:tier==='silver'?4500:tier==='gold'?1500:500, outOfPocketMax: tier==='bronze'?9100:tier==='silver'?7000:tier==='gold'?4000:2000 };
-        insight = 'If you use healthcare regularly, Gold plans often cost less overall despite higher premiums. Bronze plans work best for healthy individuals with an HSA.';
+        const deductible   = {bronze:7500,silver:4500,gold:1800,platinum:500}[tier];
+        const oopMax       = {bronze:9450,silver:7350,gold:4200,platinum:2000}[tier];
+
+        if (state === 'AK') stateNote = 'Alaska has the highest ACA premiums in the U.S. — nearly 3x the national average. Tax credits can significantly reduce costs.';
+        else if (state === 'WY') stateNote = 'Wyoming has very limited insurer competition on the ACA marketplace, resulting in above-average premiums.';
+        else if (['MA','MD','RI'].includes(state)) stateNote = state + ' has some of the lowest ACA premiums due to strong competition and a large insurer pool.';
+        if (NO_TOBACCO.includes(state) && inputs.tobaccoHealth === 'yes') stateNote += (stateNote ? ' ' : '') + state + ' prohibits tobacco surcharges on ACA plans.';
+
+        insight    = tier === 'bronze' ? 'Bronze + HSA is the most tax-efficient strategy for healthy adults. Contribute the maximum HSA amount ($4,150 individual) to offset the high deductible.' : tier === 'gold' || tier === 'platinum' ? 'Higher-tier plans cost less overall if you expect frequent medical care — calculate break-even by dividing premium difference by deductible gap.' : 'Silver is the only tier eligible for Cost-Sharing Reduction (CSR) subsidies if your income is 100–250% of the federal poverty level.';
+        savingsTip = 'Check HealthCare.gov for premium tax credits — households up to 400% FPL may qualify. Open enrollment runs Nov 1 – Jan 15.';
       }
 
+      // ── LIFE ────────────────────────────────────────────────────────────
       else if (type === 'life') {
-        const BASE_PER_100K = { '25':6, '35':10, '45':22, '55':52 };
-        const TERM_FACTOR = { '10':0.82, '20':1.0, '30':1.25 };
-        const age = inputs.lifeAge || '35';
-        const coverage = parseInt(inputs.coverageAmount) || 500000;
-        const term = inputs.termLength || '20';
-        monthlyPremium = Math.round(((BASE_PER_100K[age] || 10) * (coverage/100000)) * (TERM_FACTOR[term] || 1.0));
-        annualPremium = monthlyPremium * 12;
-        nationalAvg = 1020;
-        breakdown = { monthly: monthlyPremium, coveragePerDollar: Math.round(coverage/annualPremium) };
-        insight = 'Buying in your 30s locks in the lowest rates. Delaying by 5 years increases premiums by 30–60%. A 20-year term covers most families through peak financial vulnerability.';
+        // Rate per $1,000 of coverage per month (non-tobacco, preferred)
+        const MALE_RATE   = {25:0.09,30:0.10,35:0.13,40:0.18,45:0.30,50:0.48,55:0.76,60:1.22};
+        const FEMALE_ADJ  = 0.78; // females pay ~22% less
+        const HEALTH_ADJ  = {preferred_plus:0.85,preferred:1.00,standard_plus:1.20,standard:1.50,substandard:2.20};
+        const TOBACCO_ADJ = inputs.tobaccoLife === 'yes' ? 2.10 : 1.00;
+        const TERM_FACTOR = {10:0.80,15:0.90,20:1.00,25:1.12,30:1.28};
+
+        const coverage     = parseInt(inputs.coverageAmount) || 500000;
+        const age          = parseInt(inputs.lifeAge) || 35;
+        const baseRate     = MALE_RATE[age] || 0.13;
+        const genderAdj    = inputs.lifeGender === 'female' ? FEMALE_ADJ : 1.00;
+        const healthAdj    = HEALTH_ADJ[inputs.healthClass] || 1.00;
+        const termFactor   = TERM_FACTOR[parseInt(inputs.termLength)] || 1.00;
+        const coverageUnits= coverage / 1000;
+
+        nationalAvg      = 480; // annual, $500k 20yr preferred male 35
+        monthlyPremium   = Math.round(baseRate * genderAdj * healthAdj * TOBACCO_ADJ * termFactor * coverageUnits);
+        annualPremium    = monthlyPremium * 12;
+        stateAvg         = nationalAvg; // life insurance has minimal state variation
+
+        const costPer100k = Math.round((monthlyPremium / (coverage/100000)) * 100) / 100;
+
+        insight    = inputs.tobaccoLife === 'yes' ? 'Quitting tobacco for 12+ consecutive months before applying can cut your premium by 40–50%. Most insurers re-classify you after 12 months tobacco-free.' : age >= 45 ? 'Buying now locks in your current health class. Each 5 years you wait increases premiums by 30–60%. A $500k 20-year policy purchased at 45 costs roughly $200/month more than at 35.' : 'Term life is the most cost-efficient pure protection product. Avoid whole life or universal life for income replacement purposes — the investment component rarely outperforms low-cost index funds.';
+        savingsTip = 'Ladder multiple policies (e.g., $500k/10yr + $500k/20yr) to reduce costs as your financial obligations decrease over time. Total coverage at year 1 is $1M; at year 11 it steps down to $500k automatically.';
       }
 
       if (!monthlyPremium) monthlyPremium = Math.round(annualPremium / 12);
-      const vsAvg = annualPremium < nationalAvg ? 'below' : annualPremium > nationalAvg*1.1 ? 'above' : 'near';
-      return { annualPremium, monthlyPremium, nationalAvg, vsAvg, insight, breakdown };
+      const vsNational = annualPremium < nationalAvg * 0.95 ? 'below national average' : annualPremium > nationalAvg * 1.10 ? 'above national average' : 'near national average';
+      const stateLabel = state || 'your state';
+
+      return { annualPremium, monthlyPremium, nationalAvg, stateAvg, vsNational, insight, savingsTip, stateNote };
     `,
     outputs: [
-      { id: 'annualPremium',  label: 'Estimated Annual Premium',   type: 'currency-hero' },
-      { id: 'monthlyPremium', label: 'Monthly Cost',               type: 'currency' },
-      { id: 'nationalAvg',    label: 'National Average',           type: 'currency' },
-      { id: 'vsAvg',          label: 'Your Estimate vs Average',   type: 'insight' },
-      { id: 'insight',        label: 'Expert Tip',                 type: 'insight' },
+      { id: 'annualPremium', label: 'Estimated Annual Premium',     type: 'currency-hero' },
+      { id: 'monthlyPremium',label: 'Monthly Cost',                 type: 'currency' },
+      { id: 'stateAvg',      label: 'State Average',                type: 'currency' },
+      { id: 'nationalAvg',   label: 'National Average',             type: 'currency' },
+      { id: 'vsNational',    label: 'Your Estimate',                type: 'insight' },
+      { id: 'stateNote',     label: 'State-Specific Note',          type: 'insight' },
+      { id: 'insight',       label: 'Expert Insight',               type: 'insight' },
+      { id: 'savingsTip',    label: 'How to Save',                  type: 'insight' },
     ],
-    disclaimer: 'Estimates are based on 2024–2025 national average rate data. Actual premiums vary by state, insurer, credit score, and individual risk factors. Always compare quotes from multiple carriers before purchasing.',
+    disclaimer: `IMPORTANT DISCLAIMER: This calculator provides educational estimates only. It does not constitute insurance advice, a binding quote, or a recommendation to purchase any specific policy. CoveragePriceGuide.com is not a licensed insurance agent, broker, or financial advisor.
+
+Estimates are derived from 2024–2025 national and state-level average data compiled from NAIC (National Association of Insurance Commissioners), Kaiser Family Foundation (KFF) health insurance data, IIHS, and industry actuarial surveys. Actual premiums are determined by individual underwriting criteria including full application review, credit reports (where permitted), motor vehicle reports, medical records, and insurer-specific rating algorithms.
+
+State regulations vary significantly. In some states, certain rating factors (such as credit score, gender, or tobacco use) are prohibited. Contact your state's Department of Insurance for state-specific rules.
+
+For health insurance, this tool does not calculate ACA premium tax credits or Cost-Sharing Reductions. Visit HealthCare.gov for official enrollment, subsidy eligibility, and plan comparison tools.
+
+Always obtain quotes from multiple licensed carriers and consult a licensed insurance professional before making coverage decisions. Insurance needs change over time — review your policies annually.`,
     relatedArticles: true,
   },
 
