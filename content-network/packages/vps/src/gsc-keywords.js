@@ -29,10 +29,18 @@ import { clusterKeywords } from '@content-network/keyword-engine/src/cluster.js'
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const days = parseInt(args.find(a => a.startsWith('--days='))?.split('=')[1]
-  || args[args.indexOf('--days') + 1] || '90');
-const siteIdFilter = parseInt(args.find(a => a.startsWith('--site-id='))?.split('=')[1]
-  || args[args.indexOf('--site-id') + 1] || '0') || null;
+const _daysIdx = args.indexOf('--days');
+const days = parseInt(
+  args.find(a => a.startsWith('--days='))?.split('=')[1]
+  || (_daysIdx >= 0 ? args[_daysIdx + 1] : null)
+  || '90'
+);
+const _siteIdx = args.indexOf('--site-id');
+const siteIdFilter = parseInt(
+  args.find(a => a.startsWith('--site-id='))?.split('=')[1]
+  || (_siteIdx >= 0 ? args[_siteIdx + 1] : null)
+  || '0'
+) || null;
 
 const GSC_JSON = process.env.GSC_SERVICE_ACCOUNT_JSON;
 
