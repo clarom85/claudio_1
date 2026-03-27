@@ -131,6 +131,18 @@ async function run() {
     }
   }
 
+  // Rigenera articles.json e trending.json con i soli articoli del sito
+  const apiDir = join(WWW_ROOT, site.domain, 'api');
+  mkdirSync(apiDir, { recursive: true });
+  const lite = articles
+    .filter(a => a.status === 'published')
+    .map(a => {
+      const cat = classifyArticle(site.niche_slug, a.keyword || '', a.title);
+      return { slug: a.slug, title: a.title, excerpt: (a.meta_description || '').slice(0, 120), tags: a.tags || [], category: cat.name, categorySlug: cat.slug, image: a.image || '' };
+    });
+  writeFileSync(join(apiDir, 'articles.json'),  JSON.stringify(lite),              'utf-8');
+  writeFileSync(join(apiDir, 'trending.json'),  JSON.stringify(lite.slice(0, 8)), 'utf-8');
+
   console.log(`\n✅ Completato: ${ok} ok, ${fail} falliti`);
   process.exit(0);
 }
