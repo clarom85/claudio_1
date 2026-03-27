@@ -84,6 +84,13 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         continue;
       }
 
+      // Valida che il titolo non sia troncato
+      if (/\.\.\.$/.test(articleData.title) || articleData.title.length < 15) {
+        console.warn(`  Truncated/invalid title: "${articleData.title}" (attempt ${attempt})`);
+        if (attempt === retries) throw new Error(`Truncated title: ${articleData.title}`);
+        continue;
+      }
+
       // Build HTML
       const slug = slugify(keyword);
       const { html, schemas, metaDescription, wordCount } = buildArticleHTML(articleData, {

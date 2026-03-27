@@ -56,7 +56,7 @@ export function generateToolBody(config, site = {}) {
     .tool-hero p{font-size:16px;color:#555;max-width:580px;margin:0 auto;line-height:1.7}
     .tool-intro{background:#f8f8f8;border-left:4px solid var(--tool-color);border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:28px;font-size:15px;color:#333;line-height:1.75}
     .tool-intro p{margin:0 0 10px}.tool-intro p:last-child{margin:0}
-    .tool-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;margin-bottom:28px}
+    .tool-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;margin-bottom:16px}
     .tool-card-header{background:var(--tool-color);color:#fff;padding:18px 28px;display:flex;align-items:center;gap:12px}
     .tool-card-header h2{font-size:16px;font-weight:700;margin:0}
     .tool-body{padding:28px}
@@ -108,7 +108,7 @@ export function generateToolBody(config, site = {}) {
     .wizard-steps li{counter-increment:step-counter;display:flex;gap:12px;margin-bottom:12px;font-size:14px;line-height:1.6}
     .wizard-steps li::before{content:counter(step-counter);flex-shrink:0;width:24px;height:24px;background:#2980b9;color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
     .tool-disclaimer{margin-top:20px;padding:14px 16px;background:#f9f9f9;border-left:3px solid #ddd;border-radius:4px;font-size:12px;color:#888;line-height:1.6}
-    .tool-related{margin-top:40px}.tool-related h3{font-size:18px;margin-bottom:16px;color:#1a1a1a}
+    .tool-related{margin-top:24px}.tool-related h3{font-size:18px;margin-bottom:16px;color:#1a1a1a}
     .mgid-wrap{min-height:0;overflow:hidden}
     .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;margin:0!important;padding:0!important;border:none!important;overflow:hidden}
     @media(max-width:540px){.tool-body{padding:20px 16px}.result-grid{grid-template-columns:1fr 1fr}.result-bar-label{width:90px;font-size:12px}.result-bar-value{width:60px;font-size:13px}}
@@ -153,14 +153,13 @@ export function generateToolBody(config, site = {}) {
           </div>
         </div>
 
-        ${adDiv()}
-        ${mgidInArticle()}
-
         <div class="tool-related">
           <h3>Related Articles</h3>
           <div id="related-articles"></div>
         </div>
 
+        ${adDiv()}
+        ${mgidInArticle()}
         ${mgidSmart()}
 
       </div>
@@ -417,7 +416,7 @@ export function generateToolPage(config, site = {}) {
       border-radius: 4px; font-size: 12px; color: #888; line-height: 1.6;
     }
 
-    .tool-related { margin-top: 40px; }
+    .tool-related { margin-top: 24px; }
     .tool-related h3 {
       font-family: 'Merriweather', Georgia, serif;
       font-size: 18px; margin-bottom: 16px; color: #1a1a1a;
