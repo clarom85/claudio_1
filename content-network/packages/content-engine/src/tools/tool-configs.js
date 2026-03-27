@@ -982,99 +982,221 @@ export const TOOL_CONFIGS = {
      Tool: Life Insurance Needs Calculator
   ───────────────────────────────────────────────────────── */
   'insurance-guide': {
-    slug: 'insurance-rate-estimator',
-    title: 'Life Insurance Needs Calculator',
-    headline: 'How Much Life Insurance Do You Actually Need?',
-    description: 'Calculate your true life insurance coverage needs based on income replacement, debts, dependents, and existing assets — not an agent\'s commission.',
-    seoDescription: 'Free life insurance calculator. Find out exactly how much coverage you need based on your income, debts, and family situation. No email required.',
+    slug: 'insurance-cost-estimator',
+    title: 'Insurance Cost Estimator',
+    headline: 'What Should You Be Paying for Insurance?',
+    description: 'Estimate your annual premium for auto, home, health, or life insurance based on your profile. Compare your costs to national averages and find out if you\'re overpaying.',
+    seoDescription: 'Free insurance cost estimator. Find out what auto, home, health, and life insurance should cost for your situation — based on real market data.',
     type: 'calculator',
-    ctaText: 'Calculate My Coverage Need',
+    ctaText: 'Estimate My Insurance Cost',
     inputs: [
       {
-        id: 'annualIncome',
-        label: 'Annual Income ($)',
-        type: 'number',
-        placeholder: 'e.g. 80000',
-        min: 10000, max: 1000000, default: 80000,
-      },
-      {
-        id: 'yearsToReplace',
-        label: 'Years of Income to Replace',
+        id: 'insuranceType',
+        label: 'Type of Insurance',
         type: 'select',
         options: [
-          { value: '5',  label: '5 years (minimal)' },
-          { value: '10', label: '10 years (standard)' },
-          { value: '15', label: '15 years (family with young kids)' },
-          { value: '20', label: '20 years (max protection)' },
+          { value: 'auto',   label: 'Auto Insurance' },
+          { value: 'home',   label: 'Homeowners Insurance' },
+          { value: 'health', label: 'Health Insurance' },
+          { value: 'life',   label: 'Life Insurance (Term)' },
         ],
+        default: 'auto',
       },
+      // AUTO inputs
       {
-        id: 'mortgage',
-        label: 'Mortgage / Large Debt Balance ($)',
-        type: 'number',
-        placeholder: 'e.g. 250000',
-        min: 0, max: 2000000, default: 250000,
-      },
-      {
-        id: 'dependents',
-        label: 'Number of Dependents',
+        id: 'driverAge',
+        label: 'Driver Age',
         type: 'select',
         options: [
-          { value: '0', label: 'None' },
-          { value: '1', label: '1' },
-          { value: '2', label: '2' },
-          { value: '3', label: '3+' },
+          { value: '16',  label: '16–24 (young driver)' },
+          { value: '25',  label: '25–34' },
+          { value: '35',  label: '35–54' },
+          { value: '55',  label: '55–64' },
+          { value: '65',  label: '65+' },
         ],
+        default: '35',
+        showWhen: { input: 'insuranceType', value: 'auto' },
       },
       {
-        id: 'existingCoverage',
-        label: 'Existing Life Insurance ($)',
+        id: 'drivingRecord',
+        label: 'Driving Record',
+        type: 'select',
+        options: [
+          { value: 'clean',    label: 'Clean (no incidents)' },
+          { value: 'minor',    label: 'Minor violation (speeding)' },
+          { value: 'accident', label: 'At-fault accident' },
+          { value: 'dui',      label: 'DUI / Major violation' },
+        ],
+        default: 'clean',
+        showWhen: { input: 'insuranceType', value: 'auto' },
+      },
+      {
+        id: 'coverage',
+        label: 'Coverage Level',
+        type: 'select',
+        options: [
+          { value: 'min',   label: 'Minimum required' },
+          { value: 'basic', label: 'Basic (liability + collision)' },
+          { value: 'full',  label: 'Full coverage' },
+        ],
+        default: 'full',
+        showWhen: { input: 'insuranceType', value: 'auto' },
+      },
+      // HOME inputs
+      {
+        id: 'homeValue',
+        label: 'Home Value ($)',
         type: 'number',
-        placeholder: 'e.g. 50000',
-        min: 0, max: 5000000, default: 0,
-        hint: 'Include employer-provided and any existing policies.',
+        placeholder: 'e.g. 350000',
+        min: 50000, max: 2000000, default: 350000,
+        showWhen: { input: 'insuranceType', value: 'home' },
+      },
+      {
+        id: 'homeAge',
+        label: 'Home Age',
+        type: 'select',
+        options: [
+          { value: 'new',    label: 'Under 10 years' },
+          { value: 'mid',    label: '10–30 years' },
+          { value: 'old',    label: '30–50 years' },
+          { value: 'vold',   label: '50+ years' },
+        ],
+        default: 'mid',
+        showWhen: { input: 'insuranceType', value: 'home' },
+      },
+      // HEALTH inputs
+      {
+        id: 'healthAge',
+        label: 'Your Age',
+        type: 'select',
+        options: [
+          { value: '25', label: '18–34' },
+          { value: '40', label: '35–44' },
+          { value: '50', label: '45–54' },
+          { value: '60', label: '55–64' },
+        ],
+        default: '40',
+        showWhen: { input: 'insuranceType', value: 'health' },
+      },
+      {
+        id: 'planTier',
+        label: 'Plan Tier',
+        type: 'select',
+        options: [
+          { value: 'bronze',   label: 'Bronze (low premium, high deductible)' },
+          { value: 'silver',   label: 'Silver (moderate)' },
+          { value: 'gold',     label: 'Gold (higher premium, lower deductible)' },
+          { value: 'platinum', label: 'Platinum (max coverage)' },
+        ],
+        default: 'silver',
+        showWhen: { input: 'insuranceType', value: 'health' },
+      },
+      // LIFE inputs
+      {
+        id: 'lifeAge',
+        label: 'Your Age',
+        type: 'select',
+        options: [
+          { value: '25', label: '25–34' },
+          { value: '35', label: '35–44' },
+          { value: '45', label: '45–54' },
+          { value: '55', label: '55–64' },
+        ],
+        default: '35',
+        showWhen: { input: 'insuranceType', value: 'life' },
+      },
+      {
+        id: 'coverageAmount',
+        label: 'Coverage Amount',
+        type: 'select',
+        options: [
+          { value: '250000',  label: '$250,000' },
+          { value: '500000',  label: '$500,000' },
+          { value: '750000',  label: '$750,000' },
+          { value: '1000000', label: '$1,000,000' },
+        ],
+        default: '500000',
+        showWhen: { input: 'insuranceType', value: 'life' },
+      },
+      {
+        id: 'termLength',
+        label: 'Term Length',
+        type: 'select',
+        options: [
+          { value: '10', label: '10 years' },
+          { value: '20', label: '20 years' },
+          { value: '30', label: '30 years' },
+        ],
+        default: '20',
+        showWhen: { input: 'insuranceType', value: 'life' },
       },
     ],
     formula: `
-      const income   = parseFloat(inputs.annualIncome)     || 80000;
-      const years    = parseInt(inputs.yearsToReplace)     || 10;
-      const mortgage = parseFloat(inputs.mortgage)         || 0;
-      const deps     = parseInt(inputs.dependents)         || 0;
-      const existing = parseFloat(inputs.existingCoverage) || 0;
+      const type = inputs.insuranceType || 'auto';
+      let annualPremium = 0, monthlyPremium = 0, nationalAvg = 0, insight = '', breakdown = {};
 
-      const incomeReplacement = income * years;
-      const dependentBuffer   = deps * 25000;
-      const finalExpenses     = 15000;
-      const totalNeed         = incomeReplacement + mortgage + dependentBuffer + finalExpenses;
-      const coverageGap       = Math.max(0, totalNeed - existing);
-      const premiumPer100k    = 8;
-      const estMonthlyPremium = Math.round((coverageGap / 100000) * premiumPer100k);
-      const usAvgCoverage     = 171000;
+      if (type === 'auto') {
+        const BASE = { '16':3200, '25':1650, '35':1420, '55':1280, '65':1450 };
+        const RECORD = { clean:1.0, minor:1.32, accident:1.65, dui:2.20 };
+        const COV = { min:0.55, basic:0.85, full:1.0 };
+        const age = inputs.driverAge || '35';
+        const rec = inputs.drivingRecord || 'clean';
+        const cov = inputs.coverage || 'full';
+        annualPremium = Math.round((BASE[age] || 1420) * (RECORD[rec] || 1.0) * (COV[cov] || 1.0));
+        nationalAvg = 1760;
+        breakdown = { liability: Math.round(annualPremium*0.45), collision: Math.round(annualPremium*0.32), comprehensive: Math.round(annualPremium*0.23) };
+        insight = annualPremium > nationalAvg
+          ? 'Your estimate is above average. Shopping 3+ quotes at renewal typically saves $300–$600/year.'
+          : 'Your estimate is at or below the national average — a clean record is your biggest asset.';
+      }
 
-      let insight = '';
-      if (coverageGap === 0) insight = 'You\'re fully covered — review your policy annually as income and debts change.';
-      else if (coverageGap > 500000) insight = 'A 20-year term policy typically costs less than a streaming service per week for this coverage level.';
-      else insight = 'Term life insurance is the most cost-effective option for income replacement — avoid whole life for pure coverage needs.';
+      else if (type === 'home') {
+        const value = parseFloat(inputs.homeValue) || 350000;
+        const AGE_FACTOR = { new:0.0028, mid:0.0032, old:0.0038, vold:0.0045 };
+        const age = inputs.homeAge || 'mid';
+        annualPremium = Math.round(value * (AGE_FACTOR[age] || 0.0032));
+        nationalAvg = 1428;
+        breakdown = { dwelling: Math.round(annualPremium*0.65), liability: Math.round(annualPremium*0.15), personalProperty: Math.round(annualPremium*0.20) };
+        insight = 'Bundling home + auto with the same insurer saves 10–25% on average. Ask for discounts on new roof, security system, and smoke detectors.';
+      }
 
-      return {
-        totalNeed:          Math.round(totalNeed),
-        coverageGap:        Math.round(coverageGap),
-        estMonthlyPremium,
-        incomeReplacement:  Math.round(incomeReplacement),
-        mortgage:           Math.round(mortgage),
-        comparison: { yours: '$' + Math.round(totalNeed/1000) + 'k needed', average: '$' + Math.round(usAvgCoverage/1000) + 'k held' },
-        insight,
-      };
+      else if (type === 'health') {
+        const BASE = { '25':440, '40':612, '50':798, '60':1020 };
+        const TIER = { bronze:0.75, silver:1.0, gold:1.35, platinum:1.65 };
+        const age = inputs.healthAge || '40';
+        const tier = inputs.planTier || 'silver';
+        monthlyPremium = Math.round((BASE[age] || 612) * (TIER[tier] || 1.0));
+        annualPremium = monthlyPremium * 12;
+        nationalAvg = 7739;
+        breakdown = { premium: annualPremium, deductible: tier==='bronze'?7000:tier==='silver'?4500:tier==='gold'?1500:500, outOfPocketMax: tier==='bronze'?9100:tier==='silver'?7000:tier==='gold'?4000:2000 };
+        insight = 'If you use healthcare regularly, Gold plans often cost less overall despite higher premiums. Bronze plans work best for healthy individuals with an HSA.';
+      }
+
+      else if (type === 'life') {
+        const BASE_PER_100K = { '25':6, '35':10, '45':22, '55':52 };
+        const TERM_FACTOR = { '10':0.82, '20':1.0, '30':1.25 };
+        const age = inputs.lifeAge || '35';
+        const coverage = parseInt(inputs.coverageAmount) || 500000;
+        const term = inputs.termLength || '20';
+        monthlyPremium = Math.round(((BASE_PER_100K[age] || 10) * (coverage/100000)) * (TERM_FACTOR[term] || 1.0));
+        annualPremium = monthlyPremium * 12;
+        nationalAvg = 1020;
+        breakdown = { monthly: monthlyPremium, coveragePerDollar: Math.round(coverage/annualPremium) };
+        insight = 'Buying in your 30s locks in the lowest rates. Delaying by 5 years increases premiums by 30–60%. A 20-year term covers most families through peak financial vulnerability.';
+      }
+
+      if (!monthlyPremium) monthlyPremium = Math.round(annualPremium / 12);
+      const vsAvg = annualPremium < nationalAvg ? 'below' : annualPremium > nationalAvg*1.1 ? 'above' : 'near';
+      return { annualPremium, monthlyPremium, nationalAvg, vsAvg, insight, breakdown };
     `,
     outputs: [
-      { id: 'totalNeed',         label: 'Coverage You Need',        type: 'currency-hero' },
-      { id: 'coverageGap',       label: 'Coverage Gap',             type: 'currency' },
-      { id: 'estMonthlyPremium', label: 'Est. Monthly Premium',     type: 'currency' },
-      { id: 'incomeReplacement', label: 'Income Replacement',       type: 'currency' },
-      { id: 'comparison',        label: 'Your Need vs US Average',  type: 'comparison' },
-      { id: 'insight',           label: 'Expert Insight',           type: 'insight' },
+      { id: 'annualPremium',  label: 'Estimated Annual Premium',   type: 'currency-hero' },
+      { id: 'monthlyPremium', label: 'Monthly Cost',               type: 'currency' },
+      { id: 'nationalAvg',    label: 'National Average',           type: 'currency' },
+      { id: 'vsAvg',          label: 'Your Estimate vs Average',   type: 'insight' },
+      { id: 'insight',        label: 'Expert Tip',                 type: 'insight' },
     ],
-    disclaimer: 'Estimates use DIME method. Premium estimates are illustrative for a healthy 35-year-old. Actual premiums vary by age, health, and insurer. Compare quotes from multiple carriers.',
+    disclaimer: 'Estimates are based on 2024–2025 national average rate data. Actual premiums vary by state, insurer, credit score, and individual risk factors. Always compare quotes from multiple carriers before purchasing.',
     relatedArticles: true,
   },
 
