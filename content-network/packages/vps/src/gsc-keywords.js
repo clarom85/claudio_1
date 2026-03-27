@@ -129,6 +129,13 @@ async function run() {
   // Scope per Search Console (diverso dall'Indexing API)
   const token = await getAccessToken(credentials, 'https://www.googleapis.com/auth/webmasters.readonly');
 
+  // Fetch lista siti accessibili per risolvere www vs non-www
+  const gscSitesRes = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  const gscSitesData = await gscSitesRes.json();
+  const gscSiteUrls = (gscSitesData.siteEntry || []).map(e => e.siteUrl);
+
   const sites = siteIdFilter
     ? await sql`SELECT s.id, s.domain, n.id as niche_id, n.slug as niche_slug FROM sites s JOIN niches n ON s.niche_id = n.id WHERE s.status = 'live' AND s.id = ${siteIdFilter}`
     : await sql`SELECT s.id, s.domain, n.id as niche_id, n.slug as niche_slug FROM sites s JOIN niches n ON s.niche_id = n.id WHERE s.status = 'live'`;
@@ -156,7 +163,8 @@ async function run() {
     // Fetch da GSC
     let rows;
     try {
-      const siteUrl = `https://${site.domain}/`;
+      // Risolvi URL esatto in GSC (gestisce www vs non-www)
+      const siteUrl = gscSiteUrls.find(u => u.includes(site.domain)) || `https://${site.domain}/`;
       rows = await fetchGscQueries(siteUrl, token, startDate, endDate);
     } catch (e) {
       console.warn(`  ⚠️  GSC fetch failed: ${e.message}`);
