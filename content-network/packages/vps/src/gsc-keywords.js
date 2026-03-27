@@ -121,12 +121,9 @@ async function run() {
   // Scope per Search Console (diverso dall'Indexing API)
   const token = await getAccessToken(credentials, 'https://www.googleapis.com/auth/webmasters.readonly');
 
-  const siteFilter = siteIdFilter ? sql`AND s.id = ${siteIdFilter}` : sql``;
-  const sites = await sql`
-    SELECT s.id, s.domain, n.id as niche_id, n.slug as niche_slug
-    FROM sites s JOIN niches n ON s.niche_id = n.id
-    WHERE s.status = 'live' ${siteFilter}
-  `;
+  const sites = siteIdFilter
+    ? await sql`SELECT s.id, s.domain, n.id as niche_id, n.slug as niche_slug FROM sites s JOIN niches n ON s.niche_id = n.id WHERE s.status = 'live' AND s.id = ${siteIdFilter}`
+    : await sql`SELECT s.id, s.domain, n.id as niche_id, n.slug as niche_slug FROM sites s JOIN niches n ON s.niche_id = n.id WHERE s.status = 'live'`;
 
   // Date range
   const end = new Date();
