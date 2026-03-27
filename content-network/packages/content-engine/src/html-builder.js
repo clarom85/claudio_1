@@ -101,7 +101,7 @@ function escapeRegexChars(str) {
 }
 
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '' }) {
-  const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations } = articleData;
+  const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations, comparisonTable } = articleData;
   // Enforce Google's 160-char limit — Claude occasionally overshoots
   const metaDescription = (articleData.metaDescription || '').slice(0, 160);
 
@@ -154,6 +154,24 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     || /\bhow[ -]to\b|\bstep[- ]by[- ]step\b|\bguide to\b|\binstall(ation)?\b/i.test(keyword);
   const isCost = !isHowTo && /\bcost(s)?\b|\bprice(s)?\b|\b vs \b|\bcompar|\bhow much\b|\baverage\b|\bexpensive\b|\bcheap/i.test(keyword);
   const layoutType = isHowTo ? 'howto' : isCost ? 'cost' : 'standard';
+
+  // ── Featured comparison table (shown prominently after TOC) ────────────────
+  const comparisonTableHTML = (comparisonTable?.headers?.length && comparisonTable?.rows?.length)
+    ? (() => {
+        const { caption, headers, rows } = comparisonTable;
+        const ths = headers.map(h => `<th>${escapeHtml(String(h))}</th>`).join('');
+        const trs = rows.map(row =>
+          `<tr>${row.map(cell => `<td>${escapeHtml(String(cell ?? ''))}</td>`).join('')}</tr>`
+        ).join('');
+        return `<div style="margin:4px 0 32px;overflow-x:auto;">
+    ${caption ? `<p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#555;margin:0 0 8px;">${escapeHtml(caption)}</p>` : ''}
+    <table class="cost-table" style="width:100%">
+      <thead><tr>${ths}</tr></thead>
+      <tbody>${trs}</tbody>
+    </table>
+  </div>`;
+      })()
+    : '';
 
   // Max 2 inline ads inside sections — different Ezoic IDs to avoid duplicates
   // linkInjector: shared state across all sections → max 3 total links per article
@@ -306,6 +324,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       ${howtoHeaderHTML}
       ${costSummaryHTML}
       ${tocHTML}
+      ${comparisonTableHTML}
 
       ${AD_UNIT_INLINE}
 

@@ -326,6 +326,14 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
   "authorNote": "2-3 sentences in first person from direct professional experience — specific anecdote or observation that ONLY someone with real hands-on experience would know. Reference a real situation, client type, or pattern seen repeatedly. Not generic. Example style: 'I've seen this mistake on nearly every job where the homeowner went with the lowest bid — and it always costs more to fix than doing it right the first time.'",
   "expertTip": "1 concise tip (1-2 sentences) that represents insider knowledge — something a professional would tell a friend but that most articles miss. Prefixed naturally with the author's perspective.",
   "keyTakeaways": ["specific takeaway 1", "specific takeaway 2", "specific takeaway 3"],
+  "comparisonTable": {
+    "caption": "brief descriptive title for the table (e.g. 'Average Bathroom Remodel Cost by Scope')",
+    "headers": ["Option", "Cost Range", "Best For"],
+    "rows": [
+      ["Row 1 Col 1", "Row 1 Col 2", "Row 1 Col 3"],
+      ["Row 2 Col 1", "Row 2 Col 2", "Row 2 Col 3"]
+    ]
+  },
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "category": "best-fit category for this article (options: ${cfg.categoryHint})",
   "schemaType": "Article or HowTo — use HowTo for step-by-step guides (hint: ${cfg.schemaHint})",
@@ -362,6 +370,8 @@ ABSOLUTE RULES:
 - Citations: 1-2 REAL sources only — government agencies, major institutions, established industry bodies. Real URLs. Never invent a source.
 - Every section must add new information — zero repetition across sections
 - Write in American English
+- US PRICES ONLY: All costs, rates, and monetary values must be in USD for the US market. Never cite UK, Canadian, Australian, or other non-US prices unless the keyword explicitly targets a specific country. If in doubt, use US figures.
+- COMPARISON TABLE: include the "comparisonTable" field when the keyword involves costs, types, options, or comparisons (e.g. "cost of X", "X vs Y", "types of X", "best X for Y"). Use 3–6 rows and 3–4 columns with specific data. Omit (set to null) for HowTo/step-by-step articles and simple informational articles with no comparative data.
 - HTML TABLES REQUIRED: whenever you include a cost breakdown, comparison, or data with rows and columns — you MUST use a real HTML <table> with <thead>/<tbody>/<tr>/<th>/<td> tags. Never write tabular data as plain text or bullet lists. Use class="cost-table" on every <table>. Example: <table class="cost-table"><thead><tr><th>Item</th><th>Low</th><th>High</th></tr></thead><tbody><tr><td>Labor</td><td>$5,000</td><td>$12,000</td></tr></tbody></table>
 - HTML LISTS: use <ul class="art-list"> for feature lists, checklist items, and key points. Use plain <ul> only for generic enumerations
 - BOLD TEXT: wrap key terms, important numbers, and critical warnings in <strong> tags. Use bold 3-6 times per section to help readers scan. Example: "The average cost is <strong>$4,200–$8,500</strong> depending on material."
