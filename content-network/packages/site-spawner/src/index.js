@@ -550,12 +550,29 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'contact/index.html': {
       title: 'Contact Us',
-      noindex: true,
-      description: `Contact ${siteName}`,
-      body: `<div style="max-width:600px;margin:40px auto;padding:0 20px">
-        <h1 style="font-size:32px;margin-bottom:16px">Contact Us</h1>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:24px">Have a question, correction, or want to work with us? Reach out below.</p>
-        <p style="font-size:16px">📧 Email: <a href="mailto:contact@${domain}">contact@${domain}</a></p>
+      noindex: false,
+      description: `Contact the ${siteName} editorial team — corrections, questions, feedback, and advertising inquiries.`,
+      body: `<div style="max-width:640px;margin:48px auto;padding:0 20px;color:#1a1a1a">
+        <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Contact Us</h1>
+        <p style="color:#666;font-size:14px;margin-bottom:32px">We read every message and aim to respond within 2 business days.</p>
+        <div style="display:grid;gap:16px;margin-bottom:40px">
+          <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+            <h2 style="font-size:16px;font-weight:700;margin:0 0 6px">Editorial Questions &amp; Corrections</h2>
+            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 10px">Found an error or want to challenge a claim?</p>
+            <a href="mailto:editor@${domain}" style="font-size:14px;font-weight:600;color:#c0392b">editor@${domain}</a>
+          </div>
+          <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+            <h2 style="font-size:16px;font-weight:700;margin:0 0 6px">General Inquiries</h2>
+            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 10px">Feedback, topic suggestions, or anything else.</p>
+            <a href="mailto:contact@${domain}" style="font-size:14px;font-weight:600;color:#c0392b">contact@${domain}</a>
+          </div>
+          <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+            <h2 style="font-size:16px;font-weight:700;margin:0 0 6px">Advertising &amp; Partnerships</h2>
+            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 10px">Display advertising and sponsorship inquiries.</p>
+            <a href="mailto:ads@${domain}" style="font-size:14px;font-weight:600;color:#c0392b">ads@${domain}</a>
+          </div>
+        </div>
+        <p style="font-size:14px;color:#666"><a href="/about/" style="color:#c0392b">About Us</a> &middot; <a href="/editorial-process/" style="color:#c0392b">Editorial Standards</a></p>
       </div>`
     },
     'advertise/index.html': {

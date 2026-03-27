@@ -300,6 +300,9 @@ ${renderHeader(site)}
     <div class="art-layout">
       <div class="art-body">
         ${injectCalcCtaMidArticle(injectMgidInArticle(content, site.mgidInArticleId), calcCtaHtml)}
+        ${site.ymyl ? `<div style="margin:36px 0 0;padding:16px 20px;background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:4px">
+  <p style="font-size:13px;line-height:1.65;margin:0;color:#78350f"><strong style="display:block;margin-bottom:4px">Insurance Information Disclosure</strong>This article is for educational and informational purposes only. It does not constitute professional insurance advice, a solicitation, or a recommendation to purchase any specific policy. Premium estimates and coverage terms vary significantly by insurer, state, age, claims history, and individual underwriting criteria. Always compare quotes from multiple licensed carriers and consult a licensed insurance professional before making coverage decisions. <a href="/disclaimer/" style="color:#92400e;font-weight:600;text-decoration:underline">Read our full disclaimer →</a></p>
+</div>` : ''}
         ${(() => {
           const shortname = process.env.DISQUS_SHORTNAME || '';
           if (!shortname) return '';

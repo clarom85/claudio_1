@@ -8,6 +8,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from '@content-network/site-spawner/src/niche-methodology.js';
+import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
@@ -53,6 +54,93 @@ ${ga4Script}
   <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a></p>
 </footer>
 </body></html>`;
+}
+
+function buildContactPage(siteName, domain) {
+  return {
+    title: 'Contact Us',
+    noindex: false,
+    description: `Contact the ${siteName} editorial team — corrections, questions, feedback, and advertising inquiries.`,
+    body: `<div style="max-width:640px;margin:48px auto;padding:0 20px;color:#1a1a1a">
+      <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Contact Us</h1>
+      <p style="color:#666;font-size:14px;margin-bottom:32px">We read every message and aim to respond within 2 business days.</p>
+
+      <div style="display:grid;gap:16px;margin-bottom:40px">
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+          <h2 style="font-size:16px;font-weight:700;margin:0 0 6px;color:#1a1a1a">Editorial Questions &amp; Corrections</h2>
+          <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 10px">Found an error, want to challenge a claim, or have a question about our methodology?</p>
+          <a href="mailto:editor@${domain}" style="font-size:14px;font-weight:600;color:#c0392b">editor@${domain}</a>
+        </div>
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+          <h2 style="font-size:16px;font-weight:700;margin:0 0 6px;color:#1a1a1a">General &amp; Reader Inquiries</h2>
+          <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 10px">General questions, feedback, topic suggestions, or anything else.</p>
+          <a href="mailto:contact@${domain}" style="font-size:14px;font-weight:600;color:#c0392b">contact@${domain}</a>
+        </div>
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+          <h2 style="font-size:16px;font-weight:700;margin:0 0 6px;color:#1a1a1a">Advertising &amp; Partnerships</h2>
+          <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 10px">Display advertising, sponsored content, and affiliate partnership inquiries.</p>
+          <a href="mailto:ads@${domain}" style="font-size:14px;font-weight:600;color:#c0392b">ads@${domain}</a>
+        </div>
+      </div>
+
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:16px 20px;margin-bottom:32px">
+        <p style="font-size:13px;line-height:1.65;margin:0;color:#856404"><strong>Insurance content note:</strong> We are not a licensed insurance agent, broker, or financial advisor. We cannot provide personal insurance quotes, recommend specific policies, or give advice about your individual coverage situation. For those needs, please contact a licensed insurance professional in your state.</p>
+      </div>
+
+      <p style="font-size:14px;color:#666;line-height:1.7">
+        <a href="/about/" style="color:#c0392b">About ${siteName}</a> &middot;
+        <a href="/editorial-process/" style="color:#c0392b">Editorial Standards</a> &middot;
+        <a href="/disclaimer/" style="color:#c0392b">Disclaimer</a>
+      </p>
+    </div>`
+  };
+}
+
+function buildReviewerPage(reviewer, author, siteName, siteUrl, domain) {
+  const slug = reviewer.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  return {
+    slug,
+    title: `${reviewer.name} — ${reviewer.title} | ${siteName}`,
+    noindex: false,
+    description: `${reviewer.name}, ${reviewer.title}. ${reviewer.credentials}. Expert reviewer for ${siteName}.`,
+    body: `<div style="max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a">
+      <div style="background:linear-gradient(135deg,#1a1a2e,#2d2d4e);border-radius:8px;padding:32px;margin-bottom:32px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+        <div style="width:90px;height:90px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:32px;font-weight:900;color:#fff">${reviewer.name.charAt(0)}</div>
+        <div style="flex:1;min-width:200px">
+          <h1 style="font-size:clamp(22px,4vw,30px);font-weight:900;color:#fff;margin:0 0 6px;line-height:1.2">${htmlEsc(reviewer.name)}</h1>
+          <p style="font-size:15px;font-weight:600;color:rgba(255,255,255,.8);margin:0 0 10px">${htmlEsc(reviewer.title)}</p>
+          <p style="font-size:13px;color:rgba(255,255,255,.65);margin:0;line-height:1.5">${htmlEsc(reviewer.credentials)}</p>
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #16a34a;border-radius:6px;padding:18px 22px;margin-bottom:32px">
+        <p style="font-size:14px;font-weight:700;color:#15803d;margin:0 0 6px">Expert Reviewer — ${htmlEsc(siteName)}</p>
+        <p style="font-size:14px;line-height:1.7;color:#166534;margin:0">${htmlEsc(reviewer.name)} reviews insurance content on ${htmlEsc(siteName)} for factual accuracy, regulatory compliance, and practical relevance. Every article carrying the "Reviewed by" designation has been read and verified by ${htmlEsc(reviewer.name.split(' ')[0])} before publication.</p>
+      </div>
+
+      <h2 style="font-size:20px;font-weight:700;margin:0 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Credentials &amp; Background</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:20px;color:#333">${htmlEsc(reviewer.credentials).replace(/ · /g, ' &middot; ')}</p>
+
+      <h2 style="font-size:20px;font-weight:700;margin:32px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Review Scope</h2>
+      <ul style="font-size:15px;line-height:1.85;padding-left:24px;color:#333;margin-bottom:28px">
+        <li style="margin-bottom:8px">Verifying premium estimates against NAIC data and state Department of Insurance rate filings</li>
+        <li style="margin-bottom:8px">Confirming coverage definitions align with standard policy language (ISO forms)</li>
+        <li style="margin-bottom:8px">Flagging state-specific regulatory variations that affect consumer rights</li>
+        <li style="margin-bottom:8px">Ensuring disclaimers and disclosures meet editorial standards for YMYL financial content</li>
+        <li style="margin-bottom:8px">Reviewing calculator methodology and output ranges for actuarial reasonableness</li>
+      </ul>
+
+      <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px;margin-top:32px">
+        <p style="font-size:13px;color:#666;margin:0;line-height:1.7">
+          Content reviewed by ${htmlEsc(reviewer.name)} is marked with the "Reviewed by" badge in the editorial trust block at the top of each article.
+          Last updated: ${today} &middot;
+          <a href="/editorial-process/" style="color:#c0392b">Our Editorial Process</a> &middot;
+          <a href="/author/${author.avatar}/" style="color:#c0392b">Meet the Author: ${htmlEsc(author.name)}</a>
+        </p>
+      </div>
+    </div>`
+  };
 }
 
 function buildPages(siteName, domain, siteUrl) {
@@ -155,6 +243,9 @@ async function regenerateStaticPages(site) {
 
   const pages = buildPages(siteName, site.domain, siteUrl);
 
+  // Contact page — indexable, detailed
+  pages['contact/index.html'] = buildContactPage(siteName, site.domain);
+
   // Add niche-specific methodology page
   const nicheSlug = site.niche_slug || '';
   const methMeta = NICHE_METHODOLOGY[nicheSlug] || DEFAULT_METHODOLOGY;
@@ -171,6 +262,17 @@ async function regenerateStaticPages(site) {
     const canonical = `${siteUrl}/${path.replace('index.html', '')}`;
     const html = simplePageWrapper(page.title, page.description, page.body, siteConfig, { noindex: page.noindex || false, canonical });
     writeFileSync(join(WWW_ROOT, site.domain, path), html, 'utf-8');
+  }
+
+  // Reviewer page — only for YMYL niches that have a reviewer
+  const author = AUTHOR_PERSONAS[nicheSlug];
+  if (author?.reviewer && author?.ymyl) {
+    const rev = buildReviewerPage(author.reviewer, author, siteName, siteUrl, site.domain);
+    const revDir = join(WWW_ROOT, site.domain, 'author', rev.slug);
+    mkdirSync(revDir, { recursive: true });
+    const canonical = `${siteUrl}/author/${rev.slug}/`;
+    const html = simplePageWrapper(rev.title, rev.description, rev.body, siteConfig, { noindex: false, canonical });
+    writeFileSync(join(revDir, 'index.html'), html, 'utf-8');
   }
 
   // 404 page — must live at root level (nginx: error_page 404 /404.html)
