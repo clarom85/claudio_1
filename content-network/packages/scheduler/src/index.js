@@ -112,6 +112,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ cleanup-keyword-pool: ${e.message}`); }
   }
 
+  // 10. FAQ hub refresh — ogni domenica alle 10:xx (dopo che nuovi articoli potrebbero essere stati pubblicati)
+  if (now.getHours() === 10 && now.getDay() === 0) {
+    try {
+      console.log('  📋 Refreshing FAQ hubs...');
+      execSync('node packages/vps/src/generate-faq-hub.js --all', { cwd: ROOT, stdio: 'pipe', timeout: 60000 });
+      console.log('  ✅ FAQ hubs refreshed');
+    } catch (e) { console.error(`  ❌ generate-faq-hub: ${e.message}`); }
+  }
+
   // Report domenicale completo (ogni domenica alle 07:xx)
   if (now.getHours() === 7 && now.getDay() === 0) {
     try { await sendWeeklyReport(stats); } catch (e) { console.error(`  ❌ sendWeeklyReport: ${e.message}`); }

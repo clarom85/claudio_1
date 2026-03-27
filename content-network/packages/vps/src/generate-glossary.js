@@ -186,6 +186,63 @@ function buildTermPage(term, allTerms, nicheName, siteConfig) {
   </div>`;
 }
 
+/**
+ * Exported function for site-spawner integration.
+ * @param {object} opts - { domain, nicheSlug, nicheName, ga4MeasurementId }
+ */
+export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4MeasurementId = '' }) {
+  const terms = GLOSSARY_TERMS[nicheSlug];
+  if (!terms?.length) return 0;
+
+  const domainParts = domain.replace(/\.(com|net|org|io)$/, '').split(/[-.]/).filter(Boolean);
+  const siteName = domainParts.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const siteConfig = { name: siteName, url: `https://${domain}`, ga4MeasurementId };
+  const resolvedNicheName = nicheName || nicheSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+  const siteDir = join(WWW_ROOT, domain);
+  const glossaryRoot = join(siteDir, 'glossary');
+  mkdirSync(glossaryRoot, { recursive: true });
+
+  const indexHtml = simplePageWrapper(
+    `${resolvedNicheName} Glossary`,
+    `Complete glossary of ${resolvedNicheName.toLowerCase()} terms. ${terms.length} key concepts explained in plain English.`,
+    buildGlossaryIndex(terms, resolvedNicheName, siteConfig),
+    siteConfig,
+    { noindex: false, canonical: `${siteConfig.url}/glossary/` }
+  );
+  writeFileSync(join(glossaryRoot, 'index.html'), indexHtml, 'utf-8');
+
+  for (const term of terms) {
+    const termDir = join(glossaryRoot, term.slug);
+    mkdirSync(termDir, { recursive: true });
+    writeFileSync(
+      join(termDir, 'index.html'),
+      simplePageWrapper(
+        `${term.term}: Definition & Meaning`,
+        `${term.shortDef.slice(0, 140)} Full definition with real-world examples.`,
+        buildTermPage(term, terms, resolvedNicheName, siteConfig),
+        siteConfig,
+        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/` }
+      ),
+      'utf-8'
+    );
+  }
+
+  // Update sitemap
+  const sitemapPath = join(siteDir, 'sitemap.xml');
+  if (existsSync(sitemapPath)) {
+    let sitemap = readFileSync(sitemapPath, 'utf-8');
+    sitemap = sitemap.replace(/https:\/\/\d+\.\d+\.\d+\.\d+\//g, `https://${domain}/`);
+    sitemap = sitemap.replace(/[ \t]*<url>\s*<loc>https:\/\/[^<]+\/glossary\/[^<]*<\/loc>[\s\S]*?<\/url>\n?/g, '');
+    const indexEntry = `  <url>\n    <loc>${siteConfig.url}/glossary/</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>`;
+    const termEntries = terms.map(t => `  <url>\n    <loc>${siteConfig.url}/glossary/${t.slug}/</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>`).join('\n');
+    sitemap = sitemap.replace('</urlset>', `${indexEntry}\n${termEntries}\n</urlset>`);
+    writeFileSync(sitemapPath, sitemap, 'utf-8');
+  }
+
+  return terms.length;
+}
+
 async function run() {
   const args = process.argv.slice(2);
   const all = args.includes('--all');

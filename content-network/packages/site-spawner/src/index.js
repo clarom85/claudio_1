@@ -25,6 +25,7 @@ import { TOOL_CONFIGS } from '@content-network/content-engine/src/tools/tool-con
 import { generateToolPage, generateToolBody } from '@content-network/content-engine/src/tools/tool-generator.js';
 import { getAllCategoryIntros } from '@content-network/content-engine/src/category-intros.js';
 import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from './niche-methodology.js';
+import { generateGlossaryForSite } from '@content-network/vps/src/generate-glossary.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -125,7 +126,20 @@ async function run() {
     console.log('📄 Generating static pages...');
     await generateStaticPages(domain, siteConfig, template);
 
-    // 7b. Pagina autore — genera bio lunga + scarica foto
+    // 7b. Glossary pages (se ci sono termini per la nicchia)
+    try {
+      const termCount = generateGlossaryForSite({
+        domain,
+        nicheSlug,
+        nicheName: niche.name,
+        ga4MeasurementId: siteConfig.ga4MeasurementId || '',
+      });
+      if (termCount) console.log(`  ✅ Glossary: ${termCount} terms at /glossary/`);
+    } catch (err) {
+      console.warn(`  ⚠️  Glossary generation failed (non-blocking): ${err.message}`);
+    }
+
+    // 7d. Pagina autore — genera bio lunga + scarica foto
     console.log('👤 Generating author profile...');
     try {
       const sitePublicDir = join(WWW_ROOT, domain);
@@ -138,7 +152,7 @@ async function run() {
       console.warn(`  ⚠️  Author generation failed (non-blocking): ${err.message}`);
     }
 
-    // 7c. Interactive tool page per la nicchia
+    // 7e. Interactive tool page per la nicchia
     const toolConfig = TOOL_CONFIGS[nicheSlug];
     if (toolConfig) {
       console.log(`🔧 Generating interactive tool: ${toolConfig.title}...`);
@@ -150,7 +164,7 @@ async function run() {
       }
     }
 
-    // 7d. Category pages con intro text
+    // 7f. Category pages con intro text
     console.log('📂 Generating category pages...');
     const categories = getCategoriesForNiche(nicheSlug);
     const categoryIntros = getAllCategoryIntros(nicheSlug);
