@@ -98,6 +98,20 @@ async function run() {
     try { await runWeeklyLinkGraphAnalysis(); } catch (e) { console.error(`  ❌ runWeeklyLinkGraphAnalysis: ${e.message}`); }
   }
 
+  // 9. GSC keyword extraction + pool cleanup (ogni domenica alle 09:xx)
+  if (now.getHours() === 9 && now.getDay() === 0) {
+    try {
+      console.log('  📊 GSC keyword extraction...');
+      execSync('node packages/vps/src/gsc-keywords.js', { cwd: ROOT, stdio: 'pipe', timeout: 120000 });
+      console.log('  ✅ GSC keyword extraction done');
+    } catch (e) { console.error(`  ❌ gsc-keywords: ${e.message}`); }
+    try {
+      console.log('  🧹 Keyword pool cleanup...');
+      execSync('node packages/vps/src/cleanup-keyword-pool.js', { cwd: ROOT, stdio: 'pipe', timeout: 120000 });
+      console.log('  ✅ Keyword pool cleanup done');
+    } catch (e) { console.error(`  ❌ cleanup-keyword-pool: ${e.message}`); }
+  }
+
   // Report domenicale completo (ogni domenica alle 07:xx)
   if (now.getHours() === 7 && now.getDay() === 0) {
     try { await sendWeeklyReport(stats); } catch (e) { console.error(`  ❌ sendWeeklyReport: ${e.message}`); }

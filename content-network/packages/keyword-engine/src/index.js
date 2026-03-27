@@ -134,12 +134,27 @@ async function run() {
   const existing = await sql`SELECT keyword FROM keywords WHERE niche_id = ${niche.id}`;
   const deduped = deduplicateAcrossSites(filtered, existing.map(r => r.keyword));
 
-  console.log(`✅ ${deduped.length} unique quality keywords ready`);
+  // Rimuovi keywords il cui predicted slug conflicta con articoli già esistenti
+  // (qualsiasi status: published, removed, redirected, draft)
+  const existingSlugs = await sql`
+    SELECT a.slug FROM articles a
+    JOIN sites s ON a.site_id = s.id
+    WHERE s.niche_id = ${niche.id}
+  `;
+  const slugSet = new Set(existingSlugs.map(r => r.slug));
+  const noSlugConflict = deduped.filter(k => {
+    const predicted = k.keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return !slugSet.has(predicted);
+  });
+  const slugConflicts = deduped.length - noSlugConflict.length;
+  if (slugConflicts > 0) console.log(`  ⚠️  Removed ${slugConflicts} keywords with slug conflicts`);
+
+  console.log(`✅ ${noSlugConflict.length} unique quality keywords ready`);
 
   // Cluster keywords per topical authority
   console.log('\n🗂️  Clustering keywords...');
   const clustered = clusterKeywords(
-    deduped.map(k => k.keyword),
+    noSlugConflict.map(k => k.keyword),
     niche.slug,
     seeds
   );
@@ -149,7 +164,7 @@ async function run() {
   const clusterMap = new Map(clustered.map(c => [c.keyword, c]));
 
   // Save to DB with cluster metadata
-  await bulkInsertKeywords(deduped.map(k => {
+  await bulkInsertKeywords(noSlugConflict.map(k => {
     const cluster = clusterMap.get(k.keyword) || {};
     return {
       nicheId: niche.id,
