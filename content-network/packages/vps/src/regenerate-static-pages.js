@@ -101,7 +101,7 @@ function buildReviewerPage(reviewer, author, siteName, siteUrl, domain) {
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   return {
     slug,
-    title: `${reviewer.name} — ${reviewer.title} | ${siteName}`,
+    title: `${reviewer.name} — ${reviewer.title}`,
     noindex: false,
     description: `${reviewer.name}, ${reviewer.title}. ${reviewer.credentials}. Expert reviewer for ${siteName}.`,
     body: `<div style="max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a">
