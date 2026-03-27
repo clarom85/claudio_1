@@ -90,7 +90,11 @@ async function run() {
     nicheSlug: site.niche_slug,
     tagline: NICHE_TAGLINES[site.niche_slug] || `Expert guides on ${siteName}`,
     categories,
-    toolSlug
+    toolSlug,
+    reviewer: author.reviewer || null,
+    trustSources: author.trustSources || '',
+    trustMethodology: author.trustMethodology || '',
+    ymyl: author.ymyl || false,
   };
 
   // Carica articoli correlati per ogni articolo (cached in memoria)
