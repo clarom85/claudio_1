@@ -75,6 +75,15 @@ async function run() {
     try {
       process.stdout.write(`  [${success + failed + skipped + 1}/${keywords.length}] "${kw.keyword}" ... `);
 
+      // Pre-generation anti-cannibalization check (zero API cost)
+      const canniCheck = checkKeywordCannibalization(kw.keyword, existingSlugs, existingTitles);
+      if (canniCheck.skip) {
+        await markKeywordUsed(kw.id);
+        skipped++;
+        console.log(`⚠️  SKIP (pre-gen: ${canniCheck.reason})`);
+        continue;
+      }
+
       const article = await generateArticle(kw.keyword, niche, site, 3, sitePublicDir);
 
       // Dedup: salta se slug già esiste
@@ -217,6 +226,75 @@ function jaccardSimilarity(a, b) {
   const intersection = [...setA].filter(w => setB.has(w)).length;
   const union = new Set([...setA, ...setB]).size;
   return union === 0 ? 0 : intersection / union;
+}
+
+/**
+ * Token geografici US — usati per rilevare e limitare geo-varianti della stessa keyword.
+ * Permettiamo max 2 geo-varianti per stesso core topic.
+ */
+const US_GEO_TOKENS = new Set([
+  'alabama','alaska','arizona','arkansas','california','colorado','connecticut',
+  'delaware','florida','georgia','hawaii','idaho','illinois','indiana','iowa',
+  'kansas','kentucky','louisiana','maine','maryland','massachusetts','michigan',
+  'minnesota','mississippi','missouri','montana','nebraska','nevada',
+  'new hampshire','new jersey','new mexico','new york','north carolina',
+  'north dakota','ohio','oklahoma','oregon','pennsylvania','rhode island',
+  'south carolina','south dakota','tennessee','texas','utah','vermont',
+  'virginia','washington','west virginia','wisconsin','wyoming',
+  'nyc','la','chicago','houston','phoenix','dallas','san antonio','san diego',
+  'san jose','austin','jacksonville','fort worth','columbus','charlotte',
+  'indianapolis','san francisco','seattle','denver','boston','nashville',
+  'memphis','miami','atlanta','new orleans','portland','las vegas','tucson',
+]);
+
+/**
+ * Rimuove token geografici US da una stringa keyword.
+ * Ritorna il "core topic" senza geo-specificità.
+ */
+function stripGeoFromKeyword(kw) {
+  const tokens = kw.toLowerCase().split(/\s+/);
+  const stripped = tokens.filter(t => !US_GEO_TOKENS.has(t)).join(' ').trim();
+  return stripped || kw;
+}
+
+/**
+ * Controllo pre-generazione: verifica se una keyword causerebbe cannibalizzazione
+ * senza consumare API call. 3 livelli di check:
+ * 1. Slug predetto già esistente
+ * 2. Jaccard keyword vs titoli esistenti ≥ 0.50
+ * 3. Geo-variant cap: max 2 varianti geo per core topic
+ *
+ * @returns {{ skip: boolean, reason?: string }}
+ */
+function checkKeywordCannibalization(keyword, existingSlugs, existingTitles) {
+  const kw = keyword.toLowerCase();
+
+  // Level 1: predicted slug collision (free, no API)
+  const predictedSlug = kw.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (existingSlugs.has(predictedSlug)) {
+    return { skip: true, reason: `predicted slug already exists: ${predictedSlug}` };
+  }
+
+  // Level 2: keyword Jaccard vs existing titles (threshold 0.50 — stricter than post-gen 0.55)
+  const kwDup = existingTitles.find(t => jaccardSimilarity(kw, t) >= 0.50);
+  if (kwDup) {
+    return { skip: true, reason: `keyword too similar to existing title: "${kwDup}"` };
+  }
+
+  // Level 3: geo-variant cap — max 2 geo-variants of same core topic
+  const kwCore = stripGeoFromKeyword(kw);
+  if (kwCore !== kw) {
+    const geoVariantCount = existingTitles.filter(t => {
+      const tCore = stripGeoFromKeyword(t);
+      if (tCore === t) return false; // not a geo variant, skip
+      return jaccardSimilarity(kwCore, tCore) >= 0.60;
+    }).length;
+    if (geoVariantCount >= 2) {
+      return { skip: true, reason: `geo-variant cap (${geoVariantCount} variants already exist for core: "${kwCore}")` };
+    }
+  }
+
+  return { skip: false };
 }
 
 run().catch(err => {

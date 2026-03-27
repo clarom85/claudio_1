@@ -175,6 +175,14 @@ img{max-width:100%;height:auto;display:block}
 .art-section p strong,.article-section p strong{color:var(--navy);font-weight:700}
 .article-section{margin:28px 0}
 .article-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--navy);margin-top:36px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--red)}
+/* Trust box */
+.trust-box{background:#f3f9f5;border:1px solid #c5ddd0;border-left:5px solid var(--navy);padding:18px 22px;margin:0 0 24px;border-radius:var(--r)}
+.trust-box-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.trust-box-title{font-family:var(--ff-head);font-size:15px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:6px}
+.trust-box-date{font-size:11px;color:var(--muted);background:rgba(0,0,0,.05);padding:3px 8px;border-radius:10px;white-space:nowrap}
+.trust-box-body{font-size:13px;color:#3a4a3a;line-height:1.65;margin-bottom:10px}
+.trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);border-top:1px solid #c5ddd0;padding-top:8px;margin-top:4px}
+.trust-box-reviewer{color:var(--navy);font-weight:600}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '', lcpImage = '', ga4MeasurementId = '', mgidSiteId = '' }) {
@@ -260,6 +268,9 @@ export function renderArticlePage(article, site, relatedArticles = []) {
       <a class="related-title" href="/${r.slug}/">${esc(r.title)}</a>
     </div>`).join('');
 
+  const trustBlockHtml = buildTrustBlock(article, site);
+  const calcCtaHtml = site.toolSlug ? `<div style="background:linear-gradient(135deg,var(--navy),#0d0d1f);padding:24px;margin:32px 0;border-radius:var(--r);text-align:center"><strong style="color:#fff;font-size:16px;display:block;margin-bottom:8px">Free Rate Calculator</strong><p style="color:rgba(255,255,255,.85);font-size:14px;margin:0 0 16px;line-height:1.5">Get your personalized estimate in 60 seconds.</p><a href="/tools/${site.toolSlug}/" style="display:inline-block;background:var(--red);color:#fff;padding:12px 28px;border-radius:var(--r);font-weight:700;font-size:15px;text-decoration:none">Calculate Now →</a></div>` : '';
+
   const body = `
 ${renderHeader(site)}
 <main class="site-main">
@@ -280,10 +291,11 @@ ${renderHeader(site)}
       ${adUnit('leaderboard')}
     </header>
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:``}
+    ${trustBlockHtml}
 
     <div class="art-layout">
       <div class="art-body">
-        ${injectMgidInArticle(content, site.mgidInArticleId)}
+        ${injectCalcCtaMidArticle(injectMgidInArticle(content, site.mgidInArticleId), calcCtaHtml)}
         ${(() => {
           const shortname = process.env.DISQUS_SHORTNAME || '';
           if (!shortname) return '';
@@ -617,11 +629,13 @@ export function renderFooter(site) {
         </ul>
       </div>
       <div class="footer-col">
-        <h4>Legal</h4>
+        <h4>Legal &amp; Standards</h4>
         <ul>
           <li><a href="/privacy/">Privacy Policy</a></li>
           <li><a href="/terms/">Terms of Service</a></li>
           <li><a href="/disclaimer/">Disclaimer</a></li>
+          <li><a href="/methodology/">Our Methodology</a></li>
+          <li><a href="/editorial-process/">Editorial Process</a></li>
         </ul>
       </div>
     </div>
@@ -652,4 +666,25 @@ function adUnit(type) {
 
 function esc(str = '') {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function injectCalcCtaMidArticle(html,ctaHtml){
+  if(!ctaHtml)return html;
+  const marker='<div class="article-section"';
+  const idx=html.indexOf(marker);
+  if(idx===-1)return html;
+  const idx2=html.indexOf(marker,idx+marker.length);
+  if(idx2===-1)return html;
+  return html.slice(0,idx2)+ctaHtml+html.slice(idx2);
+}
+
+function buildTrustBlock(article,site){
+  const date=new Date(article.date||Date.now());
+  const dateStr=date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const rev=site.reviewer;
+  const reviewerHtml=rev?`<span class="trust-box-reviewer">Reviewed by ${esc(rev.name)}</span><span>${esc(rev.title)}${rev.credentials?` · ${esc(rev.credentials)}`:''}</span>`:'';
+  const sourcesHtml=site.trustSources?`<span>Data sources: ${esc(site.trustSources)}</span>`:'';
+  const ymylHtml=site.ymyl?`<span style="color:#b45309;font-weight:600">⚠ Financial &amp; insurance content. Consult a licensed professional before making decisions.</span>`:'';
+  const footerItems=[reviewerHtml,sourcesHtml,ymylHtml].filter(Boolean).join('');
+  return `<div class="trust-box"><div class="trust-box-hdr"><span class="trust-box-title">✓ Editorial Standards</span><span class="trust-box-date">Updated ${esc(dateStr)}</span></div>${site.trustMethodology?`<div class="trust-box-body">${esc(site.trustMethodology)}</div>`:''}${footerItems?`<div class="trust-box-footer">${footerItems}</div>`:''}</div>`;
 }

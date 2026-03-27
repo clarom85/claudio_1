@@ -44,12 +44,13 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .art-byline{font-size:13px;color:var(--muted);line-height:1.4}
 .art-byline strong{color:var(--dark)}
 
-/* Ad units — background removed: avoids gray boxes when ad network not configured */
-.ad{display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb}
-.ad-leader{width:100%;min-height:90px;margin:16px 0}
-.ad-inline{width:100%;min-height:250px;margin:28px 0}
-.ad-sidebar{width:100%;min-height:250px;margin-bottom:20px}
-.ad-footer{width:100%;min-height:90px;text-align:center;padding:8px 0}
+/* Ad units — hidden until AdSense fills them */
+.ad{overflow:hidden}
+.ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
+.ad-leader{width:100%;margin:16px 0}
+.ad-inline{width:100%;margin:28px 0}
+.ad-sidebar{width:100%;margin-bottom:20px}
+.ad-footer{width:100%;text-align:center;padding:8px 0}
 /* MGID empty widget suppression */
 [data-type="_mgwidget"]{min-height:0;overflow:hidden}
 
@@ -133,9 +134,38 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .footer-col a{color:rgba(255,255,255,.65);text-decoration:none;font-size:13px}
 .footer-col a:hover{color:#fff}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:14px;text-align:center;font-size:12px;color:rgba(255,255,255,.45)}
+/* Trust box */
+.trust-box{background:#f3f9f5;border:1px solid #c5ddd0;border-left:5px solid var(--green);padding:18px 22px;margin:0 0 24px;border-radius:2px}
+.trust-box-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.trust-box-title{font-family:var(--ff-head);font-size:15px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px}
+.trust-box-date{font-size:11px;color:var(--muted);background:rgba(0,0,0,.05);padding:3px 8px;border-radius:10px;white-space:nowrap}
+.trust-box-body{font-size:13px;color:#3a4a3a;line-height:1.65;margin-bottom:10px}
+.trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);border-top:1px solid #c5ddd0;padding-top:8px;margin-top:4px}
+.trust-box-reviewer{color:var(--green);font-weight:600}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function esc(str=''){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function injectCalcCtaMidArticle(html,ctaHtml){
+  if(!ctaHtml)return html;
+  const marker='<div class="article-section"';
+  const idx=html.indexOf(marker);
+  if(idx===-1)return html;
+  const idx2=html.indexOf(marker,idx+marker.length);
+  if(idx2===-1)return html;
+  return html.slice(0,idx2)+ctaHtml+html.slice(idx2);
+}
+
+function buildTrustBlock(article,site){
+  const date=new Date(article.date||Date.now());
+  const dateStr=date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const rev=site.reviewer;
+  const reviewerHtml=rev?`<span class="trust-box-reviewer">Reviewed by ${esc(rev.name)}</span><span>${esc(rev.title)}${rev.credentials?` · ${esc(rev.credentials)}`:''}</span>`:'';
+  const sourcesHtml=site.trustSources?`<span>Data sources: ${esc(site.trustSources)}</span>`:'';
+  const ymylHtml=site.ymyl?`<span style="color:#b45309;font-weight:600">⚠ Financial &amp; insurance content. Consult a licensed professional before making decisions.</span>`:'';
+  const footerItems=[reviewerHtml,sourcesHtml,ymylHtml].filter(Boolean).join('');
+  return `<div class="trust-box"><div class="trust-box-hdr"><span class="trust-box-title">✓ Editorial Standards</span><span class="trust-box-date">Updated ${esc(dateStr)}</span></div>${site.trustMethodology?`<div class="trust-box-body">${esc(site.trustMethodology)}</div>`:''}${footerItems?`<div class="trust-box-footer">${footerItems}</div>`:''}</div>`;
+}
 
 export function renderHeader(site){return`
 <div class="hdr-dateline">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} — EST. ${new Date().getFullYear()}</div>
@@ -158,7 +188,7 @@ export function renderFooter(site){return`
     <div class="footer-grid">
       <div class="footer-col"><h4>Navigate</h4><ul><li><a href="/">Home</a></li><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li></ul></div>
       <div class="footer-about"><h3>${esc(site.name)}</h3><p>Delivering trusted, expert-backed information since ${new Date().getFullYear()}.</p></div>
-      <div class="footer-col"><h4>Legal</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li><li><a href="/editorial-guidelines/">Editorial</a></li></ul></div>
+      <div class="footer-col"><h4>Legal &amp; Standards</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li><li><a href="/editorial-guidelines/">Editorial</a></li><li><a href="/methodology/">Methodology</a></li><li><a href="/editorial-process/">Review Process</a></li></ul></div>
     </div>
     <div class="footer-bottom"><p>© ${new Date().getFullYear()} ${esc(site.name)}. All rights reserved. For informational purposes only.</p></div>
   </div>
@@ -214,6 +244,8 @@ setTimeout(function(){document.querySelectorAll('[data-type="_mgwidget"]').forEa
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="${r.image||`/images/${r.slug}.jpg`}" alt="${esc(r.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
+  const trustBlockHtml=buildTrustBlock(article,site);
+  const calcCtaHtml=site.toolSlug?`<div style="background:linear-gradient(135deg,#1a5c3a,#134d2e);padding:24px;margin:32px 0;border-radius:4px;text-align:center"><strong style="color:#fff;font-size:16px;display:block;margin-bottom:8px">Free Cost Calculator</strong><p style="color:rgba(255,255,255,.85);font-size:14px;margin:0 0 16px;line-height:1.5">Get an instant estimate for your project in 60 seconds.</p><a href="/tools/${site.toolSlug}/" style="display:inline-block;background:#c9a84c;color:#1a1a2e;padding:12px 28px;border-radius:3px;font-weight:700;font-size:15px;text-decoration:none">Calculate My Cost →</a></div>`:'';
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">
     <header class="art-hdr">
       <div class="art-kicker"><a href="/category/${article.categorySlug||'guides'}/" style="color:inherit;text-decoration:none">${esc(article.category||'Expert Guide')}</a></div>
@@ -226,8 +258,9 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       ${adUnit('leaderboard')}
     </header>
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:''}
+    ${trustBlockHtml}
     <div class="art-layout">
-      <div class="art-body">${injectMgidInArticle(article.content,site.mgidInArticleId)}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
+      <div class="art-body">${injectCalcCtaMidArticle(injectMgidInArticle(article.content,site.mgidInArticleId),calcCtaHtml)}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>
         ${adUnit('sidebar')}
         ${relatedHtml?`<div class="sidebar-box"><h3>Related</h3>${relatedHtml}</div>`:''}
