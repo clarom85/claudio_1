@@ -172,6 +172,34 @@ async function regenerateStaticPages(site) {
     const html = simplePageWrapper(page.title, page.description, page.body, siteConfig, { noindex: page.noindex || false, canonical });
     writeFileSync(join(WWW_ROOT, site.domain, path), html, 'utf-8');
   }
+
+  // 404 page — must live at root level (nginx: error_page 404 /404.html)
+  const notFoundBody = `
+<div style="max-width:600px;margin:80px auto;padding:0 20px;text-align:center;">
+  <div style="font-size:80px;font-weight:900;color:#e8e8e8;line-height:1;margin-bottom:16px;">404</div>
+  <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">Page Not Found</h1>
+  <p style="font-size:16px;line-height:1.7;color:#666;margin-bottom:32px;">
+    The page you're looking for doesn't exist or may have been moved.
+    Here are some helpful links instead:
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:40px;">
+    <a href="/" style="display:inline-block;background:#1a1a2e;color:white;padding:11px 22px;border-radius:5px;text-decoration:none;font-size:15px;font-weight:700;">← Back to Home</a>
+  </div>
+  <div style="border-top:1px solid #eee;padding-top:28px;">
+    <p style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">Browse by Category</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;" id="notfound-cats"></div>
+  </div>
+</div>
+<script>
+  fetch('/api/categories.json').then(r=>r.json()).then(cats=>{
+    const el=document.getElementById('notfound-cats');
+    if(!el||!cats?.length)return;
+    el.innerHTML=cats.slice(0,6).map(c=>\`<a href="/category/\${c.slug}/" style="display:inline-block;background:#f4f4f0;color:#333;padding:6px 14px;border-radius:20px;text-decoration:none;font-size:13px;font-weight:600;">\${c.name}</a>\`).join('');
+  }).catch(()=>{});
+</script>`;
+  writeFileSync(join(WWW_ROOT, site.domain, '404.html'),
+    simplePageWrapper('Page Not Found', `The page you're looking for doesn't exist — ${siteName}`, notFoundBody, siteConfig, { noindex: true }),
+    'utf-8');
 }
 
 async function run() {

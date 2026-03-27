@@ -887,7 +887,7 @@ async function checkMonetization(site) {
       while ((m = linkRe.exec(html)) !== null) {
         const target = m[1].replace(/\/$/, '').split('/')[0]; // prendi solo il primo segmento
         if (!target || target === 'api' || target === 'category' || target === 'tag'
-            || target === 'tools' || target === 'authors' || target === 'images') continue;
+            || target === 'tools' || target === 'authors' || target === 'author' || target === 'images') continue;
         // Verifica che la pagina target esista su disco
         if (!existsSync(join(siteDir, target, 'index.html')) && !existsSync(join(siteDir, target))) {
           if (!brokenDetails.find(b => b.slug === a.slug && b.target === target)) {
