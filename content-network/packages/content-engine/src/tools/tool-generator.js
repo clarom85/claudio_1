@@ -32,7 +32,7 @@ export function generateToolBody(config, site = {}) {
 
   function adDiv() {
     if (!adsenseId) return '';
-    return `<div class="ad ad-inline" style="text-align:center;margin:28px 0;min-height:280px"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>`;
+    return `<div class="ad ad-inline" style="text-align:center"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>`;
   }
 
   function mgidInArticle() {
@@ -119,8 +119,6 @@ export function generateToolBody(config, site = {}) {
           <a href="/tools/">Tools</a> ›
           <span style="color:#555">${escHtml(title)}</span>
         </nav>
-
-        ${adDiv()}
 
         <div class="tool-hero">
           <h1>${escHtml(headline)}</h1>
