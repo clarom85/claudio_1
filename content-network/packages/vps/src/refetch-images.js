@@ -60,8 +60,8 @@ async function run() {
     ORDER BY a.id
   `;
 
-  const imagesDir = join(WWW_ROOT, site.domain, 'images');
-  mkdirSync(imagesDir, { recursive: true });
+  const destDir = join(WWW_ROOT, site.domain);
+  mkdirSync(join(destDir, 'images'), { recursive: true });
 
   const missing = articles.filter(a => !existsSync(join(WWW_ROOT, site.domain, a.image)));
   console.log(`\n🔍 ${articles.length} articoli con immagine in DB, ${missing.length} file mancanti su disco\n`);
@@ -77,7 +77,7 @@ async function run() {
   for (const a of missing) {
     process.stdout.write(`  ⬇️  ${a.slug}... `);
     try {
-      const newPath = await fetchArticleImage(a.keyword || a.slug, a.slug, imagesDir, {
+      const newPath = await fetchArticleImage(a.keyword || a.slug, a.slug, destDir, {
         nicheSlug: site.niche_slug,
         title: a.title,
       });
