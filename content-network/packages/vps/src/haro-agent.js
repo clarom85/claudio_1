@@ -23,6 +23,7 @@
 
 import 'dotenv/config';
 import { sql } from '@content-network/db';
+import { fetchConnectivelyRequests } from './connectively-parser.js';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const RESEND_API_KEY    = process.env.RESEND_API_KEY;
@@ -299,10 +300,14 @@ async function run() {
   if (!sites.length) { console.log('No live sites.'); process.exit(0); }
 
   // Fetch from all configured sources
-  const [sbItems, twItems] = await Promise.all([fetchSourceBottle(), fetchTwitterRequests()]);
-  const allItems = [...sbItems, ...twItems];
+  const [sbItems, twItems, cnItems] = await Promise.all([
+    fetchSourceBottle(),
+    fetchTwitterRequests(),
+    fetchConnectivelyRequests(),
+  ]);
+  const allItems = [...sbItems, ...twItems, ...cnItems];
 
-  console.log(`Sources: ${sbItems.length} SourceBottle, ${twItems.length} Twitter → ${allItems.length} total\n`);
+  console.log(`Sources: ${sbItems.length} SourceBottle, ${twItems.length} Twitter, ${cnItems.length} Connectively → ${allItems.length} total\n`);
 
   if (!allItems.length) {
     console.log('No requests fetched. Check SOURCEBOTTLE_RSS_URL / TWITTER_BEARER_TOKEN.');
