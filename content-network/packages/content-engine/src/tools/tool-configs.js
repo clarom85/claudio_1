@@ -1363,7 +1363,7 @@ export const TOOL_CONFIGS = {
       // ── HOME ────────────────────────────────────────────────────────────
       else if (type === 'home') {
         const value       = parseFloat(inputs.homeValue) || 350000;
-        const YEAR_FACTOR = {new:0.0026,mid:0.0032,old:0.0040,vold:0.0048};
+        const YEAR_FACTOR = {new:0.0034,mid:0.0048,old:0.0060,vold:0.0072};
         const ROOF_FACTOR = {new:0.90,mid:1.00,old:1.18,aged:1.42};
         const CONSTR      = {masonry:0.88,frame:1.00,superior:0.80};
         const COV_FACTOR  = {rcv:1.00,acv:0.88};
@@ -1375,7 +1375,7 @@ export const TOOL_CONFIGS = {
           * (COV_FACTOR[inputs.homeCoverage] || 1.00)
           * stateFac;
 
-        nationalAvg   = 1428;
+        nationalAvg   = 1700; // 2024 NAIC average (updated from $1,428 2022 data)
         annualPremium = Math.round(value * perDollarRate);
         stateAvg      = Math.round(nationalAvg * stateFac);
 
@@ -1424,7 +1424,7 @@ export const TOOL_CONFIGS = {
       // ── LIFE ────────────────────────────────────────────────────────────
       else if (type === 'life') {
         // Rate per $1,000 of coverage per month (non-tobacco, preferred)
-        const MALE_RATE   = {25:0.09,30:0.10,35:0.13,40:0.18,45:0.30,50:0.48,55:0.76,60:1.22};
+        const MALE_RATE   = {25:0.040,30:0.045,35:0.060,40:0.105,45:0.175,50:0.305,55:0.490,60:0.820};
         const FEMALE_ADJ  = 0.78; // females pay ~22% less
         const HEALTH_ADJ  = {preferred_plus:0.85,preferred:1.00,standard_plus:1.20,standard:1.50,substandard:2.20};
         const TOBACCO_ADJ = inputs.tobaccoLife === 'yes' ? 2.10 : 1.00;
@@ -1438,7 +1438,7 @@ export const TOOL_CONFIGS = {
         const termFactor   = TERM_FACTOR[parseInt(inputs.termLength)] || 1.00;
         const coverageUnits= coverage / 1000;
 
-        nationalAvg      = 480; // annual, $500k 20yr preferred male 35
+        nationalAvg      = 360; // annual, $500k 20yr preferred male 35 (2024 market ~$30/mo)
         monthlyPremium   = Math.round(baseRate * genderAdj * healthAdj * TOBACCO_ADJ * termFactor * coverageUnits);
         annualPremium    = monthlyPremium * 12;
         stateAvg         = nationalAvg; // life insurance has minimal state variation
