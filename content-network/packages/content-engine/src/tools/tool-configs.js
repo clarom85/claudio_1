@@ -1356,7 +1356,7 @@ export const TOOL_CONFIGS = {
         else if (['MI','LA','FL'].includes(state)) stateNote = state + ' is among the most expensive auto insurance states in the U.S.';
         else if (['ME','VT','NH','ID'].includes(state)) stateNote = state + ' is among the most affordable auto insurance states.';
 
-        insight    = recFactor > 1.3 ? 'A violation/accident typically affects rates for 3–5 years. Consider a defensive driving course — many insurers offer a 5–10% discount.' : 'Your clean record is your biggest pricing asset. Request a loyalty discount if you\'ve been with your insurer 3+ years.';
+        insight    = recFactor > 1.3 ? "A violation/accident typically affects rates for 3-5 years. Consider a defensive driving course - many insurers offer a 5-10% discount." : "Your clean record is your biggest pricing asset. Request a loyalty discount if you have been with your insurer 3+ years.";
         savingsTip = 'Shopping 3+ carriers at renewal saves an average of $412/year. Bundle auto + home for an additional 10–25% discount.';
       }
 
