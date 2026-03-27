@@ -234,10 +234,10 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
   });
 
   const faqHTML = faq.map(item => `
-    <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-      <h3 class="faq-question" itemprop="name">${escapeHtml(item.question)}</h3>
-      <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-        <p itemprop="text">${item.answer}</p>
+    <div class="faq-item">
+      <h3 class="faq-question">${escapeHtml(item.question)}</h3>
+      <div class="faq-answer">
+        <p>${item.answer}</p>
       </div>
     </div>`).join('');
 
@@ -325,7 +325,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         </blockquote>
       </div>
 
-      <section class="article-faq faq-wrap" itemscope itemtype="https://schema.org/FAQPage" style="margin-top:40px;padding-top:32px;border-top:2px solid #e0e0e0;">
+      <section class="article-faq faq-wrap" style="margin-top:40px;padding-top:32px;border-top:2px solid #e0e0e0;">
         <h2>Frequently Asked Questions</h2>
         ${faqHTML}
       </section>
