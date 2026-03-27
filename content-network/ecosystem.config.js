@@ -42,6 +42,23 @@ export default {
       out_file: '/var/log/content-network/health-check-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss'
     },
+    // ── Journalist Outreach Agent ────────────────────────────────────────────
+    // Monitora richieste giornalisti (SourceBottle RSS, Twitter #journorequest)
+    // filtra per nicchia con Claude, genera risposta da esperto e invia email.
+    // Env: SOURCEBOTTLE_RSS_URL e/o TWITTER_BEARER_TOKEN
+    {
+      name: 'haro',
+      script: 'packages/vps/src/haro-agent.js',
+      cron_restart: '0 */6 * * *',   // ogni 6 ore
+      watch: false,
+      autorestart: false,
+      env: {
+        NODE_ENV: 'production'
+      },
+      error_file: '/var/log/content-network/haro-error.log',
+      out_file:   '/var/log/content-network/haro-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
+    },
     // ── Niche Guardians ──────────────────────────────────────────────────────
     // Un agent dedicato per nicchia: monitoring, SEO auto-fix, pipeline health.
     // Aggiungi una entry per ogni nuova nicchia spawned.
