@@ -35,14 +35,15 @@ export function generateToolBody(config, site = {}) {
     return `<div class="ad ad-inline" style="text-align:center"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>`;
   }
 
+  // MGID widgets: wrapped so JS can add margin only after content is injected
   function mgidInArticle() {
     if (!mgidInArticleId) return '';
-    return `<div data-type="_mgwidget" data-widget-id="${mgidInArticleId}" style="margin:32px 0"></div>`;
+    return `<div class="mgid-wrap"><div data-type="_mgwidget" data-widget-id="${mgidInArticleId}"></div></div>`;
   }
 
   function mgidSmart() {
     if (!mgidSmartId) return '';
-    return `<div data-type="_mgwidget" data-widget-id="${mgidSmartId}" style="margin:32px 0"></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
+    return `<div class="mgid-wrap"><div data-type="_mgwidget" data-widget-id="${mgidSmartId}"></div></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
   }
 
   return `<style>
@@ -108,6 +109,8 @@ export function generateToolBody(config, site = {}) {
     .wizard-steps li::before{content:counter(step-counter);flex-shrink:0;width:24px;height:24px;background:#2980b9;color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
     .tool-disclaimer{margin-top:20px;padding:14px 16px;background:#f9f9f9;border-left:3px solid #ddd;border-radius:4px;font-size:12px;color:#888;line-height:1.6}
     .tool-related{margin-top:40px}.tool-related h3{font-size:18px;margin-bottom:16px;color:#1a1a1a}
+    .mgid-wrap{min-height:0;overflow:hidden}
+    .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;margin:0!important;padding:0!important;border:none!important;overflow:hidden}
     @media(max-width:540px){.tool-body{padding:20px 16px}.result-grid{grid-template-columns:1fr 1fr}.result-bar-label{width:90px;font-size:12px}.result-bar-value{width:60px;font-size:13px}}
   </style>
   <main class="site-main">
@@ -179,6 +182,14 @@ export function generateToolBody(config, site = {}) {
     function loadRelatedArticles(){fetch('/api/articles.json').then(function(r){return r.json();}).then(function(articles){var el=document.getElementById('related-articles');var items=articles.slice(0,4);if(!items.length)return;el.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;';items.forEach(function(a){var link=document.createElement('a');link.href='/'+a.slug+'/';link.style.cssText='display:block;text-decoration:none;border:1px solid #eee;border-radius:8px;overflow:hidden;transition:box-shadow .2s;';link.onmouseover=function(){this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)';};link.onmouseout=function(){this.style.boxShadow='';};if(a.image){var img=document.createElement('img');img.src=a.image;img.alt=a.title;img.loading='lazy';img.style.cssText='width:100%;height:120px;object-fit:cover;display:block;';img.onerror=function(){this.style.display='none';};link.appendChild(img);}var td=document.createElement('div');td.style.cssText='padding:12px 14px;';var p=document.createElement('p');p.style.cssText='font-size:13px;font-weight:600;color:#1a1a1a;margin:0;line-height:1.4;';p.textContent=a.title;td.appendChild(p);link.appendChild(td);el.appendChild(link);});}).catch(function(){});}
     initConditionalFields();
     loadRelatedArticles();
+    // Add margin to MGID wrappers only after content is injected (avoids blank space)
+    document.querySelectorAll('.mgid-wrap').forEach(function(wrap){
+      var inner=wrap.querySelector('[data-type="_mgwidget"]');
+      if(!inner)return;
+      new MutationObserver(function(m,obs){
+        if(inner.children.length>0){wrap.style.margin='32px 0';obs.disconnect();}
+      }).observe(inner,{childList:true,subtree:true});
+    });
   </script>`;
 }
 

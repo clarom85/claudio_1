@@ -157,7 +157,8 @@ export function injectMgidInArticle(content, widgetId = '') {
 
 export function getMgidSmartWidget(widgetId = '') {
   if (!widgetId) return '';
-  return `<div data-type="_mgwidget" data-widget-id="${widgetId}" style="margin:32px 0"></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
+  // Wrapped so MutationObserver can add margin only after MGID injects content
+  return `<div class="mgid-wrap"><div data-type="_mgwidget" data-widget-id="${widgetId}"></div></div><script>(function(w,q){w[q]=w[q]||[];w[q].push(["_mgc.load"])})(window,"_mgq");<\/script>`;
 }
 
 export const NATIVE_ADS_JS = `

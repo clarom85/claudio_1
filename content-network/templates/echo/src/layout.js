@@ -47,6 +47,7 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 /* Ad units — hidden until AdSense fills them */
 .ad{overflow:hidden}
 .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
+.mgid-wrap{min-height:0;overflow:hidden}
 .ad-leader{width:100%;margin:16px 0}
 .ad-inline{width:100%;margin:28px 0}
 .ad-sidebar{width:100%;margin-bottom:24px}
@@ -195,7 +196,8 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@400;700&display=swap"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
-${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}</script></body></html>`}
+${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
+document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});</script></body></html>`}
 
 export function renderHeader(site){return`
 <div class="hdr-top">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>

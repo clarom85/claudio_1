@@ -67,6 +67,7 @@ img{max-width:100%;height:auto;display:block}
 /* Ad units — hidden until AdSense fills them */
 .ad{border-radius:var(--r);overflow:hidden}
 .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
+.mgid-wrap{min-height:0;overflow:hidden}
 .ad-leader{width:100%;margin:16px 0}
 .ad-inline{width:100%;margin:24px 0}
 .ad-sidebar{width:100%}
@@ -247,6 +248,7 @@ ${ezoicId ? '' : COOKIE_BANNER_HTML}
 ${ezoicId ? '' : COOKIE_BANNER_JS}
 ${EMAIL_FORM_JS}
 ${NATIVE_ADS_JS}
+document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
 // Trending ticker
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{
   const el=document.getElementById('ticker-inner');
