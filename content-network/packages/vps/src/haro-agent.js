@@ -17,7 +17,8 @@
  *   node packages/vps/src/haro-agent.js [--dry-run] [--site-id <id>]
  *
  * PM2:
- *   pm2 start packages/vps/src/haro-agent.js --name haro --cron '0 */6 * * *' --no-autorestart
+ *   pm2 start packages/vps/src/haro-agent.js --name haro --cron "0 * /6 * * *" --no-autorestart
+ *   (nota: rimuovi spazio tra * e /6 nel cron string)
  */
 
 import 'dotenv/config';
