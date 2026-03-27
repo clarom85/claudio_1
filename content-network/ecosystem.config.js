@@ -59,6 +59,20 @@ export default {
       out_file:   '/var/log/content-network/haro-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss'
     },
+    // ── Unlinked Mention Monitor ─────────────────────────────────────────────
+    // Cerca menzioni dei domini senza link → outreach email per chiedere il link.
+    // Env: GOOGLE_CSE_API_KEY, GOOGLE_CSE_ID
+    {
+      name: 'mention-monitor',
+      script: 'packages/vps/src/mention-monitor.js',
+      cron_restart: '0 10 * * 0',   // domenica 10:00 UTC
+      watch: false,
+      autorestart: false,
+      env: { NODE_ENV: 'production' },
+      error_file: '/var/log/content-network/mention-monitor-error.log',
+      out_file:   '/var/log/content-network/mention-monitor-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
+    },
     // ── Niche Guardians ──────────────────────────────────────────────────────
     // Un agent dedicato per nicchia: monitoring, SEO auto-fix, pipeline health.
     // Aggiungi una entry per ogni nuova nicchia spawned.
