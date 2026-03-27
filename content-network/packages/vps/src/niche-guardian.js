@@ -305,18 +305,21 @@ async function checkContentQuality(site) {
     }
   } catch (e) { warn(`content image-check failed: ${e.message}`); }
 
-  // 2c. Immagini referenziate nel DB ma file non presente su disco
+  // 2c. Immagini referenziate nel DB ma file non presente su disco — AUTO-FIX via re-fetch
   try {
     const withImg = await sql`
-      SELECT slug, image FROM articles
-      WHERE site_id = ${site.id} AND status = 'published' AND image IS NOT NULL AND image != ''
+      SELECT a.id, a.slug, a.image, COALESCE(k.keyword, a.slug) as keyword, a.title
+      FROM articles a LEFT JOIN keywords k ON a.keyword_id = k.id
+      WHERE a.site_id = ${site.id} AND status = 'published' AND a.image IS NOT NULL AND a.image != ''
     `;
     let missingFiles = 0;
     let missingWebp  = 0;
+    const toRefetch = [];
     for (const a of withImg) {
       const imgPath = join(WWW_ROOT, site.domain, a.image);
       if (!existsSync(imgPath)) {
         missingFiles++;
+        toRefetch.push(a);
         continue;
       }
       // Controlla WebP — generato da cwebp durante post-processing
@@ -339,8 +342,42 @@ async function checkContentQuality(site) {
         }
       } catch { /* jpegoptim non installato */ }
     }
-    if (missingFiles > 0) issue(`[${site.domain}] ${missingFiles} article images referenced in DB but missing on disk`);
     if (missingWebp > 0)  warn(`[${site.domain}] ${missingWebp} images could not generate WebP (cwebp unavailable?)`);
+    // AUTO-FIX: re-scarica immagini che erano in DB ma non su disco
+    if (toRefetch.length > 0) {
+      issue(`[${site.domain}] ${missingFiles} article images referenced in DB but missing on disk — attempting re-fetch`);
+      const { fetchArticleImage } = await import('@content-network/content-engine/src/image-fetcher.js');
+      const destDir = join(WWW_ROOT, site.domain);
+      let imgFixed = 0;
+      for (const art of toRefetch) {
+        try {
+          const newPath = await fetchArticleImage(
+            art.keyword || art.title,
+            art.slug,
+            destDir,
+            { nicheSlug: site.niche_slug, title: art.title }
+          );
+          if (newPath) {
+            if (newPath !== art.image) {
+              await sql`UPDATE articles SET image = ${newPath} WHERE id = ${art.id}`;
+            }
+            fix(`[${site.domain}/${art.slug}] Re-fetched missing image: ${newPath}`);
+            imgFixed++;
+          } else {
+            warn(`[${site.domain}/${art.slug}] Image re-fetch failed (all sources exhausted)`);
+          }
+        } catch (e) {
+          warn(`[${site.domain}/${art.slug}] Image re-fetch error: ${e.message}`);
+        }
+      }
+      if (imgFixed > 0) {
+        const rerenderScript = join(ROOT, 'packages/vps/src/rerender-articles.js');
+        spawnSync('node', [rerenderScript, '--site-id', String(site.id)], {
+          stdio: 'pipe', timeout: 300000, cwd: ROOT
+        });
+        fix(`[${site.domain}] Re-rendered articles after re-fetching ${imgFixed} missing image(s)`);
+      }
+    }
   } catch (e) { warn(`content file-check failed: ${e.message}`); }
 
   // 2d. Schema markup NULL per articoli pubblicati
@@ -708,10 +745,11 @@ async function checkSiteLevel(site) {
     if (!/property="og:title"/i.test(homeHtml)) {
       warn(`[${site.domain}] Homepage missing OG tags`);
     }
-    // GSC verification tag
+    // GSC verification tag — supports comma-separated multi-site keys
     const gsv = process.env.GOOGLE_SITE_VERIFICATION;
-    if (gsv && !homeHtml.includes(gsv)) {
-      warn(`[${site.domain}] Google Site Verification tag missing from homepage`);
+    if (gsv) {
+      const missing = gsv.split(',').map(k => k.trim()).filter(k => k && !homeHtml.includes(k));
+      if (missing.length > 0) warn(`[${site.domain}] Google Site Verification tag missing from homepage`);
     }
   }
 }
