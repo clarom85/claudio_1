@@ -283,10 +283,28 @@ const AI_PHRASE_BLACKLIST = [
 ].join('", "');
 
 // ── Main prompt builder ───────────────────────────────────────────────────────
+// ── Writing style variants — injected per-article based on rotation ───────────
+// Style 0: default (analytical/expert) — no extra block, cfg.tone already covers it
+// Style 1: conversational/accessible
+// Style 2: data-driven/research-focused
+export const WRITING_STYLE_VARIANTS = {
+  0: '', // analytical — handled by the base persona + tone in NICHE_PROMPT_CONFIGS
+  1: `
+WRITING STYLE MODIFIER — CONVERSATIONAL:
+Write as if explaining this to a smart friend who has no industry background. Use "you" frequently. Open with a relatable scenario or a question the reader has likely asked themselves. Light personal observations are welcome ("Most people I talk to don't realize..."). Data must still be there, but always introduced with context. The reader should feel like they are getting advice from someone who genuinely knows this, not reading a formal report.
+`,
+  2: `
+WRITING STYLE MODIFIER — DATA-DRIVEN:
+Lead every major claim with a specific number, percentage, or cited finding. Build the narrative around the data: start with the most surprising or counterintuitive statistic, then use it as the frame for the rest. Tables and cost breakdowns are essential. Every section should anchor to a concrete benchmark or range. The tone stays accessible — but the reader should feel they are reading rigorous analysis, not opinion.
+`,
+};
+
 export function buildArticlePrompt(keyword, niche, options = {}) {
   const cfg = NICHE_PROMPT_CONFIGS[niche.slug] || DEFAULT_NICHE_CONFIG;
   const wordCount = options.targetWordCount || getVariedWordCount(cfg.wordCount);
   const liveDataBlock = options.liveDataBlock || '';
+  const styleVariant = options.styleVariant ?? 0;
+  const styleBlock = WRITING_STYLE_VARIANTS[styleVariant] || '';
   const CURRENT_YEAR = new Date().getFullYear();
   const CURRENT_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -305,7 +323,7 @@ ${cfg.requiredElements}
 
 WHAT TO AVOID:
 ${cfg.avoidances}
-${liveDataBlock}
+${styleBlock}${liveDataBlock}
 WORD COUNT: ${wordCount}–${wordCount + 300} words
 
 OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
@@ -588,4 +606,45 @@ export const AUTHOR_PERSONAS = {
     trustMethodology: 'Business cost and regulatory data in this guide are sourced from SBA, IRS, and U.S. Census publications. Legal and tax requirements vary by state and entity type — consult a qualified attorney and accountant before forming a business.',
     ymyl: false,
   },
+};
+
+// ── Additional authors per niche — indexes 1 and 2 of the rotation ───────────
+// Index 0 = primary author (AUTHOR_PERSONAS[slug])
+// Index 1 = conversational style author
+// Index 2 = data-driven style author
+// Add entries here when a new site is spawned. Niches without an entry
+// fall back to the primary author for all variant indexes.
+export const ADDITIONAL_AUTHORS = {
+  'home-improvement-costs': [
+    // idx 1 — conversational
+    {
+      name: 'Karen Phillips',
+      title: 'Home Improvement Writer & DIY Specialist',
+      bio: 'Karen learned home improvement the hard way — through 11 years of owning a 1920s fixer-upper and hiring (and firing) dozens of contractors. She writes to help homeowners ask the right questions before the crew shows up and the costs start climbing.',
+      avatar: 'karen-phillips',
+    },
+    // idx 2 — data-driven
+    {
+      name: 'Dan Mercer',
+      title: 'Construction Cost Estimator',
+      bio: 'Dan spent 14 years as a professional cost estimator for commercial and residential contractors before moving to consumer journalism. He has priced thousands of projects and knows exactly where contractors pad their margins — and how to spot it.',
+      avatar: 'dan-mercer',
+    },
+  ],
+  'insurance-guide': [
+    // idx 1 — conversational
+    {
+      name: 'Sarah Campbell',
+      title: 'Personal Finance Writer & Insurance Consumer Advocate',
+      bio: 'Sarah spent three years fighting her own insurer after a disputed claim denial, eventually winning on appeal. She now writes with the clarity that comes from having navigated the system herself — form by form, exclusion by exclusion.',
+      avatar: 'sarah-campbell',
+    },
+    // idx 2 — data-driven
+    {
+      name: 'Chris Washington',
+      title: 'Insurance Market Analyst',
+      bio: 'Chris spent 10 years analyzing rate filings and market data for a state Department of Insurance before turning to consumer journalism. He understands where the industry buries costs and how state regulators actually function in practice.',
+      avatar: 'chris-washington',
+    },
+  ],
 };

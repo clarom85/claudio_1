@@ -2,14 +2,51 @@
  * Article generator — chiama Claude API e genera articolo completo
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { buildArticlePrompt } from './prompts.js';
+import { buildArticlePrompt, AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from './prompts.js';
 import { buildArticleHTML } from './html-builder.js';
-import { AUTHOR_PERSONAS } from './prompts.js';
 import { fetchArticleImage } from './image-fetcher.js';
 import { fetchLiveData, formatLiveDataBlock } from './data-fetcher.js';
 import { sanitizeCitations } from './citation-sources.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// ── Author / style / model rotation ──────────────────────────────────────────
+
+/**
+ * Deterministic variant index 0|1|2 based on cluster_slug (or keyword id).
+ * Cluster-coherent: all articles in the same cluster get the same author + style.
+ */
+function computeVariant(keyword) {
+  const key = keyword.cluster_slug || String(keyword.id);
+  const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return hash % 3;
+}
+
+/**
+ * Returns the author object for this niche + variant.
+ * Variant 0  → primary author (AUTHOR_PERSONAS[slug])
+ * Variant 1/2 → ADDITIONAL_AUTHORS[slug][0/1] if defined, else primary
+ */
+function selectAuthor(nicheSlug, variantIdx) {
+  const primary = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  if (variantIdx === 0) return primary;
+  const extras = ADDITIONAL_AUTHORS[nicheSlug];
+  if (extras && extras[variantIdx - 1]) return extras[variantIdx - 1];
+  return primary; // fallback for niches without ADDITIONAL_AUTHORS defined
+}
+
+/**
+ * Selects the generation model.
+ * Sonnet: pillar articles, high-volume keywords (>=1500), all YMYL niches
+ * Haiku: everything else (geo-variants, low-volume satellites)
+ */
+function selectModel(keyword, nichePersona) {
+  const isYmyl    = nichePersona?.ymyl === true;
+  const isPillar  = keyword.is_pillar === true;
+  const highVol   = (keyword.search_volume || 0) >= 1500;
+  if (isYmyl || isPillar || highVol) return 'claude-sonnet-4-6';
+  return 'claude-haiku-4-5-20251001';
+}
 
 // Rate limiter semplice: max 50 req/min (well under API limits)
 let lastCall = 0;
@@ -30,15 +67,20 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
     console.log(`  [data] Injecting ${liveDataPoints.length} live data points for ${niche.slug}`);
   }
 
-  const prompt = buildArticlePrompt(keyword, niche, { liveDataBlock });
-  const author = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  const nichePersona = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  const variantIdx   = computeVariant(keyword);
+  const author       = selectAuthor(niche.slug, variantIdx);
+  const model        = selectModel(keyword, nichePersona);
+  const prompt       = buildArticlePrompt(keyword, niche, { liveDataBlock, styleVariant: variantIdx });
+
+  console.log(`  [variant] author=${author.name} style=${variantIdx} model=${model.includes('sonnet') ? 'sonnet' : 'haiku'}`);
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await throttle();
 
       const message = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001', // Haiku: veloce + economico per bulk content
+        model,
         max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }]
       });
