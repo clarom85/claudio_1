@@ -66,21 +66,50 @@ const STOP_WORDS = new Set([
 
 // Synonym normalization: varianti lessicali dello stesso concetto → forma canonica
 // Applicata PRIMA dello stemming in topicFingerprint
+// Aggiungere qui i sinonimi rilevanti per ogni nuova niche
 const TOPIC_SYNONYMS = {
-  'remodel':    'renovation',
-  'remodeling': 'renovation',
-  'remodeled':  'renovation',
-  'renovate':   'renovation',
-  'renovating': 'renovation',
-  'renovated':  'renovation',
-  'replace':    'replacement',
-  'replacing':  'replacement',
-  'install':    'installation',
-  'installing': 'installation',
-  'installed':  'installation',
-  'repair':     'fix',
-  'repairing':  'fix',
-  'repaired':   'fix',
+  // ── Home improvement ─────────────────────────────────────────
+  'remodel':      'renovation',
+  'remodeling':   'renovation',
+  'remodeled':    'renovation',
+  'renovate':     'renovation',
+  'renovating':   'renovation',
+  'renovated':    'renovation',
+  'replace':      'replacement',
+  'replacing':    'replacement',
+  'install':      'installation',
+  'installing':   'installation',
+  'installed':    'installation',
+  'repair':       'fix',
+  'repairing':    'fix',
+  'repaired':     'fix',
+
+  // ── Insurance ────────────────────────────────────────────────
+  // health/medical → stessa copertura sanitaria
+  'medical':      'health',
+  // car/auto/vehicle → stessa assicurazione auto
+  'auto':         'car',
+  'vehicle':      'car',
+  'automobile':   'car',
+  // home/homeowner/homeowners/house → stessa assicurazione casa
+  'homeowner':    'home',
+  'homeowners':   'home',
+  'house':        'home',
+  'property':     'home',
+  // renters/renter → stesso prodotto
+  'renter':       'renters',
+  // life insurance variants
+  'term':         'term',   // term vs whole è distinzione reale — NON normalizzare
+  // policy/plan/coverage → stessa cosa generica
+  'policy':       'plan',
+  'coverage':     'plan',
+  'policies':     'plan',
+
+  // ── Generic cross-niche ──────────────────────────────────────
+  'cheap':        'affordable',
+  'cheapest':     'affordable',
+  'inexpensive':  'affordable',
+  'low-cost':     'affordable',
 };
 
 /**

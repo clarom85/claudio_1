@@ -40,11 +40,20 @@ const JACCARD_STOP = new Set([
   'estimate','estimates','fee','fees','charge','charges','quote','quotes',
 ]);
 const JACCARD_SYNONYMS = {
+  // Home improvement
   'remodel':'renovation','remodeling':'renovation','remodeled':'renovation',
   'renovate':'renovation','renovating':'renovation','renovated':'renovation',
   'replace':'replacement','replacing':'replacement',
   'install':'installation','installing':'installation','installed':'installation',
   'repair':'fix','repairing':'fix','repaired':'fix',
+  // Insurance
+  'medical':'health',
+  'auto':'car','vehicle':'car','automobile':'car',
+  'homeowner':'home','homeowners':'home','house':'home','property':'home',
+  'renter':'renters',
+  'policy':'plan','coverage':'plan','policies':'plan',
+  // Generic
+  'cheap':'affordable','cheapest':'affordable','inexpensive':'affordable',
 };
 
 function tokenize(text) {
