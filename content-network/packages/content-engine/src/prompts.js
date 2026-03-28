@@ -288,15 +288,55 @@ const AI_PHRASE_BLACKLIST = [
 // Style 1: conversational/accessible
 // Style 2: data-driven/research-focused
 export const WRITING_STYLE_VARIANTS = {
-  0: '', // analytical — handled by the base persona + tone in NICHE_PROMPT_CONFIGS
+
+  // ── Variant 0: DIRECT / PRICE-FIRST ─────────────────────────────────────────
+  // Primary author. Lean, practical, gets to the number immediately.
+  0: `
+EDITORIAL ENGINE — DIRECT & PRACTICAL:
+
+OPENING: Lead with the dollar range or key number in the very first sentence. No warm-up, no preamble. Example: "Replacing a roof costs $8,000–$22,000 for most US homes — here is what drives that spread."
+
+SECTION STRUCTURE: Organize sections around decisions the reader has to make, not around information categories. Each H2 should answer a question the reader is actually asking (e.g. "What affects the final price?" not "Cost Factors Overview").
+
+EXAMPLES: Use quick, concrete comparisons with real numbers. Two-line format: state the scenario, state the number. ("A 1,500 sqft ranch in the Midwest: ~$11,000. The same job in the Northeast: ~$17,500.") Never use vague examples.
+
+FAQ: Keep questions practical and action-oriented. "How long does X take?", "Can I negotiate the quote?", "What should I expect to pay in [region]?" Short, direct answers — 2–4 sentences max per answer.
+
+CLOSING: End with a numbered action checklist (3–5 items). What the reader should do before calling anyone. No summary recap — they just read the article.
+`,
+
+  // ── Variant 1: EXPERT / MISTAKE-FIRST ───────────────────────────────────────
+  // Additional author 1. Leads with the common error, goes deep on causes.
   1: `
-WRITING STYLE MODIFIER — CONVERSATIONAL:
-Write as if explaining this to a smart friend who has no industry background. Use "you" frequently. Open with a relatable scenario or a question the reader has likely asked themselves. Light personal observations are welcome ("Most people I talk to don't realize..."). Data must still be there, but always introduced with context. The reader should feel like they are getting advice from someone who genuinely knows this, not reading a formal report.
+EDITORIAL ENGINE — EXPERT & MISTAKE-FIRST:
+
+OPENING: Start by naming the #1 mistake readers make before they understand this topic — the assumption, the shortcut, the thing they got wrong before reading this. This is your hook. Then explain why avoiding it matters before anything else.
+
+SECTION STRUCTURE: Organize sections around root causes and factors, not around price ranges. Go one level deeper than most articles: explain WHY costs or outcomes vary, not just that they do. Use "here is what most articles do not tell you" as a mental framing device for each section — what is the non-obvious layer?
+
+EXAMPLES: Use mini-scenarios of real situations with a specific outcome: "A homeowner in Ohio received three bids ranging from $9,000 to $16,000. Here is why they differed, and which one she should have chosen." The scenario should illustrate a decision, not just a price.
+
+FAQ: Frame questions around edge cases and exceptions: "What if my quote is 30% higher than average?", "Does X ever make sense to skip?", "What should I push back on?" Answers should be specific — name the variables, name the exceptions. 3–5 sentences per answer.
+
+CLOSING: End with a list of questions the reader should ask before making a decision (contractor, provider, professional). Not a summary — a diagnostic tool. Title it something like "Questions to ask before you sign anything."
 `,
+
+  // ── Variant 2: EDITORIAL / HIDDEN-COSTS-FIRST ───────────────────────────────
+  // Additional author 2. Leads with counterintuitive insight, reveals what others skip.
   2: `
-WRITING STYLE MODIFIER — DATA-DRIVEN:
-Lead every major claim with a specific number, percentage, or cited finding. Build the narrative around the data: start with the most surprising or counterintuitive statistic, then use it as the frame for the rest. Tables and cost breakdowns are essential. Every section should anchor to a concrete benchmark or range. The tone stays accessible — but the reader should feel they are reading rigorous analysis, not opinion.
+EDITORIAL ENGINE — EDITORIAL & HIDDEN COSTS:
+
+OPENING: Start with a counterintuitive fact, a hidden cost, or a number that surprises most people — something that reframes how the reader should think about this topic before they read anything else. Not a statistic for its own sake: a reframe. ("The advertised price is rarely the real price. Here is what actually shows up on the final invoice.")
+
+SECTION STRUCTURE: Less rigid than a standard breakdown. Sections can be uneven in length. One section can be a single strong insight. Mix narrative flow with data — do not force every section to follow the same template. The article should feel like it was written by a person, not assembled from a template. One section dedicated specifically to costs or risks that competitors or sellers never mention upfront.
+
+EXAMPLES: Use Option A vs Option B comparisons that reveal a tradeoff, not just a price difference. ("Choosing X saves $2,000 upfront but typically costs $800/year more to maintain — it breaks even at year 2.5.") Focus on what gets hidden in the comparison, not just what the comparison shows.
+
+FAQ: Frame questions as things people should be suspicious about: "Why do prices vary so much?", "What are the hidden fees I should ask about?", "Is the cheaper option ever actually better?" Answers should be honest about uncertainty where it exists — "it depends, and here is exactly what it depends on."
+
+CLOSING: End with an honest tradeoff summary. What should you spend more on, and where can you safely save? No action checklist — a short, frank editorial paragraph that gives the reader a clear mental model to carry into their decision.
 `,
+
 };
 
 export function buildArticlePrompt(keyword, niche, options = {}) {
