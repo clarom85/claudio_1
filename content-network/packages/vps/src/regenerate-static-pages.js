@@ -236,6 +236,206 @@ function buildPages(siteName, domain, siteUrl) {
   };
 }
 
+function buildPrivacyPage(siteName, domain) {
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const lc = '#c0392b';
+  return {
+    title: 'Privacy Policy',
+    noindex: true,
+    description: `Privacy Policy for ${domain} — how we collect, use, and protect your personal information.`,
+    body: `<div style="max-width:820px;margin:48px auto;padding:0 20px;color:#1a1a1a">
+      <h1 style="font-size:34px;font-weight:700;margin-bottom:8px">Privacy Policy</h1>
+      <p style="color:#666;font-size:14px;margin-bottom:8px">Last updated: ${today}</p>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:28px">This Privacy Policy describes how <strong>${siteName}</strong> ("we", "us", "our"), accessible at <strong>${domain}</strong>, collects, uses, discloses, and protects personal information about visitors ("you"). Please read this policy carefully. If you do not agree, please stop using the site.</p>
+
+      <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:18px 22px;margin-bottom:36px">
+        <p style="font-size:13px;color:#555;margin:0;line-height:1.7"><strong>Quick summary:</strong> We collect standard analytics data to improve the site. We serve ads through Google AdSense and MGID. We use Cloudflare for security. We do <strong>not</strong> sell your personal data. You can opt out of personalized advertising at any time.</p>
+      </div>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">1. Data Controller</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">The data controller responsible for your personal information is the operator of <strong>${domain}</strong>. For privacy-related questions or requests, contact us at:</p>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">&#x1f4e7; <a href="mailto:privacy@${domain}" style="color:${lc}">privacy@${domain}</a></p>
+      <p style="font-size:15px;line-height:1.7;margin-bottom:16px;color:#555">We aim to respond to all privacy requests within <strong>30 days</strong> (or within the statutory period required by applicable law, whichever is shorter).</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">2. Information We Collect</h2>
+      <h3 style="font-size:18px;font-weight:700;margin:20px 0 10px">2.1 Information Collected Automatically</h3>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px">When you visit ${domain}, our servers and third-party tools automatically collect:</p>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px"><strong>Log data:</strong> IP address (truncated/anonymized), browser type and version, operating system, device type</li>
+        <li style="margin-bottom:8px"><strong>Usage data:</strong> pages visited, time on page, scroll depth, exit page, referring URL</li>
+        <li style="margin-bottom:8px"><strong>Technical data:</strong> screen resolution, language preference, timezone</li>
+        <li style="margin-bottom:8px"><strong>Interaction data:</strong> clicks on links, use of interactive tools (calculators), article feedback votes</li>
+        <li style="margin-bottom:8px"><strong>Cookie data:</strong> see Section 5 for full details</li>
+      </ul>
+      <h3 style="font-size:18px;font-weight:700;margin:20px 0 10px">2.2 Information You Provide Voluntarily</h3>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px"><strong>Email address</strong> &mdash; if you subscribe to our newsletter or editorial updates</li>
+        <li style="margin-bottom:8px"><strong>Name and message</strong> &mdash; if you contact us via email</li>
+        <li style="margin-bottom:8px"><strong>Article feedback</strong> &mdash; thumbs up/down votes (anonymous; not linked to any account)</li>
+      </ul>
+      <p style="font-size:15px;line-height:1.7;margin-bottom:16px;color:#555">We do <strong>not</strong> operate user accounts, collect payment information, or require registration to access any content.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">3. Legal Basis for Processing (GDPR)</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px">For visitors in the EEA, UK, or Switzerland, we process personal data under the following legal bases (GDPR Article 6):</p>
+      <div style="overflow-x:auto;margin-bottom:20px">
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead><tr style="background:#f8f9fa"><th style="padding:10px 12px;text-align:left;border:1px solid #ddd">Purpose</th><th style="padding:10px 12px;text-align:left;border:1px solid #ddd">Legal Basis</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:9px 12px;border:1px solid #ddd">Analytics (site improvement)</td><td style="padding:9px 12px;border:1px solid #ddd">Legitimate interest (Art. 6(1)(f))</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:9px 12px;border:1px solid #ddd">Personalized advertising</td><td style="padding:9px 12px;border:1px solid #ddd">Consent (Art. 6(1)(a)) &mdash; only after cookie consent</td></tr>
+            <tr><td style="padding:9px 12px;border:1px solid #ddd">Newsletter / email updates</td><td style="padding:9px 12px;border:1px solid #ddd">Consent (Art. 6(1)(a)) &mdash; opt-in only</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:9px 12px;border:1px solid #ddd">Responding to inquiries</td><td style="padding:9px 12px;border:1px solid #ddd">Contract / legitimate interest (Art. 6(1)(b)(f))</td></tr>
+            <tr><td style="padding:9px 12px;border:1px solid #ddd">Security &amp; fraud prevention</td><td style="padding:9px 12px;border:1px solid #ddd">Legitimate interest (Art. 6(1)(f))</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:9px 12px;border:1px solid #ddd">Legal compliance</td><td style="padding:9px 12px;border:1px solid #ddd">Legal obligation (Art. 6(1)(c))</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">4. How We Use Your Information</h2>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px">Operate and maintain the website</li>
+        <li style="margin-bottom:8px">Analyze traffic patterns and improve content quality</li>
+        <li style="margin-bottom:8px">Serve relevant advertisements via Google AdSense and MGID</li>
+        <li style="margin-bottom:8px">Send newsletters and editorial updates (subscribers only)</li>
+        <li style="margin-bottom:8px">Respond to your inquiries</li>
+        <li style="margin-bottom:8px">Detect and prevent abuse, spam, or security threats</li>
+        <li style="margin-bottom:8px">Comply with legal obligations</li>
+        <li style="margin-bottom:8px">Aggregate anonymous statistics for content planning</li>
+      </ul>
+      <p style="font-size:15px;line-height:1.7;margin-bottom:16px;color:#555">We do <strong>not</strong> use your data for automated decision-making or profiling that produces legal effects on you.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">5. Cookies &amp; Tracking Technologies</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px">We use cookies and similar technologies. You can manage preferences at any time via your browser settings or by withdrawing consent through our cookie banner.</p>
+      <div style="overflow-x:auto;margin-bottom:16px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="background:#f8f9fa"><th style="padding:9px 10px;text-align:left;border:1px solid #ddd;min-width:140px">Cookie / Provider</th><th style="padding:9px 10px;text-align:left;border:1px solid #ddd">Category</th><th style="padding:9px 10px;text-align:left;border:1px solid #ddd;min-width:200px">Purpose</th><th style="padding:9px 10px;text-align:left;border:1px solid #ddd">Duration</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:8px 10px;border:1px solid #ddd"><code>cookie_consent</code></td><td style="padding:8px 10px;border:1px solid #ddd">Essential</td><td style="padding:8px 10px;border:1px solid #ddd">Stores your cookie consent choice</td><td style="padding:8px 10px;border:1px solid #ddd">1 year</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 10px;border:1px solid #ddd">Google Analytics (_ga, _gid, _ga_*)</td><td style="padding:8px 10px;border:1px solid #ddd">Analytics</td><td style="padding:8px 10px;border:1px solid #ddd">Tracks page views, sessions, and user behavior (anonymized)</td><td style="padding:8px 10px;border:1px solid #ddd">_ga: 2 yrs; _gid: 24 hrs</td></tr>
+            <tr><td style="padding:8px 10px;border:1px solid #ddd">Google AdSense (__gads, __gpi)</td><td style="padding:8px 10px;border:1px solid #ddd">Advertising</td><td style="padding:8px 10px;border:1px solid #ddd">Delivers personalized or contextual ads; frequency capping</td><td style="padding:8px 10px;border:1px solid #ddd">Up to 2 years</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 10px;border:1px solid #ddd">MGID (mgid_*)</td><td style="padding:8px 10px;border:1px solid #ddd">Advertising</td><td style="padding:8px 10px;border:1px solid #ddd">Native content recommendations; audience segmentation</td><td style="padding:8px 10px;border:1px solid #ddd">Up to 1 year</td></tr>
+            <tr><td style="padding:8px 10px;border:1px solid #ddd">Cloudflare (__cf_bm, _cfuvid)</td><td style="padding:8px 10px;border:1px solid #ddd">Security</td><td style="padding:8px 10px;border:1px solid #ddd">Bot management, DDoS protection, security challenges</td><td style="padding:8px 10px;border:1px solid #ddd">30 min &ndash; session</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:15px;line-height:1.7;margin-bottom:16px;color:#555">Advertising cookies are only set <strong>after you accept</strong> our cookie consent banner. Essential and security cookies do not require consent as they are necessary for basic site functionality.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">6. Google Analytics 4</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We use <strong>Google Analytics 4 (GA4)</strong> to understand how visitors use our site. GA4 collects anonymized behavioral data. IP anonymization is enabled &mdash; your full IP address is never stored by Google Analytics on our behalf.</p>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Google processes data on servers in the United States. Google is certified under the EU-US Data Privacy Framework. Analytics data is retained for <strong>14 months</strong> then auto-deleted.</p>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Opt out via the <a href="https://tools.google.com/dlpage/gaoptout" style="color:${lc}" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a>. Reference: <a href="https://policies.google.com/privacy" style="color:${lc}" rel="noopener noreferrer">Google Privacy Policy</a>.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">7. Google AdSense &amp; Advertising</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We participate in <strong>Google AdSense</strong>. Google may use cookies to serve ads based on your interests and prior visits to our site or other sites. We also participate in <strong>affiliate marketing programs</strong> &mdash; affiliate links are disclosed and do not influence editorial content.</p>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px">Opt out of personalized advertising:</p>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:6px"><a href="https://www.google.com/settings/ads" style="color:${lc}" rel="noopener noreferrer">Google Ad Settings</a></li>
+        <li style="margin-bottom:6px"><a href="https://www.aboutads.info/choices/" style="color:${lc}" rel="noopener noreferrer">Digital Advertising Alliance opt-out</a></li>
+        <li style="margin-bottom:6px"><a href="https://www.youronlinechoices.eu/" style="color:${lc}" rel="noopener noreferrer">EDAA opt-out (EU)</a></li>
+        <li style="margin-bottom:6px"><a href="https://optout.networkadvertising.org/" style="color:${lc}" rel="noopener noreferrer">NAI opt-out tool</a></li>
+      </ul>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">8. MGID Native Advertising</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We use <strong>MGID</strong>, a native advertising platform, to display sponsored content recommendations. MGID may set cookies to deliver relevant content and measure ad performance. MGID is an IAB member. Opt out at <a href="https://www.mgid.com/privacy-policy" style="color:${lc}" rel="noopener noreferrer">mgid.com/privacy-policy</a>.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">9. Cloudflare</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Our website is served through <strong>Cloudflare</strong> for CDN, DDoS protection, bot mitigation, and performance. Traffic passing through Cloudflare's network may include your IP address and request headers for security purposes. Cloudflare acts as a data processor under our Data Processing Addendum. Details: <a href="https://www.cloudflare.com/privacypolicy/" style="color:${lc}" rel="noopener noreferrer">cloudflare.com/privacypolicy</a>.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">10. Third-Party Services</h2>
+      <div style="overflow-x:auto;margin-bottom:20px">
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead><tr style="background:#f8f9fa"><th style="padding:9px 12px;text-align:left;border:1px solid #ddd">Service</th><th style="padding:9px 12px;text-align:left;border:1px solid #ddd">Purpose</th><th style="padding:9px 12px;text-align:left;border:1px solid #ddd">Data Processed</th><th style="padding:9px 12px;text-align:left;border:1px solid #ddd">Privacy Policy</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:8px 12px;border:1px solid #ddd">Google Analytics 4</td><td style="padding:8px 12px;border:1px solid #ddd">Analytics</td><td style="padding:8px 12px;border:1px solid #ddd">Anonymized usage data</td><td style="padding:8px 12px;border:1px solid #ddd"><a href="https://policies.google.com/privacy" style="color:${lc}" rel="noopener">policies.google.com</a></td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 12px;border:1px solid #ddd">Google AdSense</td><td style="padding:8px 12px;border:1px solid #ddd">Display advertising</td><td style="padding:8px 12px;border:1px solid #ddd">Browsing behavior, cookies</td><td style="padding:8px 12px;border:1px solid #ddd"><a href="https://policies.google.com/technologies/ads" style="color:${lc}" rel="noopener">policies.google.com</a></td></tr>
+            <tr><td style="padding:8px 12px;border:1px solid #ddd">MGID</td><td style="padding:8px 12px;border:1px solid #ddd">Native advertising</td><td style="padding:8px 12px;border:1px solid #ddd">Browsing behavior, cookies</td><td style="padding:8px 12px;border:1px solid #ddd"><a href="https://www.mgid.com/privacy-policy" style="color:${lc}" rel="noopener">mgid.com</a></td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 12px;border:1px solid #ddd">Cloudflare</td><td style="padding:8px 12px;border:1px solid #ddd">CDN &amp; Security</td><td style="padding:8px 12px;border:1px solid #ddd">IP address, request metadata</td><td style="padding:8px 12px;border:1px solid #ddd"><a href="https://www.cloudflare.com/privacypolicy/" style="color:${lc}" rel="noopener">cloudflare.com</a></td></tr>
+            <tr><td style="padding:8px 12px;border:1px solid #ddd">Pexels</td><td style="padding:8px 12px;border:1px solid #ddd">Stock photography</td><td style="padding:8px 12px;border:1px solid #ddd">Images downloaded &amp; self-hosted (not via Pexels CDN)</td><td style="padding:8px 12px;border:1px solid #ddd"><a href="https://www.pexels.com/privacy-policy/" style="color:${lc}" rel="noopener">pexels.com</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">11. Data Retention</h2>
+      <div style="overflow-x:auto;margin-bottom:20px">
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead><tr style="background:#f8f9fa"><th style="padding:9px 12px;text-align:left;border:1px solid #ddd">Data Type</th><th style="padding:9px 12px;text-align:left;border:1px solid #ddd">Retention Period</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:8px 12px;border:1px solid #ddd">Google Analytics data</td><td style="padding:8px 12px;border:1px solid #ddd">14 months (GA4 default, then auto-deleted)</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 12px;border:1px solid #ddd">Email subscriber data</td><td style="padding:8px 12px;border:1px solid #ddd">Until you unsubscribe; deleted within 30 days of request</td></tr>
+            <tr><td style="padding:8px 12px;border:1px solid #ddd">Contact form inquiries</td><td style="padding:8px 12px;border:1px solid #ddd">12 months from last communication</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 12px;border:1px solid #ddd">Anonymous feedback votes</td><td style="padding:8px 12px;border:1px solid #ddd">Indefinite (no personal data linked)</td></tr>
+            <tr><td style="padding:8px 12px;border:1px solid #ddd">Server access logs</td><td style="padding:8px 12px;border:1px solid #ddd">30 days (Cloudflare); 7 days (nginx)</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px 12px;border:1px solid #ddd">Cookie consent preference</td><td style="padding:8px 12px;border:1px solid #ddd">1 year (stored in your browser)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">12. Your GDPR Rights (EEA / UK)</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px">If you are in the EEA, UK, or Switzerland, you have the following rights under GDPR:</p>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:10px"><strong>Right of access (Art. 15):</strong> Request a copy of personal data we hold about you.</li>
+        <li style="margin-bottom:10px"><strong>Right to rectification (Art. 16):</strong> Request correction of inaccurate or incomplete data.</li>
+        <li style="margin-bottom:10px"><strong>Right to erasure (Art. 17):</strong> Request deletion of your personal data where there is no compelling reason to retain it.</li>
+        <li style="margin-bottom:10px"><strong>Right to restriction (Art. 18):</strong> Request that we limit how we process your data while a dispute is resolved.</li>
+        <li style="margin-bottom:10px"><strong>Right to data portability (Art. 20):</strong> Receive your data in a structured, machine-readable format.</li>
+        <li style="margin-bottom:10px"><strong>Right to object (Art. 21):</strong> Object to processing based on legitimate interests, including direct marketing.</li>
+        <li style="margin-bottom:10px"><strong>Right to withdraw consent (Art. 7(3)):</strong> Withdraw consent at any time without affecting the lawfulness of prior processing.</li>
+      </ul>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">To exercise these rights, email <a href="mailto:privacy@${domain}" style="color:${lc}">privacy@${domain}</a>. We will respond within 30 days. You also have the right to lodge a complaint with your local data protection authority (e.g., the ICO in the UK, or your national DPA in the EU).</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">13. California Privacy Rights (CCPA / CPRA)</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px">California residents have the following rights under CCPA and CPRA:</p>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px"><strong>Right to know:</strong> Request disclosure of personal information collected about you in the past 12 months.</li>
+        <li style="margin-bottom:8px"><strong>Right to delete:</strong> Request deletion of personal information (subject to exceptions).</li>
+        <li style="margin-bottom:8px"><strong>Right to correct:</strong> Request correction of inaccurate personal information.</li>
+        <li style="margin-bottom:8px"><strong>Right to opt-out of sale or sharing:</strong> We do <strong>not</strong> sell personal information.</li>
+        <li style="margin-bottom:8px"><strong>Right to non-discrimination:</strong> Exercising your rights will not result in discriminatory treatment.</li>
+      </ul>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:12px"><strong>Categories of personal information collected (CCPA disclosure):</strong></p>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:6px">Identifiers (anonymized IP address, cookie IDs)</li>
+        <li style="margin-bottom:6px">Internet / network activity (pages visited, interactions)</li>
+        <li style="margin-bottom:6px">Inferences drawn by ad networks (not by us directly)</li>
+      </ul>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">To exercise California rights, email <a href="mailto:privacy@${domain}" style="color:${lc}">privacy@${domain}</a>.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">14. Do Not Sell My Personal Information</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We do <strong>not</strong> sell personal information to third parties. Third-party advertising networks may use cookie data for targeted advertising per their own privacy policies &mdash; governed by your cookie consent and by the opt-out tools in Sections 7 and 8 above.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">15. International Data Transfers</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Our website and some service providers are based in the United States. If you are in the EEA, UK, or another jurisdiction with data transfer restrictions, your data may be transferred to and processed in the US. We rely on the <strong>EU-US Data Privacy Framework</strong> (Google is certified) and <strong>Standard Contractual Clauses (SCCs)</strong> where applicable.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">16. Children's Privacy (COPPA)</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Our website is not directed to children under 13 (or under 16 in the EEA). We do not knowingly collect personal information from minors. If you believe we have inadvertently collected information from a child, contact us at <a href="mailto:privacy@${domain}" style="color:${lc}">privacy@${domain}</a> and we will delete it promptly.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">17. Security</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We implement appropriate technical and organizational security measures:</p>
+      <ul style="font-size:16px;line-height:1.85;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px"><strong>HTTPS/TLS encryption</strong> &mdash; all data in transit is encrypted</li>
+        <li style="margin-bottom:8px"><strong>Cloudflare protection</strong> &mdash; DDoS mitigation, bot detection, WAF</li>
+        <li style="margin-bottom:8px"><strong>Access controls</strong> &mdash; administrative access limited to authorized personnel</li>
+        <li style="margin-bottom:8px"><strong>Regular security updates</strong> &mdash; server software kept up to date</li>
+      </ul>
+      <p style="font-size:15px;line-height:1.7;margin-bottom:16px;color:#555">No Internet transmission is 100% secure. In the event of a data breach affecting your rights, we will notify affected individuals and relevant authorities as required by law.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">18. Third-Party Links</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Our articles contain links to third-party websites for reference. We are not responsible for the privacy practices of those sites. This Privacy Policy applies only to <strong>${domain}</strong>. We encourage you to review the privacy policy of any external site you visit.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">19. Changes to This Policy</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">We may update this policy to reflect changes in our practices or legal requirements. Material changes will be reflected in an updated "Last updated" date at the top of this page. Continued use of the website after changes are posted constitutes your acknowledgment of the updated policy.</p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">20. Contact &amp; Data Protection Inquiries</h2>
+      <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px;margin-bottom:20px">
+        <p style="font-size:15px;line-height:1.7;margin:0 0 8px"><strong>Privacy requests &amp; data rights:</strong> <a href="mailto:privacy@${domain}" style="color:${lc}">privacy@${domain}</a></p>
+        <p style="font-size:15px;line-height:1.7;margin:0 0 8px"><strong>General contact:</strong> <a href="mailto:contact@${domain}" style="color:${lc}">contact@${domain}</a></p>
+        <p style="font-size:15px;line-height:1.7;margin:0"><strong>Website:</strong> <a href="https://${domain}" style="color:${lc}">${domain}</a></p>
+      </div>
+      <p style="font-size:15px;line-height:1.7;color:#555">If you are in the EU/UK and are unsatisfied with our response, you have the right to lodge a complaint with your local supervisory authority (e.g., <a href="https://ico.org.uk" style="color:${lc}" rel="noopener noreferrer">ICO</a> in the UK).</p>
+    </div>`
+  };
+}
+
 async function regenerateStaticPages(site) {
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const siteUrl = `https://${site.domain}`;
@@ -245,6 +445,9 @@ async function regenerateStaticPages(site) {
 
   // Contact page — indexable, detailed
   pages['contact/index.html'] = buildContactPage(siteName, site.domain);
+
+  // Privacy page — comprehensive GDPR/CCPA/COPPA
+  pages['privacy/index.html'] = buildPrivacyPage(siteName, site.domain);
 
   // Add niche-specific methodology page
   const nicheSlug = site.niche_slug || '';
