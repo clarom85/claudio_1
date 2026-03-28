@@ -390,6 +390,38 @@ async function checkContentQuality(site) {
     const count = parseInt(noSchema[0].count);
     if (count > 0) warn(`[${site.domain}] ${count} articles with empty schema_markup`);
   } catch (e) { /* non bloccante */ }
+
+  // 2e. Stale year in article titles — AUTO-FIX in DB + re-render
+  try {
+    const CY = new Date().getFullYear();
+    const candidates = await sql`
+      SELECT a.id, a.slug, a.title
+      FROM articles a
+      WHERE a.site_id = ${site.id} AND a.status = 'published'
+        AND a.title ~ '20[0-9]{2}'
+    `;
+    const stale = candidates.filter(a => {
+      const m = a.title.match(/\b(20\d{2})\b/);
+      return m && parseInt(m[1]) < CY;
+    });
+    if (stale.length > 0) {
+      issue(`[${site.domain}] ${stale.length} published articles have stale year in title`);
+      let fixed = 0;
+      for (const a of stale) {
+        const newTitle = a.title.replace(/\b(20\d{2})\b/g, y => parseInt(y) < CY ? String(CY) : y);
+        await sql`UPDATE articles SET title = ${newTitle} WHERE id = ${a.id}`;
+        fix(`[${site.domain}/${a.slug}] Title year fixed: "${a.title}" → "${newTitle}"`);
+        fixed++;
+      }
+      if (fixed > 0) {
+        const rerenderScript = join(ROOT, 'packages/vps/src/rerender-articles.js');
+        spawnSync('node', [rerenderScript, '--site-id', String(site.id)], {
+          stdio: 'pipe', timeout: 300000, cwd: ROOT
+        });
+        fix(`[${site.domain}] Re-rendered site after fixing ${fixed} stale-year title(s)`);
+      }
+    }
+  } catch (e) { warn(`content year-check failed: ${e.message}`); }
 }
 
 // ── 3. Per-Article SEO (legge HTML da disco) ─────────────────────────────────
