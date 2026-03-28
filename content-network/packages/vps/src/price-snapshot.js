@@ -29,12 +29,12 @@ export const NICHE_METRICS = {
       description: 'Producer Price Index for lumber and wood products (base 1982=100). Tracks raw material cost for framing, decking, and finish work.',
     },
     {
-      key:    'construction-ppi',
-      label:  'Residential Construction PPI',
-      blsId:  'PCU236116236116',
+      key:    'steel-ppi',
+      label:  'Steel Mill Products PPI',
+      fredId: 'WPU101',
       unit:   'index',
-      source: 'BLS',
-      description: 'Producer Price Index for residential building construction — labor and materials combined.',
+      source: 'BLS via FRED',
+      description: 'Producer Price Index for steel mill products — tracks structural steel costs used in foundations, framing, and roofing.',
     },
     {
       key:    'appliance-cpi',
@@ -48,12 +48,12 @@ export const NICHE_METRICS = {
 
   'insurance-guide': [
     {
-      key:    'auto-insurance-cpi',
-      label:  'Auto Insurance CPI',
-      fredId: 'CUSR0000SEHF03',
+      key:    'household-insurance-cpi',
+      label:  'Household Insurance CPI',
+      fredId: 'CUSR0000SEHF',
       unit:   'index',
       source: 'BLS via FRED',
-      description: 'Consumer Price Index for motor vehicle insurance (base 1982-84=100).',
+      description: 'Consumer Price Index for household insurance (homeowners, renters, and vehicle) — base 1982-84=100.',
     },
     {
       key:    'homeowners-insurance-cpi',
@@ -102,23 +102,23 @@ export const NICHE_METRICS = {
       description: 'Consumer Price Index for medical care services.',
     },
     {
-      key:    'nursing-home-cpi',
-      label:  'Nursing Home & Adult Day Services CPI',
-      fredId: 'CUUR0000SAM213',
+      key:    'medical-care-cpi',
+      label:  'Medical Care CPI',
+      fredId: 'CPIMEDSL',
       unit:   'index',
       source: 'BLS via FRED',
-      description: 'Consumer Price Index for nursing home care and adult day services.',
+      description: 'Consumer Price Index for all medical care — primary cost driver for Medicare premiums and supplemental insurance.',
     },
   ],
 
   'legal-advice': [
     {
-      key:    'legal-services-cpi',
-      label:  'Legal Services CPI',
-      fredId: 'CUUR0000SERS',
-      unit:   'index',
+      key:    'professional-services-wages',
+      label:  'Professional Services Avg Hourly Wage',
+      fredId: 'CES6000000008',
+      unit:   'usd',
       source: 'BLS via FRED',
-      description: 'Consumer Price Index for legal services.',
+      description: 'Average hourly earnings in professional and business services — tracks attorney and paralegal billing rate trends.',
     },
     {
       key:    'professional-wages',
