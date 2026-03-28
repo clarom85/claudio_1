@@ -263,7 +263,7 @@ export function renderHomePage(articles,site){
   const webSiteSchema={'@context':'https://schema.org','@type':'WebSite','@id':`${site.url}/#website`,url:site.url,name:site.name,description:site.tagline||site.name,potentialAction:{'@type':'SearchAction',target:{'@type':'EntryPoint',urlTemplate:`${site.url}/?s={search_term_string}`},'query-input':'required name=search_term_string'}};
   const heroImg=hero?(hero.image||`/images/${hero.slug}.jpg`):'';
   const metaDesc=site.tagline?`${site.tagline}. Trusted guides, real data, expert advice.`:`${site.name}: inspiring guides for better living.`;
-  return renderBase({title:`${site.name} — Lifestyle & Wellness Guides`,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:heroImg?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema],lcpImage:heroImg?`${site.url}${heroImg}`:'',mgidSiteId:site.mgidSiteId||''});
+  return renderBase({title:`Lifestyle & Wellness Guides`,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:heroImg?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema],lcpImage:heroImg?`${site.url}${heroImg}`:'',mgidSiteId:site.mgidSiteId||''});
 }
 
 export function renderCategoryPage(articles,category,site,page=1,totalPages=1){
@@ -275,7 +275,7 @@ export function renderCategoryPage(articles,category,site,page=1,totalPages=1){
   const nextUrl=page<totalPages?`${catBase}/page/${page+1}/`:'';
   const paginationHtml=totalPages>1?`<nav class="pagination" aria-label="Page navigation" style="display:flex;justify-content:center;align-items:center;gap:16px;margin:32px 0;padding:16px 0;border-top:1px solid var(--border)">${page>1?`<a href="${page===2?`/category/${category.slug}/`:`/category/${category.slug}/page/${page-1}/`}" rel="prev" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--warm);text-decoration:none">&#8592; Prev</a>`:'<span style="padding:8px 20px;opacity:.4">&#8592; Prev</span>'}<span style="color:var(--muted);font-size:14px">Page ${page} of ${totalPages}</span>${page<totalPages?`<a href="/category/${category.slug}/page/${page+1}/" rel="next" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;color:var(--warm);text-decoration:none">Next &#8594;</a>`:'<span style="padding:8px 20px;opacity:.4">Next &#8594;</span>'}</nav>`:'';
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}<p style="text-align:center;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px"><a href="/" style="color:var(--terra)">Home</a> › <span>${esc(category.name)}</span></p><h1 class="section-title" style="text-align:center;font-size:clamp(28px,4vw,46px)">${esc(category.name)}</h1><p style="text-align:center;color:var(--muted);margin-bottom:32px;font-size:13px;letter-spacing:1px">${articles.length} ARTICLE${articles.length!==1?'S':''}</p><div class="art-grid">${gridHtml}</div>${adUnit('leaderboard')}${paginationHtml}</div></main>${renderFooter(site)}`;
-  const pageTitle=page>1?`${category.name} — Page ${page} — ${site.name}`:`${category.name} — ${site.name}`;
+  const pageTitle=page>1?`${category.name} — Page ${page}`:`${category.name}`;
   const pageSchemas=page===1?[schema,itemListSchema]:[schema];
   return renderBase({title:pageTitle,description:`Browse ${articles.length} expert articles about ${category.name} on ${site.name}.`,slug:page>1?`category/${category.slug}/page/${page}`:`category/${category.slug}`,siteName:site.name,siteUrl:site.url,schemas:pageSchemas,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:articles[0]?`${site.url}/images/${articles[0].slug}.jpg`:'',prevUrl,nextUrl});
 }
@@ -310,7 +310,7 @@ export function renderTagPage(tag, articles, site) {
     ${adUnit('leaderboard')}
   </div></main>${renderFooter(site)}`;
   return renderBase({
-    title: `${tag.name} — ${site.name}`,
+    title: `${tag.name}`,
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
     slug: `tag/${tag.slug}`,
     siteName: site.name, siteUrl: site.url,

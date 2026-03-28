@@ -523,7 +523,7 @@ ${renderHeader(site)}
 </main>
 ${renderFooter(site)}`;
 
-  const pageTitle = page > 1 ? `${category.name} — Page ${page} — ${site.name}` : `${category.name} — ${site.name}`;
+  const pageTitle = page > 1 ? `${category.name} — Page ${page}` : `${category.name}`;
   const pageSchemas = page === 1 ? [breadcrumbSchema, itemListSchema] : [breadcrumbSchema];
   return renderBase({
     title: pageTitle,
@@ -571,7 +571,7 @@ ${renderFooter(site)}`;
   };
 
   return renderBase({
-    title: `${tag.name} — ${site.name}`,
+    title: `${tag.name}`,
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
     slug: `tag/${tag.slug}`,
     siteName: site.name, siteUrl: site.url,
