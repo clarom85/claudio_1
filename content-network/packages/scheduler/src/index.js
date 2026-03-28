@@ -130,6 +130,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ generate-faq-hub: ${e.message}`); }
   }
 
+  // Pipeline preview email — ogni giorno alle 11:xx UTC
+  if (now.getHours() === 11) {
+    try {
+      console.log('  ⏳ Sending pipeline preview...');
+      execSync('node packages/vps/src/pipeline-preview.js', { cwd: ROOT, stdio: 'pipe', timeout: 30000 });
+      console.log('  ✅ Pipeline preview sent');
+    } catch (e) { console.error(`  ❌ pipeline-preview: ${e.message}`); }
+  }
+
   // 11. Suspicious keyword review email — ogni domenica alle 11:xx
   if (now.getHours() === 11 && now.getDay() === 0) {
     try {
