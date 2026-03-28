@@ -325,4 +325,6 @@ async function run() {
   process.exit(0);
 }
 
-run().catch(err => { console.error(err); process.exit(1); });
+if (process.argv[1]?.includes('price-snapshot')) {
+  run().catch(err => { console.error(err); process.exit(1); });
+}
