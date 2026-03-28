@@ -148,6 +148,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ review-suspicious-keywords: ${e.message}`); }
   }
 
+  // 12. HARO weekly digest — ogni domenica alle 13:xx UTC
+  if (now.getHours() === 13 && now.getDay() === 0) {
+    try {
+      console.log('  📰 HARO weekly digest...');
+      execSync('node packages/vps/src/haro-digest.js', { cwd: ROOT, stdio: 'pipe', timeout: 60000 });
+      console.log('  ✅ HARO digest email sent');
+    } catch (e) { console.error(`  ❌ haro-digest: ${e.message}`); }
+  }
+
   // Link digest giornaliero (ogni giorno alle 12:xx UTC)
   if (now.getHours() === 12) {
     try {
