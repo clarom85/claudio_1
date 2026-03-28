@@ -148,6 +148,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ review-suspicious-keywords: ${e.message}`); }
   }
 
+  // Link digest giornaliero (ogni giorno alle 12:xx UTC)
+  if (now.getHours() === 12) {
+    try {
+      console.log('  🔗 Internal link digest...');
+      execSync('node packages/vps/src/link-digest.js', { cwd: ROOT, stdio: 'pipe', timeout: 60000 });
+      console.log('  ✅ Link digest email sent');
+    } catch (e) { console.error(`  ❌ link-digest: ${e.message}`); }
+  }
+
   // Report domenicale completo (ogni domenica alle 07:xx)
   if (now.getHours() === 7 && now.getDay() === 0) {
     try { await sendWeeklyReport(stats); } catch (e) { console.error(`  ❌ sendWeeklyReport: ${e.message}`); }
