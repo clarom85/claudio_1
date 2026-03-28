@@ -123,3 +123,19 @@ CREATE INDEX IF NOT EXISTS idx_queue_scheduled ON publish_queue(scheduled_for, s
 CREATE INDEX IF NOT EXISTS idx_sites_status ON sites(status);
 CREATE INDEX IF NOT EXISTS idx_rankings_site_article ON rankings(site_id, article_id, checked_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rankings_position ON rankings(site_id, position) WHERE position IS NOT NULL;
+
+-- Price tracker — monthly economic data snapshots
+CREATE TABLE IF NOT EXISTS price_snapshots (
+  id           SERIAL PRIMARY KEY,
+  niche_slug   TEXT NOT NULL,
+  metric_key   TEXT NOT NULL,
+  metric_label TEXT NOT NULL,
+  value        NUMERIC NOT NULL,
+  period       DATE NOT NULL,
+  source       TEXT NOT NULL,
+  unit         TEXT NOT NULL DEFAULT 'index',
+  series_id    TEXT,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(niche_slug, metric_key, period)
+);
+CREATE INDEX IF NOT EXISTS idx_price_snapshots_niche ON price_snapshots(niche_slug, period DESC);

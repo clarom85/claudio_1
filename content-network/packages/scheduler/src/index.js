@@ -25,6 +25,7 @@ import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { getDailyArticleLimit, logScheduleInfo, isDeadDay, isWithinPublishingWindow } from '@content-network/content-engine/src/publishing-schedule.js';
 import { injectInternalLinks, injectPillarSatelliteLinks } from '@content-network/content-engine/src/link-injector.js';
+import { generateCostTrackerForSite } from '@content-network/vps/src/generate-cost-tracker.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -146,6 +147,24 @@ async function run() {
       execSync('node packages/vps/src/review-suspicious-keywords.js', { cwd: ROOT, stdio: 'pipe', timeout: 60000 });
       console.log('  ✅ Keyword review email sent');
     } catch (e) { console.error(`  ❌ review-suspicious-keywords: ${e.message}`); }
+  }
+
+  // 11b. Price snapshot + cost-tracker rebuild — 1° del mese alle 15:xx UTC
+  if (now.getDate() === 1 && now.getHours() === 15) {
+    try {
+      console.log('  📈 Monthly price snapshot collection...');
+      execSync('node packages/vps/src/price-snapshot.js', { cwd: ROOT, stdio: 'pipe', timeout: 120000 });
+      console.log('  ✅ Price snapshots saved');
+    } catch (e) { console.error(`  ❌ price-snapshot: ${e.message}`); }
+
+    try {
+      console.log('  📊 Regenerating cost-tracker pages...');
+      const liveSites = await sql`SELECT s.*, n.slug AS niche_slug, n.name AS niche_name, s.ga4_measurement_id FROM sites s JOIN niches n ON s.niche_id = n.id WHERE s.status = 'live'`;
+      for (const site of liveSites) {
+        await generateCostTrackerForSite({ domain: site.domain, nicheSlug: site.niche_slug, nicheName: site.niche_name, ga4MeasurementId: site.ga4_measurement_id || '' });
+      }
+      console.log('  ✅ Cost-tracker pages updated');
+    } catch (e) { console.error(`  ❌ generate-cost-tracker: ${e.message}`); }
   }
 
   // 12. HARO weekly digest — ogni domenica alle 13:xx UTC

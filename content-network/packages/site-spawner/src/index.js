@@ -27,6 +27,7 @@ import { generateToolPage, generateToolBody } from '@content-network/content-eng
 import { getAllCategoryIntros } from '@content-network/content-engine/src/category-intros.js';
 import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from './niche-methodology.js';
 import { generateGlossaryForSite } from '@content-network/vps/src/generate-glossary.js';
+import { generateCostTrackerForSite } from '@content-network/vps/src/generate-cost-tracker.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -138,6 +139,19 @@ async function run() {
       if (termCount) console.log(`  ✅ Glossary: ${termCount} terms at /glossary/`);
     } catch (err) {
       console.warn(`  ⚠️  Glossary generation failed (non-blocking): ${err.message}`);
+    }
+
+    // 7c. Cost tracker page (if price_snapshots data exists for this niche)
+    try {
+      const dataPoints = await generateCostTrackerForSite({
+        domain,
+        nicheSlug,
+        nicheName: niche.name,
+        ga4MeasurementId: siteConfig.ga4MeasurementId || '',
+      });
+      if (dataPoints) console.log(`  ✅ Cost Tracker: /cost-tracker/ (${dataPoints} data points)`);
+    } catch (err) {
+      console.warn(`  ⚠️  Cost tracker generation failed (non-blocking): ${err.message}`);
     }
 
     // 7d. Pagina autore — genera bio lunga + scarica foto
