@@ -56,8 +56,9 @@ async function run() {
   }
 
   // Carica slug e titoli già esistenti per il sito — usati per dedup
+  // Escludi articoli rimossi (status='removed') per non bloccare keyword legittime
   const existingArticles = await sql`
-    SELECT slug, title FROM articles WHERE site_id = ${siteId}
+    SELECT slug, title FROM articles WHERE site_id = ${siteId} AND status != 'removed'
   `;
   const existingSlugs = new Set(existingArticles.map(a => a.slug));
   const existingTitles = existingArticles.map(a => a.title.toLowerCase());
@@ -275,13 +276,14 @@ function checkKeywordCannibalization(keyword, existingSlugs, existingTitles) {
     return { skip: true, reason: `predicted slug already exists: ${predictedSlug}` };
   }
 
-  // Level 2: keyword Jaccard vs existing titles (threshold 0.50 — stricter than post-gen 0.55)
-  const kwDup = existingTitles.find(t => jaccardSimilarity(kw, t) >= 0.50);
+  // Level 2: keyword Jaccard vs existing titles (threshold 0.62 — near-exact duplicates only)
+  const kwDup = existingTitles.find(t => jaccardSimilarity(kw, t) >= 0.62);
   if (kwDup) {
     return { skip: true, reason: `keyword too similar to existing title: "${kwDup}"` };
   }
 
-  // Level 3: geo-variant cap — max 2 geo-variants of same core topic
+  // Level 3: geo-variant cap — max 8 geo-variants of same core topic
+  // (insurance/home-improvement need state-by-state coverage: 50 states, cap must be generous)
   const kwCore = stripGeoFromKeyword(kw);
   if (kwCore !== kw) {
     const geoVariantCount = existingTitles.filter(t => {
@@ -289,7 +291,7 @@ function checkKeywordCannibalization(keyword, existingSlugs, existingTitles) {
       if (tCore === t) return false; // not a geo variant, skip
       return jaccardSimilarity(kwCore, tCore) >= 0.60;
     }).length;
-    if (geoVariantCount >= 2) {
+    if (geoVariantCount >= 8) {
       return { skip: true, reason: `geo-variant cap (${geoVariantCount} variants already exist for core: "${kwCore}")` };
     }
   }
