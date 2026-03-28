@@ -71,7 +71,11 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
   const variantIdx   = computeVariant(keyword);
   const author       = selectAuthor(niche.slug, variantIdx);
   const model        = selectModel(keyword, nichePersona);
-  const prompt       = buildArticlePrompt(keyword, niche, { liveDataBlock, styleVariant: variantIdx });
+  const prompt       = buildArticlePrompt(keyword, niche, {
+    liveDataBlock,
+    styleVariant: variantIdx,
+    authorPersona: variantIdx > 0 ? author.promptPersona : null,
+  });
 
   console.log(`  [variant] author=${author.name} style=${variantIdx} model=${model.includes('sonnet') ? 'sonnet' : 'haiku'}`);
 
