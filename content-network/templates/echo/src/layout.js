@@ -206,7 +206,7 @@ export function renderHeader(site){return`
     <a href="/" class="logo"><span class="logo-name">${esc(site.name)}</span><span class="logo-sub">Living · Wellness · Inspiration</span></a>
     ${adUnit('leaderboard')}
   </div></div>
-  <nav class="hdr-nav"><button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--terra);font-weight:700">Free Calculator</a></li>`:''}${site.hasCostTracker?`<li><a href="/cost-tracker/">Cost Tracker</a></li>`:''}</ul></nav>
+  <nav class="hdr-nav"><button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--terra);font-weight:700">${site.toolLabel||'Free Calculator'}</a></li>`:''}${site.hasCostTracker?`<li><a href="/cost-tracker/">Cost Tracker</a></li>`:''}</ul></nav>
 </header>
 <script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`}
 

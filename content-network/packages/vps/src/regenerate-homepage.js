@@ -31,9 +31,11 @@ async function buildSiteConfig(site, nicheSlug) {
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
   let toolSlug = null;
+  let toolLabel = 'Free Calculator';
   try {
     const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
     toolSlug = TOOL_CONFIGS[nicheSlug]?.slug || null;
+    toolLabel = TOOL_CONFIGS[nicheSlug]?.navLabel || 'Free Calculator';
   } catch {}
 
   // Fetch latest price snapshots for homepage widget (max 4 metrics, with MoM delta)
@@ -91,6 +93,7 @@ async function buildSiteConfig(site, nicheSlug) {
     mgidInArticleId:  site.mgid_in_article_id || '',
     mgidSmartId:      site.mgid_smart_id || '',
     toolSlug,
+    toolLabel,
     hasCostTracker,
     costTrackerData,
   };

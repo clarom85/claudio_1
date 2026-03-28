@@ -611,7 +611,7 @@ export function renderHeader(site) {
       <ul id="main-nav" style="list-style:none">
         <li><a href="/">Home</a></li>
         ${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}
-        ${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#e67e22;font-weight:700">Free Calculator</a></li>`:''}
+        ${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#e67e22;font-weight:700">${site.toolLabel||'Free Calculator'}</a></li>`:''}
         ${site.hasCostTracker?`<li><a href="/cost-tracker/">Cost Tracker</a></li>`:''}
       </ul>
     </div>

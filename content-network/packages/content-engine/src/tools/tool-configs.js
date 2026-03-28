@@ -12,6 +12,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'home-improvement-costs': {
     slug: 'renovation-cost-calculator',
+    navLabel: 'Renovation Calculator',
     title: 'Home Renovation Cost Calculator',
     headline: 'How Much Will Your Project Cost?',
     description: 'Get an instant, contractor-verified cost estimate for your home improvement project. Select your project type and see project-specific options — results include a low/mid/high range broken down by labor, materials, and permits.',
@@ -498,6 +499,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'pet-care-by-breed': {
     slug: 'pet-cost-calculator',
+    navLabel: 'Pet Cost Calculator',
     title: 'Annual Pet Care Cost Calculator',
     headline: 'How Much Does Your Pet Cost Per Year?',
     description: 'Calculate the real annual cost of owning your pet — including food, vet visits, grooming, toys, and insurance. Based on breed size and age.',
@@ -592,6 +594,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'software-error-fixes': {
     slug: 'error-fix-finder',
+    navLabel: 'Error Fix Finder',
     title: 'Software Error Fix Finder',
     headline: 'Find the Fix for Your Error',
     description: 'Answer 4 quick questions about your error and we\'ll show you the most likely cause and the exact steps to fix it.',
@@ -676,6 +679,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'diet-specific-recipes': {
     slug: 'macro-calculator',
+    navLabel: 'Macro Calculator',
     title: 'Daily Macro & Calorie Calculator',
     headline: 'Find Your Daily Calorie & Macro Targets',
     description: 'Calculate your personalized daily calorie needs and macro targets (protein, carbs, fat) based on your body and goals. Adjusted for your specific diet.',
@@ -795,6 +799,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'small-town-tourism': {
     slug: 'trip-budget-calculator',
+    navLabel: 'Trip Calculator',
     title: 'Weekend Trip Budget Calculator',
     headline: 'Plan Your Perfect Weekend Trip Budget',
     description: 'Calculate a realistic budget for your small-town weekend getaway. Covers accommodation, food, activities, and travel — customized to your travel style.',
@@ -898,6 +903,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'personal-finance': {
     slug: 'savings-rate-calculator',
+    navLabel: 'Savings Calculator',
     title: 'Savings Rate & Emergency Fund Calculator',
     headline: 'Are You Saving Enough?',
     description: 'Calculate your savings rate, see how you compare to national averages, and find out exactly how many months of emergency fund you have.',
@@ -983,6 +989,7 @@ export const TOOL_CONFIGS = {
   ───────────────────────────────────────────────────────── */
   'insurance-guide': {
     slug: 'insurance-calculator',
+    navLabel: 'Insurance Calculator',
     title: 'Insurance Premium Calculator',
     headline: 'How Much Should You Pay for Insurance in Your State?',
     description: 'Get a data-driven estimate of your auto, home, health, or life insurance premium — adjusted for your state, coverage profile, and risk factors. Compare to national and state averages.',
@@ -1483,6 +1490,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'legal-advice': {
     slug: 'legal-cost-estimator',
+    navLabel: 'Legal Cost Estimator',
     title: 'Legal Cost Estimator',
     headline: 'How Much Will Your Legal Matter Cost?',
     description: 'Get a realistic cost range for your legal case before hiring an attorney. Based on case type, complexity, and your location.',
@@ -1592,6 +1600,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'real-estate-investing': {
     slug: 'rental-roi-calculator',
+    navLabel: 'ROI Calculator',
     title: 'Rental Property ROI Calculator',
     headline: 'Is This Rental Property Worth Buying?',
     description: 'Calculate cap rate, cash-on-cash return, and annual cash flow for any rental property. See if the numbers actually work before you make an offer.',
@@ -1699,6 +1708,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'health-symptoms': {
     slug: 'symptom-triage-checker',
+    navLabel: 'Symptom Checker',
     title: 'Symptom Triage Checker',
     headline: 'Should You See a Doctor?',
     description: 'Answer 4 quick questions about your symptoms and find out the urgency level and what type of care is appropriate.',
@@ -1790,6 +1800,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'credit-cards-banking': {
     slug: 'credit-card-rewards-calculator',
+    navLabel: 'Rewards Calculator',
     title: 'Credit Card Rewards Calculator',
     headline: 'How Much Could You Earn in Credit Card Rewards?',
     description: 'Calculate your annual rewards earnings based on your spending habits and compare flat-rate, travel, and category cashback cards.',
@@ -1851,6 +1862,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'weight-loss-fitness': {
     slug: 'weight-loss-timeline-calculator',
+    navLabel: 'Weight Loss Calculator',
     title: 'Weight Loss Timeline Calculator',
     headline: 'How Long Will It Take to Reach Your Goal Weight?',
     description: 'Get a realistic, science-based timeline for your weight loss goal based on your body, activity level, and calorie deficit.',
@@ -1928,6 +1940,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'automotive-guide': {
     slug: 'car-ownership-cost-calculator',
+    navLabel: 'Car Cost Calculator',
     title: 'True Cost of Car Ownership Calculator',
     headline: 'What Does That Car Really Cost Per Year?',
     description: 'See the full cost of owning a car — depreciation, insurance, fuel, maintenance, and financing — not just the monthly payment.',
@@ -2031,6 +2044,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'online-education': {
     slug: 'education-roi-calculator',
+    navLabel: 'Education ROI',
     title: 'Degree & Certification ROI Calculator',
     headline: 'Is This Degree or Certification Worth the Cost?',
     description: 'Calculate your return on investment for any degree or online certification. See how long it takes to break even and your 10-year salary gain.',
@@ -2129,6 +2143,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'cybersecurity-privacy': {
     slug: 'security-risk-assessment',
+    navLabel: 'Risk Assessment',
     title: 'Personal Security Risk Assessment',
     headline: 'How Vulnerable Are You Online?',
     description: 'Answer 5 quick questions about your digital habits and get a personalized security risk score with the most impactful fixes.',
@@ -2233,6 +2248,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'mental-health-wellness': {
     slug: 'burnout-risk-checker',
+    navLabel: 'Burnout Checker',
     title: 'Burnout Risk Checker',
     headline: 'Are You on the Path to Burnout?',
     description: 'Answer 5 questions about your work habits, energy, and emotional state to get an honest burnout risk assessment and science-backed recovery steps.',
@@ -2279,6 +2295,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'home-security-systems': {
     slug: 'security-system-cost-calculator',
+    navLabel: 'Security Calculator',
     title: 'Home Security System Cost Calculator',
     headline: 'How Much Does a Home Security System Cost?',
     description: 'Get an accurate cost estimate for a home security system based on your home size, monitoring preferences, and installation type.',
@@ -2378,6 +2395,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'solar-energy': {
     slug: 'solar-savings-calculator',
+    navLabel: 'Solar Calculator',
     title: 'Solar Panel Savings Calculator',
     headline: 'How Much Can You Save With Solar Panels?',
     description: 'Calculate your solar installation cost, annual savings, and break-even point based on your energy usage, location, and available incentives.',
@@ -2481,6 +2499,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'senior-care-medicare': {
     slug: 'medicare-cost-estimator',
+    navLabel: 'Medicare Estimator',
     title: 'Medicare Cost Estimator',
     headline: 'What Will Medicare Actually Cost You?',
     description: 'Estimate your annual Medicare costs based on your plan type, income, and healthcare usage. Compare Original Medicare vs Medicare Advantage.',
@@ -2580,6 +2599,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
   ───────────────────────────────────────────────────────── */
   'business-startup': {
     slug: 'startup-cost-calculator',
+    navLabel: 'Startup Calculator',
     title: 'Startup Cost Calculator',
     headline: 'How Much Does It Cost to Start a Business?',
     description: 'Get a realistic first-year cost estimate for your business type. Covers formation, licensing, equipment, marketing, staffing, and operating expenses.',

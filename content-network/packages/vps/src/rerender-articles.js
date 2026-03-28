@@ -67,9 +67,11 @@ async function run() {
 
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   let toolSlug = null;
+  let toolLabel = 'Free Calculator';
   try {
     const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
     toolSlug = TOOL_CONFIGS[site.niche_slug]?.slug || null;
+    toolLabel = TOOL_CONFIGS[site.niche_slug]?.navLabel || 'Free Calculator';
   } catch {}
 
   const siteConfig = {
@@ -91,6 +93,7 @@ async function run() {
     tagline: NICHE_TAGLINES[site.niche_slug] || `Expert guides on ${siteName}`,
     categories,
     toolSlug,
+    toolLabel,
     hasCostTracker: true,
     reviewer: author.reviewer || null,
     trustSources: author.trustSources || '',
