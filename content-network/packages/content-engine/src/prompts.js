@@ -339,13 +339,44 @@ CLOSING: End with an honest tradeoff summary. What should you spend more on, and
 
 };
 
+// ── Per-variant structural parameters ────────────────────────────────────────
+
+// Word count offset from cfg.wordCount base:
+// Variant 0 (lean/direct) → shorter; Variant 1 (expert/deep) → longer; Variant 2 (editorial) → base
+const VARIANT_WC_OFFSETS = { 0: -150, 1: 400, 2: 50 };
+
+// Meta description framing per variant — different SERP appearance
+const VARIANT_META_DESC_STYLE = {
+  0: 'lead with the price range or key number upfront, then keyword, end with a practical CTA. Example: "Roof replacement costs $8,000–$22,000. See what drives the spread and how to get a fair quote."',
+  1: 'open with the key question or the common mistake this article corrects, then what the reader learns. Example: "Why do quotes for the same job differ by 40%? A cost estimator explains the real factors — and what to push back on."',
+  2: 'lead with a counterintuitive fact or what most articles miss, then honest framing. Example: "The listed price is rarely the final price. Here is what actually shows up on the invoice — and how to budget realistically."',
+};
+
+// Schema type per variant — affects rich result eligibility
+const VARIANT_SCHEMA_HINT = {
+  0: 'HowTo — this article is step-by-step and actionable',
+  1: 'Article — this is expert analysis with depth and root causes',
+  2: 'FAQPage — this article has prominent Q&A and counterintuitive reveals',
+};
+
+// Author note framing per variant — reinforces persona coherence
+const VARIANT_AUTHOR_NOTE_STYLE = {
+  0: 'a quick practical observation from direct experience — something you notice every time. 2 sentences max. Example: "I have never seen a homeowner regret spending more on [X]. I have seen dozens regret saving on it."',
+  1: 'a specific mistake you personally witnessed — name what the person did, what happened, and what the correct move was. 2-3 sentences. Example: "A client skipped the permit to save $300. The inspector flagged it at resale and she spent $4,200 correcting it."',
+  2: 'something about this topic that genuinely surprised you when you first encountered it — a counterintuitive pattern you only know from experience. 2 sentences. Example: "The cheapest option on paper is almost never the cheapest over two years. I started tracking this and the gap averaged 23%."',
+};
+
 export function buildArticlePrompt(keyword, niche, options = {}) {
   const cfg = NICHE_PROMPT_CONFIGS[niche.slug] || DEFAULT_NICHE_CONFIG;
-  const wordCount = options.targetWordCount || getVariedWordCount(cfg.wordCount);
-  const liveDataBlock = options.liveDataBlock || '';
   const styleVariant = options.styleVariant ?? 0;
+  const baseWc = cfg.wordCount;
+  const wordCount = options.targetWordCount || Math.max(800, baseWc + (VARIANT_WC_OFFSETS[styleVariant] ?? 0));
+  const liveDataBlock = options.liveDataBlock || '';
   const styleBlock = WRITING_STYLE_VARIANTS[styleVariant] || '';
   const persona = options.authorPersona || cfg.persona;
+  const metaDescStyle = VARIANT_META_DESC_STYLE[styleVariant] || VARIANT_META_DESC_STYLE[0];
+  const schemaHint = VARIANT_SCHEMA_HINT[styleVariant] || cfg.schemaHint;
+  const authorNoteStyle = VARIANT_AUTHOR_NOTE_STYLE[styleVariant] || VARIANT_AUTHOR_NOTE_STYLE[0];
   const CURRENT_YEAR = new Date().getFullYear();
   const CURRENT_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -370,7 +401,7 @@ WORD COUNT: ${wordCount}–${wordCount + 300} words
 OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
 {
   "title": "compelling H1 title (50-65 chars, includes keyword naturally)",
-  "metaDescription": "compelling meta description (150-160 chars, includes keyword, has CTA)",
+  "metaDescription": "150-160 chars — ${metaDescStyle}",
   "intro": "2-3 sentence intro that immediately delivers value — no preamble, no throat-clearing",
   "sections": [
     {
@@ -384,7 +415,7 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
     { "question": "question people actually search?", "answer": "direct answer (2-3 sentences, no hedging)" }
   ],
   "conclusion": "1-2 paragraphs — actionable takeaway, not a summary of what was already said",
-  "authorNote": "2-3 sentences in first person from direct professional experience — specific anecdote or observation that ONLY someone with real hands-on experience would know. Reference a real situation, client type, or pattern seen repeatedly. Not generic. Example style: 'I've seen this mistake on nearly every job where the homeowner went with the lowest bid — and it always costs more to fix than doing it right the first time.'",
+  "authorNote": "first-person, from direct experience — ${authorNoteStyle}",
   "expertTip": "1 concise tip (1-2 sentences) that represents insider knowledge — something a professional would tell a friend but that most articles miss. Prefixed naturally with the author's perspective.",
   "keyTakeaways": ["specific takeaway 1", "specific takeaway 2", "specific takeaway 3"],
   "comparisonTable": {
@@ -397,7 +428,7 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
   },
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "category": "best-fit category for this article (options: ${cfg.categoryHint})",
-  "schemaType": "Article or HowTo — use HowTo for step-by-step guides (hint: ${cfg.schemaHint})",
+  "schemaType": "Article, HowTo, or FAQPage — choose the best fit (guidance: ${schemaHint})",
   "citations": [
     {
       "claim": "the specific fact or statistic this source supports",
