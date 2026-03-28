@@ -54,7 +54,7 @@ export function injectInternalLinks(articles) {
       if (usedSlugs.has(target.slug)) continue;
 
       for (const phrase of target.phrases) {
-        if (phrase.length < 15) continue; // frasi troppo corte → falsi positivi
+        if (phrase.length < 12) continue; // frasi troppo corte → falsi positivi
 
         // Cerca la frase nel testo visibile (non dentro attributi HTML)
         const result = injectLink(content, phrase, target.slug);
@@ -106,7 +106,7 @@ function buildPhrases(title, tags = []) {
 
   // Tags come anchor text alternativo
   for (const tag of (tags || [])) {
-    if (tag.length >= 15) phrases.add(tag);
+    if (tag.length >= 12) phrases.add(tag);
   }
 
   return [...phrases]
