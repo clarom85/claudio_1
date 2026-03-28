@@ -18,8 +18,9 @@ import {
   generateRobotsTxt, generateAdsTxt, generateSitemap, writeSiteFile, enableSSL
 } from '@content-network/vps';
 import { setupDomain as cfSetupDomain, purgeCache as cfPurgeCache } from '@content-network/vps/src/cloudflare.js';
-import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
 import { generateAuthors } from '@content-network/content-engine/src/author-generator.js';
+import { setupAdditionalAuthor } from '@content-network/vps/src/setup-additional-authors.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { TOOL_CONFIGS } from '@content-network/content-engine/src/tools/tool-configs.js';
 import { generateToolPage, generateToolBody } from '@content-network/content-engine/src/tools/tool-generator.js';
@@ -150,6 +151,20 @@ async function run() {
       }
     } catch (err) {
       console.warn(`  ⚠️  Author generation failed (non-blocking): ${err.message}`);
+    }
+
+    // 7d.5 — Autori aggiuntivi (immagini Pexels + pagine /author/)
+    const extraAuthors = ADDITIONAL_AUTHORS[nicheSlug] || [];
+    if (extraAuthors.length > 0) {
+      console.log(`👥 Setting up ${extraAuthors.length} additional author(s)...`);
+      const extraSiteConfig = { name: siteConfig.name, url: siteConfig.url };
+      for (const extraAuthor of extraAuthors) {
+        try {
+          await setupAdditionalAuthor(extraAuthor, domain, extraSiteConfig, { force: true });
+        } catch (err) {
+          console.warn(`  ⚠️  Additional author setup failed for ${extraAuthor.name} (non-blocking): ${err.message}`);
+        }
+      }
     }
 
     // 7e. Interactive tool page per la nicchia

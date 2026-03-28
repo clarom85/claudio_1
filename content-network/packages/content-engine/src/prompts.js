@@ -615,40 +615,225 @@ export const AUTHOR_PERSONAS = {
 // Add entries here when a new site is spawned. Niches without an entry
 // fall back to the primary author for all variant indexes.
 export const ADDITIONAL_AUTHORS = {
+
   'home-improvement-costs': [
-    // idx 1 — conversational
-    {
-      name: 'Karen Phillips',
-      title: 'Home Improvement Writer & DIY Specialist',
+    { name: 'Karen Phillips', title: 'Home Improvement Writer & DIY Specialist',
       bio: 'Karen learned home improvement the hard way — through 11 years of owning a 1920s fixer-upper and hiring (and firing) dozens of contractors. She writes to help homeowners ask the right questions before the crew shows up and the costs start climbing.',
-      avatar: 'karen-phillips',
-      avatarUrl: 'https://i.pravatar.cc/150?u=karen-phillips-home-improvement', // fallback until Pexels image downloaded
-    },
-    // idx 2 — data-driven
-    {
-      name: 'Dan Mercer',
-      title: 'Construction Cost Estimator',
+      avatar: 'karen-phillips', avatarUrl: 'https://i.pravatar.cc/150?u=karen-phillips-home',
+      portraitQuery: 'professional woman smiling portrait headshot' },
+    { name: 'Dan Mercer', title: 'Construction Cost Estimator',
       bio: 'Dan spent 14 years as a professional cost estimator for commercial and residential contractors before moving to consumer journalism. He has priced thousands of projects and knows exactly where contractors pad their margins — and how to spot it.',
-      avatar: 'dan-mercer',
-      avatarUrl: 'https://i.pravatar.cc/150?u=dan-mercer-construction-costs', // fallback until Pexels image downloaded
-    },
+      avatar: 'dan-mercer', avatarUrl: 'https://i.pravatar.cc/150?u=dan-mercer-construction',
+      portraitQuery: 'professional man business portrait headshot' },
   ],
+
   'insurance-guide': [
-    // idx 1 — conversational
-    {
-      name: 'Sarah Campbell',
-      title: 'Personal Finance Writer & Insurance Consumer Advocate',
+    { name: 'Sarah Campbell', title: 'Personal Finance Writer & Insurance Consumer Advocate',
       bio: 'Sarah spent three years fighting her own insurer after a disputed claim denial, eventually winning on appeal. She now writes with the clarity that comes from having navigated the system herself — form by form, exclusion by exclusion.',
-      avatar: 'sarah-campbell',
-      avatarUrl: 'https://i.pravatar.cc/150?u=sarah-campbell-insurance-guide', // fallback until Pexels image downloaded
-    },
-    // idx 2 — data-driven
-    {
-      name: 'Chris Washington',
-      title: 'Insurance Market Analyst',
+      avatar: 'sarah-campbell', avatarUrl: 'https://i.pravatar.cc/150?u=sarah-campbell-insurance',
+      portraitQuery: 'professional woman business portrait headshot' },
+    { name: 'Chris Washington', title: 'Insurance Market Analyst',
       bio: 'Chris spent 10 years analyzing rate filings and market data for a state Department of Insurance before turning to consumer journalism. He understands where the industry buries costs and how state regulators actually function in practice.',
-      avatar: 'chris-washington',
-      avatarUrl: 'https://i.pravatar.cc/150?u=chris-washington-insurance-analyst', // fallback until Pexels image downloaded
-    },
+      avatar: 'chris-washington', avatarUrl: 'https://i.pravatar.cc/150?u=chris-washington-insurance',
+      portraitQuery: 'professional man financial analyst portrait headshot' },
   ],
+
+  'legal-advice': [
+    { name: 'Rachel Torres', title: 'Legal Writer & Consumer Rights Advocate',
+      bio: 'Rachel spent two years navigating a wrongful termination case without legal representation before winning on appeal. She now writes to help others understand their legal rights before situations become expensive and irreversible.',
+      avatar: 'rachel-torres', avatarUrl: 'https://i.pravatar.cc/150?u=rachel-torres-legal',
+      portraitQuery: 'professional woman lawyer portrait headshot' },
+    { name: 'Mark Stevens', title: 'Legal Research Analyst',
+      bio: 'Mark is a legal research analyst with 12 years of experience compiling case law data and tracking legislative changes across jurisdictions. He writes to make legal information searchable and actionable for non-lawyers.',
+      avatar: 'mark-stevens', avatarUrl: 'https://i.pravatar.cc/150?u=mark-stevens-legal',
+      portraitQuery: 'professional man suit portrait headshot' },
+  ],
+
+  'senior-care-medicare': [
+    { name: 'Patricia Hayes', title: 'Family Caregiver Advocate & Senior Care Writer',
+      bio: 'Patricia spent four years as the primary caregiver for both of her aging parents, navigating Medicare enrollment, skilled nursing facilities, and Medicaid spend-down simultaneously. She writes to give families the practical roadmap she wished she had had from the beginning.',
+      avatar: 'patricia-hayes', avatarUrl: 'https://i.pravatar.cc/150?u=patricia-hayes-senior',
+      portraitQuery: 'professional woman mature portrait headshot' },
+    { name: 'Robert Chen', title: 'Medicare Policy Analyst',
+      bio: 'Robert has tracked Medicare Advantage plan performance, premium trends, and coverage changes for 11 years and has consulted for state health departments on enrollment patterns. He translates CMS data and annual rule updates into actionable guidance for beneficiaries.',
+      avatar: 'robert-chen', avatarUrl: 'https://i.pravatar.cc/150?u=robert-chen-medicare',
+      portraitQuery: 'professional man healthcare analyst portrait headshot' },
+  ],
+
+  'solar-energy': [
+    { name: 'Lisa Nguyen', title: 'Homeowner Solar Advocate & Energy Writer',
+      bio: 'Lisa installed a 9.6 kW solar system on her home three years ago and has tracked every kilowatt-hour produced and every dollar saved since. She writes to give prospective solar buyers an unfiltered look at what ownership actually looks like beyond the installer sales pitch.',
+      avatar: 'lisa-nguyen', avatarUrl: 'https://i.pravatar.cc/150?u=lisa-nguyen-solar',
+      portraitQuery: 'professional woman smiling portrait headshot' },
+    { name: 'Brian Foster', title: 'Energy Policy Analyst',
+      bio: 'Brian has worked with state utility commissions and researched solar incentive program effectiveness for a decade. He brings a rigorous, market-data perspective to solar economics, net metering policy, and the real cost of going solar.',
+      avatar: 'brian-foster', avatarUrl: 'https://i.pravatar.cc/150?u=brian-foster-solar',
+      portraitQuery: 'professional man energy analyst portrait headshot' },
+  ],
+
+  'personal-finance': [
+    { name: 'Stephanie Park', title: 'Personal Finance Writer & Debt-Free Coach',
+      bio: 'Stephanie paid off $92,000 in student loans and credit card debt in four years on an average salary. She writes about personal finance with the honesty that comes from having lived through every mistake she warns readers about.',
+      avatar: 'stephanie-park', avatarUrl: 'https://i.pravatar.cc/150?u=stephanie-park-finance',
+      portraitQuery: 'professional woman finance portrait headshot' },
+    { name: 'Thomas Reed', title: 'Quantitative Finance Journalist',
+      bio: 'Thomas spent 11 years as a quantitative analyst for a regional bank before moving to financial journalism. He specializes in translating Federal Reserve data and market statistics into actionable personal finance guidance.',
+      avatar: 'thomas-reed', avatarUrl: 'https://i.pravatar.cc/150?u=thomas-reed-finance',
+      portraitQuery: 'professional man financial analyst portrait headshot' },
+  ],
+
+  'real-estate-investing': [
+    { name: 'Amanda Torres', title: 'Real Estate Investor & First-Time Buyer Coach',
+      bio: 'Amanda bought her first rental property at 29 with a modest down payment and no prior investing experience. She documents every deal — the wins and the costly mistakes — to give new investors a realistic picture of what REI actually requires.',
+      avatar: 'amanda-torres', avatarUrl: 'https://i.pravatar.cc/150?u=amanda-torres-rei',
+      portraitQuery: 'professional woman real estate portrait headshot' },
+    { name: 'Kevin Foster', title: 'Real Estate CPA & Investment Analyst',
+      bio: 'Kevin is a CPA who specializes in real estate taxation and has advised investors on more than 600 property acquisitions. He approaches every deal through the lens of after-tax cash flow and deal structure.',
+      avatar: 'kevin-foster', avatarUrl: 'https://i.pravatar.cc/150?u=kevin-foster-rei',
+      portraitQuery: 'professional man financial analyst portrait headshot' },
+  ],
+
+  'health-symptoms': [
+    { name: 'Susan James', title: 'Medical Writer & Patient Advocate',
+      bio: 'Susan has covered health and medicine for general audiences for 10 years and has served as a patient advocate through multiple family hospitalizations. She bridges the gap between clinical terminology and what patients actually need to understand.',
+      avatar: 'susan-james', avatarUrl: 'https://i.pravatar.cc/150?u=susan-james-health',
+      portraitQuery: 'professional woman health journalist portrait headshot' },
+    { name: 'Dr. Alan Wright', title: 'Epidemiologist & Public Health Researcher',
+      bio: 'Dr. Wright has worked on disease surveillance studies for the CDC and published research on symptom prevalence and diagnostic patterns across population groups. He contextualizes health statistics for a non-specialist audience.',
+      avatar: 'alan-wright', avatarUrl: 'https://i.pravatar.cc/150?u=alan-wright-health',
+      portraitQuery: 'professional man doctor portrait headshot' },
+  ],
+
+  'credit-cards-banking': [
+    { name: 'Maria Lopez', title: 'Former Bank Manager & Consumer Finance Advocate',
+      bio: 'Maria worked as a bank branch manager for seven years before leaving to write about the financial products she spent years selling. She reviews credit cards and bank accounts from the inside perspective of someone who knows exactly how issuers make their money.',
+      avatar: 'maria-lopez', avatarUrl: 'https://i.pravatar.cc/150?u=maria-lopez-banking',
+      portraitQuery: 'professional woman banking portrait headshot' },
+    { name: 'Daniel Park', title: 'Credit Market Analyst (CFA)',
+      bio: 'Daniel spent 9 years analyzing credit market data for a consumer lending company and holds a CFA charter. He brings a rigorous quantitative approach to evaluating credit card offers, rates, and fee structures.',
+      avatar: 'daniel-park', avatarUrl: 'https://i.pravatar.cc/150?u=daniel-park-credit',
+      portraitQuery: 'professional man financial portrait headshot' },
+  ],
+
+  'weight-loss-fitness': [
+    { name: 'Jessica Kim', title: 'Fitness Writer & Sustainable Weight Loss Coach',
+      bio: 'Jessica lost 53 pounds over 18 months and has kept it off for six years by building sustainable habits rather than following rigid programs. She writes for people who have tried and failed at dieting and are looking for an approach that fits real life.',
+      avatar: 'jessica-kim', avatarUrl: 'https://i.pravatar.cc/150?u=jessica-kim-fitness',
+      portraitQuery: 'professional woman fitness portrait headshot' },
+    { name: 'Dr. Steven Park', title: 'Exercise Physiologist & Research Scientist',
+      bio: 'Dr. Park holds a PhD in exercise physiology and has published research on metabolic adaptation, body composition, and the long-term efficacy of weight loss interventions. He translates clinical research into practical guidance.',
+      avatar: 'steven-park', avatarUrl: 'https://i.pravatar.cc/150?u=steven-park-fitness',
+      portraitQuery: 'professional man scientist portrait headshot' },
+  ],
+
+  'automotive-guide': [
+    { name: 'Mike Chen', title: 'DIY Mechanic & Automotive Writer',
+      bio: 'Mike has been restoring and repairing his own vehicles since age 16 and currently has three projects in his garage. He writes to help drivers make informed decisions without getting taken advantage of at the shop.',
+      avatar: 'mike-chen', avatarUrl: 'https://i.pravatar.cc/150?u=mike-chen-auto',
+      portraitQuery: 'professional man mechanic portrait headshot' },
+    { name: 'Sarah Webb', title: 'Automotive Cost Analyst',
+      bio: 'Sarah spent 10 years tracking automotive repair costs and parts pricing data for a consumer advocacy organization. She uses pricing databases and labor rate studies to give readers defensible cost benchmarks.',
+      avatar: 'sarah-webb', avatarUrl: 'https://i.pravatar.cc/150?u=sarah-webb-auto',
+      portraitQuery: 'professional woman analyst portrait headshot' },
+  ],
+
+  'online-education': [
+    { name: 'James Rodriguez', title: 'Career Change Coach & Online Education Writer',
+      bio: 'James used online certifications to transition from warehouse logistics to data analytics in 18 months, earning more in year two than in five years at his previous job. He writes to give career changers a realistic picture of what online learning can and cannot do.',
+      avatar: 'james-rodriguez', avatarUrl: 'https://i.pravatar.cc/150?u=james-rodriguez-edu',
+      portraitQuery: 'professional man education portrait headshot' },
+    { name: 'Dr. Emily Chang', title: 'Education Policy Researcher',
+      bio: 'Dr. Chang has evaluated the labor market outcomes of online credential programs for a state higher education board and has published research on credential recognition by employers. She identifies which programs actually translate into career advancement.',
+      avatar: 'emily-chang', avatarUrl: 'https://i.pravatar.cc/150?u=emily-chang-edu',
+      portraitQuery: 'professional woman researcher portrait headshot' },
+  ],
+
+  'cybersecurity-privacy': [
+    { name: 'Alex Morgan', title: 'Consumer Privacy Journalist',
+      bio: 'Alex has covered consumer privacy and digital security for tech publications for seven years. She writes to help ordinary users understand cybersecurity without needing a technical background — focusing on the 20% of measures that prevent 80% of attacks.',
+      avatar: 'alex-morgan', avatarUrl: 'https://i.pravatar.cc/150?u=alex-morgan-cyber',
+      portraitQuery: 'professional woman technology journalist portrait headshot' },
+    { name: 'Rachel Foster', title: 'Threat Intelligence Analyst',
+      bio: 'Rachel is a threat intelligence analyst who has tracked attack campaigns and data breach trends for a cybersecurity firm for nine years. She brings a forensic, data-driven perspective to understanding how and why specific threats emerge.',
+      avatar: 'rachel-foster', avatarUrl: 'https://i.pravatar.cc/150?u=rachel-foster-cyber',
+      portraitQuery: 'professional woman cybersecurity analyst portrait headshot' },
+  ],
+
+  'mental-health-wellness': [
+    { name: 'Lisa Chen', title: 'Mental Health Advocate & Writer',
+      bio: 'Lisa has lived with anxiety disorder for 15 years and has written about her mental health journey for major health publications. She writes to reduce stigma and give readers who are hesitant to seek help a compassionate, honest starting point.',
+      avatar: 'lisa-chen', avatarUrl: 'https://i.pravatar.cc/150?u=lisa-chen-mental-health',
+      portraitQuery: 'professional woman mental health advocate portrait headshot' },
+    { name: 'Dr. Marcus Williams', title: 'Clinical Psychology Researcher',
+      bio: 'Dr. Williams has published studies on treatment outcomes, therapeutic modalities, and mental health service access across diverse populations. He translates academic research into clear guidance for people trying to understand their options.',
+      avatar: 'marcus-williams', avatarUrl: 'https://i.pravatar.cc/150?u=marcus-williams-psych',
+      portraitQuery: 'professional man psychologist portrait headshot' },
+  ],
+
+  'home-security-systems': [
+    { name: 'Sandra Hayes', title: 'Home Security Writer & Consumer Tester',
+      bio: 'Sandra upgraded her home security system after a break-in and spent six months testing every major platform on the market. She writes from the perspective of a homeowner who learned the hard way that marketing claims rarely match real-world performance.',
+      avatar: 'sandra-hayes', avatarUrl: 'https://i.pravatar.cc/150?u=sandra-hayes-security',
+      portraitQuery: 'professional woman homeowner portrait headshot' },
+    { name: 'James Clark', title: 'Security Market Research Analyst',
+      bio: 'James tracks the home security market for a consumer research firm and has analyzed pricing, monitoring contract terms, and hardware reliability data for over 40 system brands. He distills market complexity into defensible comparisons.',
+      avatar: 'james-clark', avatarUrl: 'https://i.pravatar.cc/150?u=james-clark-security',
+      portraitQuery: 'professional man security analyst portrait headshot' },
+  ],
+
+  'pet-care-by-breed': [
+    { name: 'Tom Garrett', title: 'Pet Care Writer & Rescue Volunteer',
+      bio: 'Tom has owned dogs and cats for 25 years and currently shares his home with two rescue greyhounds and a geriatric tabby cat. He writes to close the gap between what veterinarians recommend and what pet owners actually do.',
+      avatar: 'tom-garrett', avatarUrl: 'https://i.pravatar.cc/150?u=tom-garrett-pets',
+      portraitQuery: 'professional man happy portrait headshot' },
+    { name: 'Dr. Maya Patel', title: 'Veterinary Epidemiologist',
+      bio: 'Dr. Patel is a veterinary epidemiologist with a background in population health and breed-specific disease tracking. She translates large-scale animal health data into practical insights for everyday pet owners.',
+      avatar: 'maya-patel', avatarUrl: 'https://i.pravatar.cc/150?u=maya-patel-pets',
+      portraitQuery: 'professional woman scientist portrait headshot' },
+  ],
+
+  'software-error-fixes': [
+    { name: 'Sarah Johnson', title: 'Tech Writer & IT Explainer',
+      bio: 'Sarah has spent eight years writing about technology for non-technical audiences. She specializes in translating IT jargon into plain English that helps ordinary users fix their own problems without calling a technician.',
+      avatar: 'sarah-johnson', avatarUrl: 'https://i.pravatar.cc/150?u=sarah-johnson-tech',
+      portraitQuery: 'professional woman technology portrait headshot' },
+    { name: 'Ryan Lee', title: 'Software QA Engineer',
+      bio: 'Ryan is a software QA engineer with 10 years of experience in bug tracking and root cause analysis across enterprise and consumer software platforms. He approaches every error from a systematic debugging perspective.',
+      avatar: 'ryan-lee', avatarUrl: 'https://i.pravatar.cc/150?u=ryan-lee-software',
+      portraitQuery: 'professional man software engineer portrait headshot' },
+  ],
+
+  'diet-specific-recipes': [
+    { name: 'Jake Morrison', title: 'Home Cook & Dietary Adaptation Writer',
+      bio: 'Jake spent three years adapting his family\'s home cooking after his wife was diagnosed with celiac disease. He now tests every recipe for dietary compliance and writes for home cooks who want flavor without the guesswork.',
+      avatar: 'jake-morrison', avatarUrl: 'https://i.pravatar.cc/150?u=jake-morrison-recipes',
+      portraitQuery: 'professional man chef portrait headshot' },
+    { name: 'Dr. Priya Sharma', title: 'Nutrition Scientist',
+      bio: 'Dr. Sharma is a nutrition scientist who has published research on dietary patterns and metabolic outcomes. She approaches recipe development through the lens of macronutrient science and clinical evidence.',
+      avatar: 'priya-sharma', avatarUrl: 'https://i.pravatar.cc/150?u=priya-sharma-nutrition',
+      portraitQuery: 'professional woman nutritionist portrait headshot' },
+  ],
+
+  'small-town-tourism': [
+    { name: 'Claire Foster', title: 'Road Trip Writer & Weekend Travel Specialist',
+      bio: 'Claire has driven every major US highway at least twice and keeps a running list of towns she would actually move to. She writes about small-town travel for people who value authenticity over Instagram moments.',
+      avatar: 'claire-foster', avatarUrl: 'https://i.pravatar.cc/150?u=claire-foster-travel',
+      portraitQuery: 'professional woman travel portrait headshot' },
+    { name: 'Dr. Rachel Kim', title: 'Tourism Economics Researcher',
+      bio: 'Dr. Kim researches regional tourism economics and has consulted for state tourism bureaus on visitor spending patterns. She brings a data-first perspective to travel that reveals which small towns are genuinely thriving.',
+      avatar: 'rachel-kim', avatarUrl: 'https://i.pravatar.cc/150?u=rachel-kim-tourism',
+      portraitQuery: 'professional woman economics portrait headshot' },
+  ],
+
+  'business-startup': [
+    { name: 'Tom Rivera', title: 'Serial Entrepreneur & First-Time Founder Coach',
+      bio: 'Tom launched a service business from his kitchen table with $2,000 in savings and scaled it to $800,000 in annual revenue before selling. He writes to share the operational realities — cash flow, hiring, pricing — that most startup content glosses over.',
+      avatar: 'tom-rivera', avatarUrl: 'https://i.pravatar.cc/150?u=tom-rivera-startup',
+      portraitQuery: 'professional man entrepreneur portrait headshot' },
+    { name: 'Katherine Smith', title: 'Small Business Economist',
+      bio: 'Katherine has analyzed formation rates, survival data, and regulatory costs for the SBA Office of Advocacy. She uses government data and economic research to give founders realistic expectations about costs, timelines, and odds.',
+      avatar: 'katherine-smith', avatarUrl: 'https://i.pravatar.cc/150?u=katherine-smith-startup',
+      portraitQuery: 'professional woman economist portrait headshot' },
+  ],
+
 };

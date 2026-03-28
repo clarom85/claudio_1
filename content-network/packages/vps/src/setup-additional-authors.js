@@ -21,14 +21,6 @@ const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 const PEXELS_KEY = process.env.PEXELS_API_KEY;
 const FORCE = process.argv.includes('--force');
 
-// Pexels search queries per autore aggiuntivo — portrait professionale
-const PORTRAIT_QUERIES = {
-  'karen-phillips':   'professional woman smiling portrait headshot',
-  'dan-mercer':       'professional man confident portrait headshot',
-  'sarah-campbell':   'professional woman business portrait headshot',
-  'chris-washington': 'professional man serious portrait headshot',
-};
-
 function htmlEsc(str = '') {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -162,15 +154,22 @@ async function downloadPexelsImage(query, destPath) {
   });
 }
 
-async function setupAuthor(author, domain, siteConfig) {
+/**
+ * Esportabile: usato dal site-spawner per creare autori aggiuntivi a spawn time.
+ * @param {object} author  — entry da ADDITIONAL_AUTHORS
+ * @param {string} domain
+ * @param {{ name: string, url: string }} siteConfig
+ * @param {{ force?: boolean }} opts
+ */
+export async function setupAdditionalAuthor(author, domain, siteConfig, { force = false } = {}) {
   const imgDest = join(WWW_ROOT, domain, 'images', `author-${author.avatar}.jpg`);
   const pageDir = join(WWW_ROOT, domain, 'author', author.avatar);
   const pageFile = join(pageDir, 'index.html');
 
   // ── Image ────────────────────────────────────────────────────────────────
   let imgSrc;
-  if (!existsSync(imgDest) || FORCE) {
-    const query = PORTRAIT_QUERIES[author.avatar] || 'professional business portrait headshot';
+  if (!existsSync(imgDest) || force) {
+    const query = author.portraitQuery || 'professional business portrait headshot';
     try {
       await downloadPexelsImage(query, imgDest);
       console.log(`    📷 Downloaded: /images/author-${author.avatar}.jpg`);
@@ -180,19 +179,24 @@ async function setupAuthor(author, domain, siteConfig) {
       imgSrc = author.avatarUrl || `/images/author-${author.avatar}.jpg`;
     }
   } else {
-    console.log(`    ✓ Image already exists: /images/author-${author.avatar}.jpg`);
+    console.log(`    ✓ Image exists: /images/author-${author.avatar}.jpg`);
     imgSrc = `/images/author-${author.avatar}.jpg`;
   }
 
   // ── Author page ──────────────────────────────────────────────────────────
-  if (!existsSync(pageFile) || FORCE) {
+  if (!existsSync(pageFile) || force) {
     mkdirSync(pageDir, { recursive: true });
     const html = buildAuthorPageHtml(author, siteConfig, imgSrc);
     writeFileSync(pageFile, html, 'utf8');
     console.log(`    📄 Created: /author/${author.avatar}/`);
   } else {
-    console.log(`    ✓ Author page already exists: /author/${author.avatar}/`);
+    console.log(`    ✓ Page exists: /author/${author.avatar}/`);
   }
+}
+
+// Wrapper interno per il CLI (mantiene backward compat con il vecchio nome)
+async function setupAuthor(author, domain, siteConfig) {
+  return setupAdditionalAuthor(author, domain, siteConfig, { force: FORCE });
 }
 
 async function run() {
@@ -228,4 +232,7 @@ async function run() {
   process.exit(0);
 }
 
-run().catch(err => { console.error(err); process.exit(1); });
+// Auto-run solo se eseguito direttamente (non quando importato dal spawner)
+if (process.argv[1]?.endsWith('setup-additional-authors.js')) {
+  run().catch(err => { console.error(err); process.exit(1); });
+}
