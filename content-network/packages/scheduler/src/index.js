@@ -98,6 +98,15 @@ async function run() {
     try { await runWeeklyLinkGraphAnalysis(); } catch (e) { console.error(`  ❌ runWeeklyLinkGraphAnalysis: ${e.message}`); }
   }
 
+  // Daily digest email — ogni giorno alle 09:xx UTC
+  if (now.getHours() === 9) {
+    try {
+      console.log('  📰 Sending daily digest...');
+      execSync('node packages/vps/src/daily-digest.js', { cwd: ROOT, stdio: 'pipe', timeout: 30000 });
+      console.log('  ✅ Daily digest sent');
+    } catch (e) { console.error(`  ❌ daily-digest: ${e.message}`); }
+  }
+
   // 9. GSC keyword extraction + pool cleanup (ogni domenica alle 09:xx)
   if (now.getHours() === 9 && now.getDay() === 0) {
     try {
