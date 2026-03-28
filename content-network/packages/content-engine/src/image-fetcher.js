@@ -16,6 +16,7 @@ import { createHash } from 'crypto';
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PIXABAY_API = 'https://pixabay.com/api/';
 const UNSPLASH_API = 'https://api.unsplash.com/search/photos';
+const FAL_API = 'https://fal.run/fal-ai/flux/schnell';
 const USED_IDS_FILE = '.pexels-used.json';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
 const POLLINATIONS_TIMEOUT_MS = 35000;
@@ -247,6 +248,40 @@ function buildPollinationsPrompt(keyword, title, nicheSlug) {
   if (!subject) subject = POLLINATIONS_FALLBACKS[nicheSlug] || `professional ${cleanKeyword(keyword)} scene, realistic setting`;
 
   return `${subject}, photorealistic editorial photography, sharp focus, high resolution, natural lighting, no text overlays, no watermarks, no logos, no CGI look`;
+}
+
+async function fetchFromFal(keyword, title, slug, nicheSlug, imagesDir) {
+  const apiKey = process.env.FAL_API_KEY;
+  if (!apiKey) return null;
+
+  const prompt = buildPollinationsPrompt(keyword, title, nicheSlug); // reuse detailed niche prompts
+  console.log(`  [image] fal.ai prompt: "${prompt.slice(0, 80)}..."`);
+
+  try {
+    const res = await fetch(FAL_API, {
+      method: 'POST',
+      headers: { 'Authorization': `Key ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, image_size: 'landscape_16_9', num_images: 1, output_format: 'jpeg' }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 120)}`);
+    const data = await res.json();
+    const imageUrl = data.images?.[0]?.url;
+    if (!imageUrl) throw new Error('No image URL in response');
+
+    const imgRes = await fetch(imageUrl);
+    if (!imgRes.ok) throw new Error(`Image download HTTP ${imgRes.status}`);
+    const buf = Buffer.from(await imgRes.arrayBuffer());
+    if (buf.length < 10000) throw new Error('Image too small');
+
+    const destPath = join(imagesDir, `${slug}.jpg`);
+    writeFileSync(destPath, buf);
+    postProcessImage(destPath);
+    console.log(`  [image] Saved /images/${slug}.jpg (fal.ai flux-schnell)`);
+    return `/images/${slug}.jpg`;
+  } catch (err) {
+    console.warn(`  [image] fal.ai failed: ${err.message}`);
+    return null;
+  }
 }
 
 async function fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir) {
@@ -709,7 +744,11 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 3. Fallback: Pixabay (register at pixabay.com for free API key)
+  // 3. Fallback: fal.ai FLUX generation (~$0.003/image — FAL_API_KEY env)
+  const falResult = await fetchFromFal(keyword, title, slug, nicheSlug, imagesDir);
+  if (falResult) return falResult;
+
+  // 4. Fallback: Pixabay (register at pixabay.com for free API key)
   if (process.env.PIXABAY_API_KEY) {
     const queries = buildQueries(keyword, title, nicheSlug);
     const usedIds = loadUsedIds(imagesDir);
@@ -730,7 +769,7 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 4. Last resort: Pollinations AI-generated image (requires POLLINATIONS_API_KEY)
+  // 5. Last resort: Pollinations AI-generated image (requires POLLINATIONS_API_KEY)
   const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
   if (pollinationsResult) return pollinationsResult;
 
