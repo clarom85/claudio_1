@@ -336,6 +336,140 @@ const _DEFAULT_METHODOLOGY_UNUSED = {
   caveats: 'While we strive for accuracy, content is for informational purposes only. Always verify critical information with the relevant professional or official source for your specific situation.',
 };
 
+// ── YMYL Disclaimer builder ───────────────────────────────────────────────────
+// Returns niche-adapted full legal disclaimer body for YMYL sites.
+function buildYmylDisclaimerBody(nicheSlug, domain, siteName) {
+  // Niche-type classification
+  const isInsurance   = nicheSlug === 'insurance-guide';
+  const isLegal       = nicheSlug === 'legal-advice';
+  const isMedical     = ['health-symptoms','mental-health-wellness','senior-care-medicare'].includes(nicheSlug);
+  const isFinancial   = ['credit-cards-banking','real-estate-investing','personal-finance'].includes(nicheSlug);
+
+  // Niche-specific copy blocks
+  const alertText = isInsurance
+    ? 'Insurance Information Disclosure — The content on this site is for educational purposes only and does not constitute insurance advice. Always consult a licensed insurance professional before making coverage decisions.'
+    : isLegal
+    ? 'Legal Information Disclosure — The content on this site is for general informational purposes only and does not constitute legal advice. Always consult a licensed attorney for advice specific to your situation.'
+    : isMedical
+    ? 'Health Information Disclosure — The content on this site is for general informational purposes only and does not constitute medical advice. Always consult a licensed healthcare professional for advice specific to your health condition.'
+    : isFinancial
+    ? 'Financial Information Disclosure — The content on this site is for general informational purposes only and does not constitute financial or investment advice. Always consult a licensed financial advisor before making financial decisions.'
+    : 'Informational Disclosure — The content on this site is for general informational purposes only and does not constitute professional advice. Always consult a qualified professional for advice specific to your situation.';
+
+  const section1Title = isInsurance ? '1. Not Insurance Advice'
+    : isLegal ? '1. Not Legal Advice'
+    : isMedical ? '1. Not Medical Advice'
+    : isFinancial ? '1. Not Financial Advice'
+    : '1. Not Professional Advice';
+
+  const section1Body = isInsurance
+    ? `The content published on ${siteName} — including articles, guides, cost estimates, comparisons, and calculator outputs — is provided for <strong>general educational purposes only</strong>. Nothing on this site constitutes insurance advice, and nothing creates an insurance advisor-client relationship between you and ${siteName} or any of its contributors.`
+    : isLegal
+    ? `The content published on ${siteName} — including articles, guides, and analysis — is provided for <strong>general informational purposes only</strong>. Nothing on this site constitutes legal advice, and nothing creates an attorney-client relationship between you and ${siteName} or any of its contributors.`
+    : isMedical
+    ? `The content published on ${siteName} — including articles, guides, and symptom information — is provided for <strong>general educational purposes only</strong>. Nothing on this site constitutes medical advice, and nothing creates a doctor-patient relationship between you and ${siteName} or any of its contributors.`
+    : isFinancial
+    ? `The content published on ${siteName} — including articles, guides, rate comparisons, and calculator outputs — is provided for <strong>general educational purposes only</strong>. Nothing on this site constitutes financial or investment advice, and nothing creates an advisor-client relationship between you and ${siteName} or any of its contributors.`
+    : `The content published on ${siteName} is provided for <strong>general informational purposes only</strong>. Nothing on this site constitutes professional advice.`;
+
+  const section2Title = isInsurance ? '2. No Licensed Professional Relationship'
+    : isLegal ? '2. No Attorney-Client Relationship'
+    : isMedical ? '2. No Doctor-Patient Relationship'
+    : isFinancial ? '2. No Advisor-Client Relationship'
+    : '2. No Professional Relationship';
+
+  const section2Body = isInsurance
+    ? `${siteName} is not a licensed insurance company, agency, or brokerage. Our editors and contributors are not licensed insurance agents or brokers. Information shared on this site does not take into account your personal financial situation, health history, state of residence, or specific coverage needs.`
+    : isLegal
+    ? `${siteName} is not a law firm and does not provide legal representation. Information shared on this site does not take into account your specific jurisdiction, facts, or legal circumstances. Do not rely on this site as a substitute for professional legal counsel.`
+    : isMedical
+    ? `${siteName} is not a medical provider and does not provide diagnoses or treatment recommendations. Information shared on this site does not take into account your personal health history, medications, or specific medical conditions. If you are experiencing a medical emergency, call 911 immediately.`
+    : isFinancial
+    ? `${siteName} is not a registered investment advisor, broker-dealer, or financial planner. Information shared on this site does not take into account your personal financial situation, risk tolerance, tax status, or investment objectives.`
+    : `${siteName} does not provide professional advisory services. Information shared on this site does not take into account your personal circumstances.`;
+
+  const section3Title = isInsurance ? '3. Premium and Price Estimates'
+    : isFinancial ? '3. Rate and Return Estimates'
+    : '3. Cost and Price Estimates';
+
+  const section3Body = isInsurance
+    ? `Any insurance premium estimates, average cost figures, or price ranges presented on this site are based on publicly available data, industry surveys, and third-party research. Actual premiums vary significantly based on your age, health status, claims history, coverage amount, deductible, state of residence, and the specific insurer. Estimates should not be treated as quotes.`
+    : isFinancial
+    ? `Any rate estimates, return projections, or cost figures presented on this site are based on publicly available data, industry averages, and third-party research. Actual rates and returns vary based on market conditions, credit profile, investment strategy, and other individual factors. Estimates should not be treated as guaranteed figures.`
+    : `Any cost estimates, price ranges, or average figures presented on this site are based on publicly available data, industry research, and third-party sources. Actual costs vary significantly based on your location, specific circumstances, and market conditions.`;
+
+  const professionalLink = isInsurance
+    ? `<a href="https://www.naic.org/consumer_home.htm" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">NAIC Consumer Insurance Resources</a>`
+    : isLegal
+    ? `<a href="https://www.americanbar.org/groups/legal_services/flh-home/" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">ABA Legal Help Resources</a>`
+    : isMedical
+    ? `<a href="https://www.nih.gov/health-information" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">NIH Health Information</a>`
+    : isFinancial
+    ? `<a href="https://www.finra.org/investors" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">FINRA Investor Resources</a>`
+    : `a qualified professional in your area`;
+
+  const professionalCallout = isInsurance
+    ? `Before purchasing, canceling, or changing any insurance policy, consult a licensed insurance agent or broker in your state. You can find licensed professionals and verify credentials through your state's Department of Insurance or the ${professionalLink}.`
+    : isLegal
+    ? `Before taking any legal action or signing any legal document, consult a licensed attorney in your jurisdiction. You can find legal aid and licensed attorneys through the ${professionalLink}.`
+    : isMedical
+    ? `Before making any health decisions, consult a licensed healthcare professional. For authoritative health information, visit the ${professionalLink}.`
+    : isFinancial
+    ? `Before making investment, credit, or financial planning decisions, consult a licensed financial advisor. You can verify advisor credentials through the ${professionalLink}.`
+    : `Before making important decisions based on this content, consult a qualified professional relevant to your situation.`;
+
+  return `<div style="max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a;font-family:Arial,sans-serif">
+
+  <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Disclaimer</h1>
+  <p style="color:#666;font-size:13px;margin-bottom:28px">Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+
+  <div style="background:#fff8e1;border-left:4px solid #f39c12;padding:16px 20px;border-radius:4px;margin-bottom:32px">
+    <p style="margin:0;font-size:15px;line-height:1.7;color:#7d4e00"><strong>&#9888; Important Notice:</strong> ${alertText}</p>
+  </div>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">${section1Title}</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${section1Body}</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">${section2Title}</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${section2Body}</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">${section3Title}</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${section3Body}</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">4. State-by-State and Geographic Variation</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Laws, regulations, costs, and professional requirements vary significantly by state and locality. Content on ${siteName} is written for a general US audience and may not reflect the specific rules, rates, or resources available in your state. Always verify information with local or state-specific sources.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">5. Accuracy and Currency of Information</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We make every effort to ensure the accuracy and timeliness of information published on ${siteName}. However, the regulatory landscape, market conditions, and professional standards change frequently. We cannot guarantee that all content is current, complete, or accurate at the time you read it. The "Last Reviewed" date shown on each article indicates when the content was last verified.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">6. References to Third-Party Companies and Products</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Any references to specific companies, products, services, or brands are for illustrative and comparison purposes only. ${siteName} does not endorse any specific company or product. Company information, ratings, and offerings change frequently — always verify directly with the provider before making a decision.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">7. Affiliate and Advertising Disclosure</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteName} may earn a commission when you click links to third-party products or services. This affiliate relationship does not influence our editorial decisions, content, or rankings. We are committed to editorial independence. Sponsored content, when present, is clearly labeled. This disclosure is made in accordance with the <a href="https://www.ftc.gov/business-guidance/resources/disclosures-how-make-effective-disclosures-digital-advertising" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b">FTC guidelines on endorsements and testimonials</a>.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">8. Calculator and Tool Disclaimer</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Interactive calculators and tools on this site are provided for illustrative purposes only. Outputs are estimates based on the inputs you provide and general market data. They do not account for all variables relevant to your specific situation and should not be used as the sole basis for any financial, coverage, or professional decision.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">9. Third-Party Links</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteName} may link to third-party websites for additional information or resources. We do not control the content of external sites and are not responsible for their accuracy, privacy practices, or availability. Links are provided as a convenience and do not constitute an endorsement of the linked site or its content.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">10. Limitation of Liability</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">To the fullest extent permitted by applicable law, ${siteName}, its editors, contributors, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from your use of, or reliance on, any content, tool, or resource on this site. Your use of this site is entirely at your own risk.</p>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">11. Consult a Licensed Professional</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${professionalCallout}</p>
+  <div style="background:#e8f4fd;border-left:4px solid #3498db;padding:14px 18px;border-radius:4px;margin-bottom:24px">
+    <p style="margin:0;font-size:14px;line-height:1.7;color:#1a4f72"><strong>Need help finding a professional?</strong> Use the link above to find a licensed professional in your area. Never make major decisions based solely on information found online.</p>
+  </div>
+
+  <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">12. Contact</h2>
+  <p style="font-size:16px;line-height:1.8;margin-bottom:8px">Questions about this Disclaimer? Contact our editorial team:</p>
+  <p style="font-size:16px;line-height:1.8">&#128231; <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
+
+</div>`;
+}
+
 async function generateStaticPages(domain, siteConfig, template) {
   const { renderBase } = await import(`${TEMPLATES_DIR}/${template}/src/layout.js`);
   const siteName = siteConfig.name;
@@ -552,16 +686,25 @@ async function generateStaticPages(domain, siteConfig, template) {
         <p style="font-size:16px;line-height:1.8">📧 <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
       </div>`
     },
-    'disclaimer/index.html': {
-      title: 'Disclaimer',
-      noindex: true,
-      description: `Disclaimer for ${domain}`,
-      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+    'disclaimer/index.html': (() => {
+      const author = AUTHOR_PERSONAS[siteConfig.nicheSlug] || {};
+      const isYmyl = author.ymyl === true;
+      return {
+        title: 'Disclaimer',
+        noindex: true,
+        description: isYmyl
+          ? `Legal disclaimer for ${siteName} — not professional advice, affiliate disclosure, limitation of liability.`
+          : `Disclaimer for ${domain}`,
+        body: isYmyl
+          ? buildYmylDisclaimerBody(siteConfig.nicheSlug, domain, siteName)
+          : `<div style="max-width:800px;margin:40px auto;padding:0 20px">
         <h1 style="font-size:32px;margin-bottom:16px">Disclaimer</h1>
-        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The information provided on ${siteName} is for general informational purposes only. While we strive to keep information accurate and up-to-date, we make no representations or warranties of any kind.</p>
-        <p style="font-size:16px;line-height:1.8">We may earn commissions from affiliate links. This does not affect our editorial independence.</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The information provided on ${siteName} is for general informational purposes only. While we strive to keep information accurate and up-to-date, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, or suitability of the information, products, services, or related graphics contained on this site for any purpose.</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Any reliance you place on such information is therefore strictly at your own risk. In no event will we be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any loss or damage whatsoever arising from loss of data or profits arising out of, or in connection with, the use of this site.</p>
+        <p style="font-size:16px;line-height:1.8">We may earn commissions from affiliate links on this site. This does not affect our editorial independence or the integrity of our content. Contact: <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
       </div>`
-    },
+      };
+    })(),
     'contact/index.html': {
       title: 'Contact Us',
       noindex: false,
