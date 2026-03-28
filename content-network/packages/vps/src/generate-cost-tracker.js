@@ -135,7 +135,10 @@ function buildCostTrackerPage(nicheSlug, nicheName, metricsData, siteConfig) {
     <span style="font-size:12px;color:#888;margin-left:8px">${htmlEsc(latDate)}</span>
   </div>
   ${chartSvg}
-  <p style="font-size:13px;color:#666;margin:10px 0 0">${htmlEsc(m.description)}</p>
+  <div style="background:#f8f9fb;border-left:3px solid ${color};padding:10px 14px;margin-top:14px;border-radius:0 4px 4px 0">
+    <div style="font-size:10px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">What this measures</div>
+    <p style="font-size:13px;color:#444;margin:0;line-height:1.6">${htmlEsc(m.description)}</p>
+  </div>
 </div>`;
   }).join('');
 
@@ -198,7 +201,12 @@ ${ga4Script}
 
   <h1 style="font-size:26px;color:#1a1a2e;margin:0 0 8px">${htmlEsc(nicheName)} Cost Tracker</h1>
   <p style="color:#555;font-size:15px;margin:0 0 8px">Real monthly price data from US government sources (FRED, Bureau of Labor Statistics). Updated automatically each month.</p>
-  <p style="font-size:12px;color:#999;margin:0 0 28px">Last updated: ${updatedDate} &middot; Data: Federal Reserve / BLS</p>
+  <p style="font-size:12px;color:#999;margin:0 0 20px">Last updated: ${updatedDate} &middot; Data: Federal Reserve / BLS</p>
+
+  <div style="background:#eef6ff;border:1px solid #c3daf9;border-radius:6px;padding:14px 16px;margin-bottom:28px">
+    <div style="font-size:12px;font-weight:700;color:#1a5c9e;margin-bottom:6px">📖 How to read this data</div>
+    <p style="font-size:13px;color:#2c4a6e;margin:0;line-height:1.6">These indices track the real cost of materials and labor that go into home renovation projects, sourced directly from US government agencies. <strong>When an index rises, contractor quotes typically follow within 1–3 months</strong> — materials get passed through to the homeowner. Use the trend charts to gauge whether prices are climbing, stabilizing, or pulling back before locking in a quote or signing a contract.</p>
+  </div>
 
   ${metricCards}
 
