@@ -86,7 +86,7 @@ function buildHtml(bySite, dateStr) {
 
       return `
         <tr style="border-bottom:1px solid #f0f0f0${i === 0 ? ';background:#fffef0' : ''}">
-          <td style="padding:7px 10px;font-size:12px;color:#aaa;text-align:center">${i + 1}</td>
+          <td style="padding:7px 10px;font-size:11px;color:#bbb;font-family:monospace;text-align:center">${k.id}</td>
           <td style="padding:7px 10px;font-size:13px;font-weight:${i === 0 ? '600' : '400'}">${k.keyword} ${pillarBadge}</td>
           <td style="padding:7px 10px;font-size:12px;color:#666;text-align:right">${vol}</td>
           <td style="padding:7px 10px;font-size:12px;color:#27ae60;text-align:right">${cpc}</td>
@@ -101,7 +101,7 @@ function buildHtml(bySite, dateStr) {
         <table style="width:100%;border-collapse:collapse">
           <thead>
             <tr style="background:#f9f9f9">
-              <th style="padding:6px 10px;text-align:center;font-size:11px;color:#999;width:32px">#</th>
+              <th style="padding:6px 10px;text-align:center;font-size:11px;color:#999;width:48px">ID</th>
               <th style="padding:6px 10px;text-align:left;font-size:11px;color:#999">KEYWORD</th>
               <th style="padding:6px 10px;text-align:right;font-size:11px;color:#999">VOL/MO</th>
               <th style="padding:6px 10px;text-align:right;font-size:11px;color:#999">CPC</th>
