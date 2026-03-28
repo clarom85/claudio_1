@@ -1,6 +1,6 @@
 /**
  * Image fetcher — cascade: Pexels → Pixabay → Pollinations
- * Env: PEXELS_API_KEY (primary), PIXABAY_API_KEY (fallback)
+ * Env: PEXELS_API_KEY (primary), PIXABAY_API_KEY (fallback), POLLINATIONS_API_KEY (last resort, optional)
  * Salva: /images/{slug}.jpg nella directory pubblica del sito
  *
  * Unicità: traccia gli ID foto già usati in images/.pexels-used.json
@@ -249,10 +249,16 @@ function buildPollinationsPrompt(keyword, title, nicheSlug) {
 }
 
 async function fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir) {
+  const apiKey = process.env.POLLINATIONS_API_KEY;
+  if (!apiKey) {
+    // Pollinations now requires an API key — skip silently to avoid 401 spam
+    return null;
+  }
+
   const prompt = buildPollinationsPrompt(keyword, title, nicheSlug);
   // Use hash of slug as seed → deterministic but unique per article
   const seed = parseInt(createHash('md5').update(slug).digest('hex').slice(0, 8), 16) % 999999;
-  const url = `${POLLINATIONS_BASE}/${encodeURIComponent(prompt)}?width=1200&height=630&nologo=true&seed=${seed}&model=flux`;
+  const url = `${POLLINATIONS_BASE}/${encodeURIComponent(prompt)}?width=1200&height=630&nologo=true&seed=${seed}&model=flux&key=${apiKey}`;
 
   console.log(`  [image] Pollinations prompt: "${prompt.slice(0, 80)}..."`);
 
@@ -671,7 +677,7 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 3. Last resort: Pollinations AI-generated image
+  // 3. Last resort: Pollinations AI-generated image (requires POLLINATIONS_API_KEY)
   const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
   if (pollinationsResult) return pollinationsResult;
 
