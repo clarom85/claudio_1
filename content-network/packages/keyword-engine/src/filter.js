@@ -51,6 +51,11 @@ const STOP_WORDS = new Set([
   'get', 'use', 'make', 'need', 'want', 'like', 'vs', 'per',
   // Decorative title words: non cambiano il topic di fondo
   'guide', 'overview', 'breakdown', 'explained', 'basics', 'intro',
+  // Cost/price intent qualifiers: "roof repair cost" same topic as "how much to repair a roof"
+  // Stripping these ensures fingerprint consistency across phrasing variants
+  'cost', 'costs', 'price', 'prices', 'pricing', 'rate', 'rates',
+  'estimate', 'estimates', 'fee', 'fees', 'charge', 'charges',
+  'quote', 'quotes',
 ]);
 
 /**

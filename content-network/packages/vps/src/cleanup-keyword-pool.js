@@ -62,16 +62,23 @@ async function cleanNiche(niche) {
     usedKws.map(k => `${classifyIntent(k.keyword)}::${topicFingerprint(k.keyword)}`)
   );
 
-  // Carica keywords inutilizzate
+  // Fingerprints of published article titles — to catch "article exists but keyword phrased differently"
+  const articleFingerprints = new Set(
+    publishedTitles.map(t => `${classifyIntent(t)}::${topicFingerprint(t)}`)
+  );
+
+  // Carica keywords inutilizzate (search_volume per tenere quelle più preziose nell'intra-pool dedup)
   const unused = await sql`
-    SELECT id, keyword FROM keywords
+    SELECT id, keyword, search_volume FROM keywords
     WHERE niche_id = ${niche.id} AND used = false
-    ORDER BY id
+    ORDER BY COALESCE(search_volume, 0) DESC, id ASC
   `;
   console.log(`  Unused: ${unused.length}`);
 
   const toMark = [];
   const reasons = {};
+  // Intra-pool dedup: tracks fingerprints of unused keywords we decided to KEEP
+  const keptPoolFingerprints = new Set();
 
   for (const kw of unused) {
     const kwLower = kw.keyword.toLowerCase();
@@ -96,9 +103,26 @@ async function cleanNiche(niche) {
     const fp = `${classifyIntent(kwLower)}::${topicFingerprint(kwLower)}`;
     if (usedFingerprints.has(fp)) {
       toMark.push(kw.id);
-      reasons[kw.id] = `fingerprint dup: ${fp}`;
+      reasons[kw.id] = `fingerprint dup (used kw): ${fp}`;
       continue;
     }
+
+    // Check 4: topic fingerprint identico a titolo di articolo pubblicato
+    // Cattura casi in cui l'articolo esiste ma il titolo è diverso dalla keyword
+    if (articleFingerprints.has(fp)) {
+      toMark.push(kw.id);
+      reasons[kw.id] = `fingerprint matches published article: ${fp}`;
+      continue;
+    }
+
+    // Check 5: intra-pool dedup — elimina varianti dello stesso topic nel pool inutilizzato
+    // (unused è già ordinato per search_volume DESC → teniamo la keyword più preziosa)
+    if (keptPoolFingerprints.has(fp)) {
+      toMark.push(kw.id);
+      reasons[kw.id] = `intra-pool duplicate: ${fp}`;
+      continue;
+    }
+    keptPoolFingerprints.add(fp);
   }
 
   console.log(`  To cleanup: ${toMark.length} (${((toMark.length / unused.length) * 100).toFixed(1)}%)`);

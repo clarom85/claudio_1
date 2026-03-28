@@ -400,6 +400,15 @@ async function triggerDailyGeneration() {
         } catch (e) {
           console.log(`  ⚠️  Keyword engine: ${e.message?.slice(0, 80)}`);
         }
+        // Cleanup pool immediately after refill (don't wait until Sunday)
+        try {
+          execSync(
+            `node packages/vps/src/cleanup-keyword-pool.js --niche ${niche.slug}`.trim(),
+            { cwd: ROOT, stdio: 'pipe', timeout: 120000 }
+          );
+        } catch (e) {
+          console.log(`  ⚠️  Keyword cleanup: ${e.message?.slice(0, 80)}`);
+        }
       }
     }
 
