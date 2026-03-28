@@ -788,7 +788,7 @@ async function generateTagPages(domain, articlesData, siteConfig) {
     }
   }
 
-  const tags = Object.values(tagMap).filter(t => t.articles.length >= 2);
+  const tags = Object.values(tagMap).filter(t => t.articles.length >= 1);
   if (!tags.length) return;
 
   const { renderTagPage } = await import(`${TEMPLATES_DIR}/${siteConfig.template}/src/layout.js`);
