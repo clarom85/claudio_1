@@ -423,6 +423,7 @@ export function renderHomePage(articles, site) {
   }).join('') : '';
 
   const h1Html = `<div style="background:var(--accent);color:#fff;text-align:center;padding:20px 16px;margin-bottom:24px;border-radius:2px"><span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.75;display:block;margin-bottom:8px">Breaking News &amp; Analysis</span><h1 style="font-size:clamp(18px,3.5vw,30px);font-weight:900;margin:0 0 8px;line-height:1.15">${esc(site.tagline||site.name)}</h1><p style="font-size:12px;opacity:.8;letter-spacing:1px;margin:0;text-transform:uppercase">In-depth coverage — updated ${new Date().getFullYear()}</p></div>`;
+  const costTrackerHtml=site.costTrackerData?.length?`<section style="margin:0 0 28px;padding:16px 20px;border:1px solid var(--border,#e2e8f0)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border,#e2e8f0)"><h2 style="margin:0;font-size:15px;font-weight:700">📈 Price Index</h2><a href="/cost-tracker/" style="font-size:13px;font-weight:700;color:#c0392b;text-decoration:none">Full Tracker →</a></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">${site.costTrackerData.map(m=>`<div style="padding:10px;border:1px solid var(--border,#e2e8f0)"><div style="font-size:10px;color:var(--muted,#888);margin-bottom:3px;text-transform:uppercase">${esc(m.label)}</div><div style="font-size:18px;font-weight:800">${m.unit==='%'?m.value.toFixed(2)+'%':m.unit==='usd'?'$'+m.value.toFixed(2):m.value.toFixed(1)}</div>${m.delta!=null?`<div style="font-size:11px;color:${m.delta>=0?'#e53e3e':'#38a169'};margin-top:2px">${m.delta>=0?'▲':'▼'} ${Math.abs(m.delta).toFixed(1)}% MoM</div>`:''}</div>`).join('')}</div></section>`:'';
   const body = `
 ${renderHeader(site)}
 <main class="site-main">
@@ -430,6 +431,7 @@ ${renderHeader(site)}
     ${adUnit('leaderboard')}
     ${h1Html}
     ${heroHtml}
+    ${costTrackerHtml}
     ${adUnit('leaderboard')}
     ${gridHtml}
     ${categorySectionsHtml}
@@ -610,6 +612,7 @@ export function renderHeader(site) {
         <li><a href="/">Home</a></li>
         ${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}
         ${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:#e67e22;font-weight:700">Free Calculator</a></li>`:''}
+        ${site.hasCostTracker?`<li><a href="/cost-tracker/">Cost Tracker</a></li>`:''}
       </ul>
     </div>
   </nav>

@@ -91,6 +91,7 @@ async function run() {
     tagline: NICHE_TAGLINES[site.niche_slug] || `Expert guides on ${siteName}`,
     categories,
     toolSlug,
+    hasCostTracker: true,
     reviewer: author.reviewer || null,
     trustSources: author.trustSources || '',
     trustMethodology: author.trustMethodology || '',

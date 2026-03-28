@@ -36,6 +36,40 @@ async function buildSiteConfig(site, nicheSlug) {
     toolSlug = TOOL_CONFIGS[nicheSlug]?.slug || null;
   } catch {}
 
+  // Fetch latest price snapshots for homepage widget (max 4 metrics, with MoM delta)
+  let costTrackerData = null;
+  const hasCostTracker = true;
+  try {
+    const rows = await sql`
+      SELECT metric_key, metric_label, value, unit
+      FROM (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY metric_key ORDER BY period DESC) AS rn
+        FROM price_snapshots
+        WHERE niche_slug = ${nicheSlug}
+      ) ranked
+      WHERE rn <= 2
+      ORDER BY metric_key, rn
+    `;
+    if (rows.length) {
+      const metricMap = {};
+      for (const row of rows) {
+        const k = row.metric_key;
+        if (!metricMap[k]) metricMap[k] = { label: row.metric_label, unit: row.unit, curr: null, prev: null };
+        if (metricMap[k].curr === null) metricMap[k].curr = parseFloat(row.value);
+        else metricMap[k].prev = parseFloat(row.value);
+      }
+      costTrackerData = Object.values(metricMap)
+        .filter(m => m.curr !== null)
+        .slice(0, 4)
+        .map(m => ({
+          label: m.label,
+          value: m.curr,
+          unit: m.unit,
+          delta: m.prev != null ? ((m.curr - m.prev) / m.prev * 100) : null,
+        }));
+    }
+  } catch {}
+
   return {
     domain: site.domain,
     name: siteName,
@@ -57,6 +91,8 @@ async function buildSiteConfig(site, nicheSlug) {
     mgidInArticleId:  site.mgid_in_article_id || '',
     mgidSmartId:      site.mgid_smart_id || '',
     toolSlug,
+    hasCostTracker,
+    costTrackerData,
   };
 }
 
