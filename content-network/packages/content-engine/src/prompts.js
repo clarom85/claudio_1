@@ -622,6 +622,7 @@ export const ADDITIONAL_AUTHORS = {
       title: 'Home Improvement Writer & DIY Specialist',
       bio: 'Karen learned home improvement the hard way — through 11 years of owning a 1920s fixer-upper and hiring (and firing) dozens of contractors. She writes to help homeowners ask the right questions before the crew shows up and the costs start climbing.',
       avatar: 'karen-phillips',
+      avatarUrl: 'https://i.pravatar.cc/150?u=karen-phillips-home-improvement', // fallback until Pexels image downloaded
     },
     // idx 2 — data-driven
     {
@@ -629,6 +630,7 @@ export const ADDITIONAL_AUTHORS = {
       title: 'Construction Cost Estimator',
       bio: 'Dan spent 14 years as a professional cost estimator for commercial and residential contractors before moving to consumer journalism. He has priced thousands of projects and knows exactly where contractors pad their margins — and how to spot it.',
       avatar: 'dan-mercer',
+      avatarUrl: 'https://i.pravatar.cc/150?u=dan-mercer-construction-costs', // fallback until Pexels image downloaded
     },
   ],
   'insurance-guide': [
@@ -638,6 +640,7 @@ export const ADDITIONAL_AUTHORS = {
       title: 'Personal Finance Writer & Insurance Consumer Advocate',
       bio: 'Sarah spent three years fighting her own insurer after a disputed claim denial, eventually winning on appeal. She now writes with the clarity that comes from having navigated the system herself — form by form, exclusion by exclusion.',
       avatar: 'sarah-campbell',
+      avatarUrl: 'https://i.pravatar.cc/150?u=sarah-campbell-insurance-guide', // fallback until Pexels image downloaded
     },
     // idx 2 — data-driven
     {
@@ -645,6 +648,7 @@ export const ADDITIONAL_AUTHORS = {
       title: 'Insurance Market Analyst',
       bio: 'Chris spent 10 years analyzing rate filings and market data for a state Department of Insurance before turning to consumer journalism. He understands where the industry buries costs and how state regulators actually function in practice.',
       avatar: 'chris-washington',
+      avatarUrl: 'https://i.pravatar.cc/150?u=chris-washington-insurance-analyst', // fallback until Pexels image downloaded
     },
   ],
 };
