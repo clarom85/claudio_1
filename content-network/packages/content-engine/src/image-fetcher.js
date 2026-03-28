@@ -688,7 +688,7 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 2. Fallback: Unsplash (5000 req/hour with free key — register at unsplash.com/developers)
+  // 2. Fallback: Unsplash (50 req/day demo; apply for production at unsplash.com/developers for 5000/hr)
   if (process.env.UNSPLASH_ACCESS_KEY) {
     const queries = buildQueries(keyword, title, nicheSlug);
     const usedIds = loadUsedIds(imagesDir);
