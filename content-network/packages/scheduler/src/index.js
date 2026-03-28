@@ -121,6 +121,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ generate-faq-hub: ${e.message}`); }
   }
 
+  // 11. Suspicious keyword review email — ogni domenica alle 11:xx
+  if (now.getHours() === 11 && now.getDay() === 0) {
+    try {
+      console.log('  🔍 Suspicious keyword review...');
+      execSync('node packages/vps/src/review-suspicious-keywords.js', { cwd: ROOT, stdio: 'pipe', timeout: 60000 });
+      console.log('  ✅ Keyword review email sent');
+    } catch (e) { console.error(`  ❌ review-suspicious-keywords: ${e.message}`); }
+  }
+
   // Report domenicale completo (ogni domenica alle 07:xx)
   if (now.getHours() === 7 && now.getDay() === 0) {
     try { await sendWeeklyReport(stats); } catch (e) { console.error(`  ❌ sendWeeklyReport: ${e.message}`); }
