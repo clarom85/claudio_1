@@ -52,7 +52,8 @@ const FLAG_RULES = [
     reason: 'Stale year',
     test: kw => {
       const CY = new Date().getFullYear();
-      const m = kw.match(/\b(20\d{2})\b/);
+      // Only match 2020+ to avoid flagging measurements like "2000 sq ft"
+      const m = kw.match(/\b(202\d)\b/);
       return m && parseInt(m[1]) < CY;
     },
   },
