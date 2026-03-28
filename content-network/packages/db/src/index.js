@@ -109,7 +109,14 @@ export async function getUnusedKeywords(nicheId, limit = 60) {
     )
     SELECT * FROM ranked
     WHERE (rn + already_published) <= ${MAX_PER_CLUSTER}
-    ORDER BY is_pillar DESC NULLS LAST, search_volume DESC NULLS LAST, RANDOM()
+    ORDER BY
+      -- Volume prima: keyword con search_volume alto emergono subito (anche se non pillar)
+      -- is_pillar come tiebreaker: a parità di volume, pillar vince
+      -- La priorità pillar DENTRO il cluster è già gestita dalla PARTITION ORDER BY sopra
+      CASE WHEN search_volume > 0 THEN 0 ELSE 1 END,  -- con volume prima di senza
+      search_volume DESC NULLS LAST,
+      is_pillar DESC NULLS LAST,
+      RANDOM()
     LIMIT ${limit}
   `;
 }
