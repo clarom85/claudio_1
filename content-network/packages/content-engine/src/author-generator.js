@@ -6,7 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { createWriteStream, mkdirSync, existsSync, writeFileSync } from 'fs';
+import { createWriteStream, mkdirSync, existsSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { pipeline } from 'stream/promises';
 import { AUTHOR_PERSONAS } from './prompts.js';
@@ -30,8 +30,22 @@ export async function generateAuthors(nicheSlug, destDirOrOpts) {
   console.log(`\n👤 Generating author profile: ${persona.name}`);
 
   // 1. Genera bio lunga con Claude
-  const longBio = await generateLongBio(persona, nicheSlug);
-  console.log(`  ✅ Bio generated (${longBio.split(' ').length} words)`);
+  // If a persisted bio already exists on disk, reuse it (avoids Claude call on re-spawn)
+  let longBio;
+  const bioFilePath = destDir ? join(destDir, 'api', 'author.json') : null;
+  if (bioFilePath && existsSync(bioFilePath)) {
+    try {
+      const saved = JSON.parse(readFileSync(bioFilePath, 'utf-8'));
+      if (saved.longBio && saved.longBio.length > 200) {
+        longBio = saved.longBio;
+        console.log(`  ✅ Bio loaded from disk (${longBio.split(' ').length} words)`);
+      }
+    } catch {}
+  }
+  if (!longBio) {
+    longBio = await generateLongBio(persona, nicheSlug);
+    console.log(`  ✅ Bio generated (${longBio.split(' ').length} words)`);
+  }
 
   // 2. Scarica avatar da Pexels
   let avatarPath = null;
@@ -40,6 +54,27 @@ export async function generateAuthors(nicheSlug, destDirOrOpts) {
     // Per VPS: destDir = /var/www/domain → /var/www/domain/images/
     // Per Astro: passare il public dir come destDir
     avatarPath = await fetchAuthorPhoto(persona, destDir);
+  }
+
+  const socialLinks = buildSocialLinks(persona);
+
+  // 3. Persist longBio to disk so regeneration scripts can access it without re-calling Claude
+  if (destDir) {
+    try {
+      const apiDir = join(destDir, 'api');
+      mkdirSync(apiDir, { recursive: true });
+      writeFileSync(join(apiDir, 'author.json'), JSON.stringify({
+        slug: persona.avatar,
+        name: persona.name,
+        title: persona.title,
+        longBio,
+        shortBio: persona.bio,
+        socialLinks,
+        nicheSlug
+      }, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn(`  [author] Could not persist bio to disk: ${err.message}`);
+    }
   }
 
   const author = {
@@ -51,7 +86,7 @@ export async function generateAuthors(nicheSlug, destDirOrOpts) {
     avatar: persona.avatar,
     avatarUrl: avatarPath || `/authors/${persona.avatar}.jpg`,
     nicheSlug,
-    socialLinks: buildSocialLinks(persona)
+    socialLinks
   };
 
   return [author];

@@ -174,8 +174,10 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     : '';
 
   // Max 2 inline ads inside sections — different Ezoic IDs to avoid duplicates
-  // linkInjector: shared state across all sections → max 3 total links per article
-  const linkInjector = createLinkInjector(relatedArticles, slug, 3);
+  // linkInjector: shared state across all sections, max links scales with word count
+  const estWordCount = countWords((articleData.sections || []).map(s => s.content).join(' '));
+  const maxInlineLinks = Math.min(6, Math.max(3, Math.floor(estWordCount / 300)));
+  const linkInjector = createLinkInjector(relatedArticles, slug, maxInlineLinks);
 
   // ── Cost layout: Quick Summary box ──────────────────────────────────────────
   const costSummaryHTML = (layoutType === 'cost' && articleData.keyTakeaways?.length)
@@ -371,6 +373,36 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
           </li>`).join('')}
         </ol>
       </section>` : ''}
+
+      <!-- Related Articles widget — internal linking + engagement -->
+      ${(() => {
+        const related = (relatedArticles || [])
+          .filter(a => a.slug !== slug && a.title)
+          .sort((a, b) => {
+            // Prefer same category, then fallback to any
+            const aCat = (a.category || '').toLowerCase() === (articleData.category || '').toLowerCase() ? -1 : 1;
+            const bCat = (b.category || '').toLowerCase() === (articleData.category || '').toLowerCase() ? -1 : 1;
+            if (aCat !== bCat) return aCat - bCat;
+            return Math.random() - 0.5;
+          })
+          .slice(0, 3);
+        if (!related.length) return '';
+        const cards = related.map(a => `
+          <a href="/${a.slug}/" style="display:block;text-decoration:none;background:#fff;border:1px solid #e8e8e8;border-radius:6px;overflow:hidden;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
+            ${a.image ? `<img src="${escapeHtml(a.image)}" alt="${escapeHtml(a.title)}" loading="lazy" style="width:100%;height:140px;object-fit:cover;display:block;" onerror="this.style.display='none'" />` : `<div style="height:6px;background:#c0392b;"></div>`}
+            <div style="padding:14px 16px;">
+              <p style="font-size:14px;font-weight:600;color:#1a1a2e;line-height:1.4;margin:0 0 6px;">${escapeHtml(a.title)}</p>
+              ${a.excerpt ? `<p style="font-size:12px;color:#888;line-height:1.5;margin:0;">${escapeHtml((a.excerpt || '').slice(0, 90))}…</p>` : ''}
+            </div>
+          </a>`).join('');
+        return `
+      <section style="margin:36px 0 28px;">
+        <h3 style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin:0 0 16px;padding-bottom:8px;border-bottom:1px solid #eee;">Related Articles</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+          ${cards}
+        </div>
+      </section>`;
+      })()}
 
       <!-- Social share buttons -->
       ${(() => {

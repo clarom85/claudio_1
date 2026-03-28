@@ -16,11 +16,14 @@
  */
 
 /**
- * @param {Array<{slug: string, title: string, content: string, tags?: string[]}>} articles
+ * @param {Array<{slug: string, title: string, content: string, wordCount?: number, tags?: string[]}>} articles
  * @returns {Array} — stessi articoli con `.content` aggiornato
  */
 export function injectInternalLinks(articles) {
   if (!articles?.length) return articles;
+
+  // Count inbound links per slug so we can prioritise orphans
+  const inboundCount = new Map(articles.map(a => [a.slug, 0]));
 
   // Costruisci indice: per ogni articolo, i suoi anchor text candidati
   const linkTargets = articles.map(a => ({
@@ -28,16 +31,25 @@ export function injectInternalLinks(articles) {
     phrases: buildPhrases(a.title, a.tags)
   }));
 
-  return articles.map(article => {
+  const updated = articles.map(article => {
     let content = article.content;
     let linksAdded = 0;
     const usedSlugs = new Set();
 
-    // Shuffla targets per variare quali articoli vengono linkati
-    const shuffled = [...linkTargets].sort(() => Math.random() - 0.5);
+    // Max links scales with article length: 1 per ~300 words, min 3, max 6
+    const wordCount = article.wordCount || estimateWordCount(content);
+    const maxLinks = Math.min(6, Math.max(3, Math.floor(wordCount / 300)));
+
+    // Prioritise orphan targets (0 inbound links) — they need links most
+    const shuffled = [...linkTargets].sort((a, b) => {
+      const aOrphan = (inboundCount.get(a.slug) || 0) === 0 ? -1 : 1;
+      const bOrphan = (inboundCount.get(b.slug) || 0) === 0 ? -1 : 1;
+      if (aOrphan !== bOrphan) return aOrphan - bOrphan;
+      return Math.random() - 0.5; // random within same priority tier
+    });
 
     for (const target of shuffled) {
-      if (linksAdded >= 3) break;
+      if (linksAdded >= maxLinks) break;
       if (target.slug === article.slug) continue; // no self-link
       if (usedSlugs.has(target.slug)) continue;
 
@@ -49,6 +61,7 @@ export function injectInternalLinks(articles) {
         if (result.injected) {
           content = result.content;
           usedSlugs.add(target.slug);
+          inboundCount.set(target.slug, (inboundCount.get(target.slug) || 0) + 1);
           linksAdded++;
           break; // una frase per target
         }
@@ -57,28 +70,48 @@ export function injectInternalLinks(articles) {
 
     return { ...article, content };
   });
+
+  return updated;
+}
+
+function estimateWordCount(html) {
+  return (html || '').replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 }
 
 /**
  * Costruisce le frasi anchor candidate da titolo e tags.
  * Ordinate dalla più lunga alla più corta (match più precisi prima).
+ * Produce varianti naturali per evitare anchor text identici su ogni link.
  */
 function buildPhrases(title, tags = []) {
-  const phrases = [title];
+  const phrases = new Set();
+  phrases.add(title);
 
-  // Aggiungi sottostringhe significative del titolo (ultime N parole)
   const words = title.split(/\s+/);
+
+  // Sottostringhe del titolo (skip prima parola, skip ultima parola)
   if (words.length > 4) {
-    phrases.push(words.slice(1).join(' ')); // titolo senza prima parola
-    phrases.push(words.slice(0, -1).join(' ')); // titolo senza ultima parola
+    phrases.add(words.slice(1).join(' '));
+    phrases.add(words.slice(0, -1).join(' '));
   }
 
-  // Aggiungi tags come anchor text
-  for (const tag of tags) {
-    if (tag.length >= 15) phrases.push(tag);
+  // Rimuovi le parole di costo/tipo comuni per ottenere il core topic
+  // es. "Average Cost to Install Laminate Flooring" → "laminate flooring installation"
+  const stripped = title
+    .replace(/\b(average|typical|cost(s)?|price(s)?|how much|what does|guide to|complete guide|in \w+|near me|\d{4})\b/gi, '')
+    .replace(/\s+/g, ' ').trim();
+  if (stripped.length >= 15 && stripped !== title) {
+    phrases.add(stripped);
   }
 
-  return phrases.sort((a, b) => b.length - a.length);
+  // Tags come anchor text alternativo
+  for (const tag of (tags || [])) {
+    if (tag.length >= 15) phrases.add(tag);
+  }
+
+  return [...phrases]
+    .filter(p => p.length >= 12)
+    .sort((a, b) => b.length - a.length);
 }
 
 /**
