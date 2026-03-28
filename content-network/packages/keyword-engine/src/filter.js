@@ -49,18 +49,43 @@ const STOP_WORDS = new Set([
   'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might',
   'i', 'my', 'your', 'it', 'its', 'this', 'that', 'these', 'those',
   'get', 'use', 'make', 'need', 'want', 'like', 'vs', 'per',
+  // Interrogative / modal (no topic meaning)
+  'how', 'much', 'what', 'why', 'when', 'where', 'which', 'who',
+  'can', 'not', 'no', 'all', 'any', 'just', 'well',
   // Decorative title words: non cambiano il topic di fondo
   'guide', 'overview', 'breakdown', 'explained', 'basics', 'intro',
+  // Quantifier qualifiers: "average X" same topic as "X"
+  'average', 'typical', 'usual', 'standard',
+  // Generic containers: "hvac system" = "hvac"
+  'system', 'type', 'types',
   // Cost/price intent qualifiers: "roof repair cost" same topic as "how much to repair a roof"
-  // Stripping these ensures fingerprint consistency across phrasing variants
   'cost', 'costs', 'price', 'prices', 'pricing', 'rate', 'rates',
   'estimate', 'estimates', 'fee', 'fees', 'charge', 'charges',
   'quote', 'quotes',
 ]);
 
+// Synonym normalization: varianti lessicali dello stesso concetto → forma canonica
+// Applicata PRIMA dello stemming in topicFingerprint
+const TOPIC_SYNONYMS = {
+  'remodel':    'renovation',
+  'remodeling': 'renovation',
+  'remodeled':  'renovation',
+  'renovate':   'renovation',
+  'renovating': 'renovation',
+  'renovated':  'renovation',
+  'replace':    'replacement',
+  'replacing':  'replacement',
+  'install':    'installation',
+  'installing': 'installation',
+  'installed':  'installation',
+  'repair':     'fix',
+  'repairing':  'fix',
+  'repaired':   'fix',
+};
+
 /**
  * Returns a canonical topic fingerprint for a keyword.
- * Strips intent prefixes + stop words + stems remaining terms → sorted join.
+ * Strips intent prefixes + stop words + numbers + synonyms + stems → sorted join.
  * Two keywords with the same fingerprint target the same underlying topic.
  */
 export function topicFingerprint(keyword) {
@@ -73,8 +98,8 @@ export function topicFingerprint(keyword) {
     }
   }
   const words = kw.split(/\s+/)
-    .filter(w => w.length > 2 && !STOP_WORDS.has(w))
-    .map(stem);
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w) && !/^\d+$/.test(w)) // strip numbers (anni nel titolo)
+    .map(w => stem(TOPIC_SYNONYMS[w] || w)); // normalizza sinonimi prima di stemmare
   return words.sort().join(' ');
 }
 

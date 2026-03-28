@@ -26,9 +26,37 @@ function stem(w) {
   return w.replace(/(?<=\w{3})(ing|tion|ment|ness|ful|less|er|es|s)$/i, '');
 }
 
+// Stesse stop word + sinonimi di topicFingerprint — per coerenza nel confronto Jaccard
+const JACCARD_STOP = new Set([
+  'a','an','the','and','or','but','in','on','at','to','for','of','with','by',
+  'from','up','about','into','is','are','was','were','be','been','have','has',
+  'do','does','did','will','would','could','should','may','might','i','my',
+  'your','it','its','this','that','get','use','make','vs','per',
+  'how','much','what','why','when','where','which','who','can','not','no',
+  'all','any','just','well',
+  'guide','overview','breakdown','explained','basics','intro',
+  'average','typical','usual','standard','system','type','types',
+  'cost','costs','price','prices','pricing','rate','rates',
+  'estimate','estimates','fee','fees','charge','charges','quote','quotes',
+]);
+const JACCARD_SYNONYMS = {
+  'remodel':'renovation','remodeling':'renovation','remodeled':'renovation',
+  'renovate':'renovation','renovating':'renovation','renovated':'renovation',
+  'replace':'replacement','replacing':'replacement',
+  'install':'installation','installing':'installation','installed':'installation',
+  'repair':'fix','repairing':'fix','repaired':'fix',
+};
+
+function tokenize(text) {
+  return text.toLowerCase().split(/\s+/)
+    .filter(w => w.length > 2 && !JACCARD_STOP.has(w) && !/^\d+$/.test(w))
+    .map(w => stem(JACCARD_SYNONYMS[w] || w));
+}
+
 function jaccardSimilarity(a, b) {
-  const setA = new Set(a.toLowerCase().split(/\s+/).map(stem));
-  const setB = new Set(b.toLowerCase().split(/\s+/).map(stem));
+  const setA = new Set(tokenize(a));
+  const setB = new Set(tokenize(b));
+  if (setA.size === 0 || setB.size === 0) return 0;
   const intersection = [...setA].filter(w => setB.has(w)).length;
   const union = new Set([...setA, ...setB]).size;
   return union === 0 ? 0 : intersection / union;
