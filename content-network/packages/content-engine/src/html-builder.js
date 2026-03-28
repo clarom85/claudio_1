@@ -19,7 +19,8 @@ function adUnit(type) {
   if (type === 'sidebar') {
     return `<div class="ad ad-sidebar"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="rectangle"></ins></div>`;
   }
-  return `<div class="ad ad-inline"><ins class="adsbygoogle" style="display:block;text-align:center" data-ad-client="${adsenseId}" data-ad-format="fluid" data-ad-layout="in-article"></ins></div>`;
+  // min-height:0 overrides the CSS class — fluid in-article ads size themselves; blank slot = 0px not 280px
+  return `<div class="ad ad-inline" style="min-height:0"><ins class="adsbygoogle" style="display:block;text-align:center" data-ad-client="${adsenseId}" data-ad-format="fluid" data-ad-layout="in-article"></ins></div>`;
 }
 
 const AD_UNIT_INLINE = adUnit('inline');
@@ -327,8 +328,6 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       ${costSummaryHTML}
       ${tocHTML}
       ${comparisonTableHTML}
-
-      ${AD_UNIT_INLINE}
 
       ${sectionsHTML}
 
