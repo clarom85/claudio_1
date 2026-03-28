@@ -110,6 +110,9 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         articleData.metaDescription = articleData.metaDescription.replace(/\b(20\d{2})\b/g, y => parseInt(y) < CY ? String(CY) : y);
       }
 
+      // Post-generation review pass — second Claude call on lightweight metadata only
+      await reviewAndFixArticle(articleData, keyword, CY);
+
       // Build HTML
       const slug = slugify(keyword);
       const { html, schemas, metaDescription, wordCount } = buildArticleHTML(articleData, {
@@ -151,6 +154,74 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       if (attempt === retries) throw err;
       await new Promise(r => setTimeout(r, 2000 * attempt));
     }
+  }
+}
+
+/**
+ * Post-generation review pass: sends lightweight metadata to Claude Haiku for a second check.
+ * Only reviews title, metaDescription, H2s, FAQ questions — NOT the full body (saves tokens).
+ * Fixes issues in-place on articleData. Fails silently if API call fails.
+ * Cost: ~$0.0007/article.
+ */
+async function reviewAndFixArticle(articleData, keyword, CY) {
+  const metadata = {
+    title: articleData.title,
+    metaDescription: articleData.metaDescription,
+    h2s: (articleData.sections || []).map(s => s.h2),
+    faqQuestions: (articleData.faq || []).map(f => f.question),
+  };
+
+  const reviewPrompt = `You are a quality reviewer for SEO articles. Inspect this metadata and fix any issues.
+
+KEYWORD: "${keyword}"
+CURRENT YEAR: ${CY}
+
+METADATA:
+${JSON.stringify(metadata, null, 2)}
+
+RULES TO ENFORCE:
+1. Any year < ${CY} in any field → replace with ${CY}
+2. Title must not end with "..." and must be 40-70 chars; if broken, rewrite it from the keyword
+3. No non-US market references (Netherlands, UK prices, Canada, Australia) unless the keyword explicitly targets that country
+4. All fields must be topically consistent with the keyword
+
+Return ONLY valid JSON, no markdown:
+{
+  "pass": true,
+  "fixes": {
+    "title": null,
+    "metaDescription": null,
+    "h2s": null,
+    "faqQuestions": null
+  }
+}
+Set "pass": false and fill in corrected values when issues are found. Use null for fields that need no change.`;
+
+  try {
+    await throttle();
+    const msg = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: reviewPrompt }],
+    });
+    const jsonMatch = msg.content[0].text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return;
+    const review = JSON.parse(jsonMatch[0]);
+
+    if (!review.pass && review.fixes) {
+      const f = review.fixes;
+      if (f.title)          { articleData.title = f.title; console.warn(`  [review] title fixed → "${f.title}"`); }
+      if (f.metaDescription)  articleData.metaDescription = f.metaDescription;
+      if (Array.isArray(f.h2s))
+        f.h2s.forEach((h, i) => { if (h && articleData.sections?.[i]) articleData.sections[i].h2 = h; });
+      if (Array.isArray(f.faqQuestions))
+        f.faqQuestions.forEach((q, i) => { if (q && articleData.faq?.[i]) articleData.faq[i].question = q; });
+      console.log(`  [review] ⚠ Issues fixed`);
+    } else {
+      console.log(`  [review] ✓ Passed`);
+    }
+  } catch (err) {
+    console.warn(`  [review] Skipped (${err.message})`);
   }
 }
 
