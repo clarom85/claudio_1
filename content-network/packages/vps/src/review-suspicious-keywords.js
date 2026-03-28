@@ -1,8 +1,10 @@
 /**
  * review-suspicious-keywords.js
  *
- * Scansiona il pool keyword e invia email di review con le keyword sospette.
- * L'utente risponde in chat con gli ID da escludere.
+ * Scansiona il pool keyword, esclude automaticamente le sospette,
+ * e invia email di notifica con il riepilogo di cosa è stato rimosso.
+ *
+ * L'utente può rispondere in chat per ripristinare qualsiasi keyword.
  *
  * Run manuale: node packages/vps/src/review-suspicious-keywords.js
  * Run dry:     node packages/vps/src/review-suspicious-keywords.js --dry-run
@@ -13,141 +15,143 @@ import { sql } from '@content-network/db';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
-// ── Pattern sospetti ──────────────────────────────────────────────────────────
+// ── Regole: auto-exclude vs notify-only ──────────────────────────────────────
+//
+// auto: true  → keyword viene marcata used=true automaticamente
+// auto: false → viene inclusa nell'email come FYI ma NON esclusa
+//               (es. stale year: il review pass la corregge comunque)
 
 const FLAG_RULES = [
   {
     reason: 'Non-US geo: Australia',
+    auto: true,
     test: kw => /\baustrali(a|an|ans)?\b/i.test(kw),
   },
   {
     reason: 'Non-US geo: Canada',
+    auto: true,
     test: kw => /\bcanad(a|ian|ians)?\b/i.test(kw),
   },
   {
     reason: 'Non-US geo: Netherlands',
+    auto: true,
     test: kw => /\bnetherlands\b/i.test(kw),
   },
   {
-    reason: 'Non-US geo: UK/British',
+    reason: 'Non-US geo: UK/British/Ireland',
+    auto: true,
     test: kw => /\b(united kingdom|british|england|scotland|wales|ireland)\b/i.test(kw),
   },
   {
     reason: 'Non-US product: conservatory',
+    auto: true,
     test: kw => /\bconservator(y|ies)\b/i.test(kw),
   },
   {
     reason: 'Non-US currency: pound/sterling',
-    test: kw => /\b(pound sterling|gbp|£)\b/i.test(kw),
+    auto: true,
+    test: kw => /\b(pound sterling|gbp)\b/i.test(kw),
   },
   {
     reason: 'Non-US healthcare: NHS/BUPA',
+    auto: true,
     test: kw => /\b(nhs|bupa)\b/i.test(kw),
   },
   {
     reason: 'Off-topic: gaming',
+    auto: true,
     test: kw => /\b(bloxburg|roblox|minecraft|fortnite|sims)\b/i.test(kw),
   },
   {
-    reason: 'Stale year',
-    test: kw => {
-      const CY = new Date().getFullYear();
-      // Only match 2020+ to avoid flagging measurements like "2000 sq ft"
-      const m = kw.match(/\b(202\d)\b/);
-      return m && parseInt(m[1]) < CY;
-    },
-  },
-  {
     reason: 'Non-ASCII characters',
+    auto: true,
     test: kw => /[^\x00-\x7F]/.test(kw),
   },
   {
     reason: 'Too short (<3 words)',
+    auto: true,
     test: kw => kw.trim().split(/\s+/).length < 3,
+  },
+  {
+    // Stale year: NOT auto-excluded — review pass fixes the year in the title
+    reason: 'Stale year (FYI — review pass will fix)',
+    auto: false,
+    test: kw => {
+      const CY = new Date().getFullYear();
+      const m = kw.match(/\b(202\d)\b/);
+      return m && parseInt(m[1]) < CY;
+    },
   },
 ];
 
 function flagKeyword(keyword) {
   for (const rule of FLAG_RULES) {
-    if (rule.test(keyword)) return rule.reason;
+    if (rule.test(keyword)) return { reason: rule.reason, auto: rule.auto };
   }
   return null;
 }
 
 // ── Email via Resend ──────────────────────────────────────────────────────────
 
-async function sendReviewEmail(flagged) {
+async function sendNotificationEmail(excluded, notified) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const TO = process.env.ALERT_EMAIL_TO;
   const FROM = process.env.ALERT_EMAIL_FROM || 'onboarding@resend.dev';
 
   if (!RESEND_API_KEY || !TO) {
-    console.log('[review] No email config — printing to console only');
+    console.log('[review] No email config — skipping email');
     return;
   }
 
-  // Build HTML table
-  const rows = flagged.map(k => `
-    <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 10px;font-family:monospace;color:#555">${k.id}</td>
-      <td style="padding:6px 10px;font-size:12px;color:#888">${k.site}</td>
-      <td style="padding:6px 10px;font-weight:500">${k.keyword}</td>
-      <td style="padding:6px 10px;font-size:12px;color:#c0392b">${k.reason}</td>
-    </tr>`).join('');
+  function buildTable(items, color) {
+    if (!items.length) return '<p style="color:#888;font-size:13px">Nessuna.</p>';
+    const rows = items.map(k => `
+      <tr style="border-bottom:1px solid #eee">
+        <td style="padding:5px 10px;font-family:monospace;font-size:12px;color:#777">${k.id}</td>
+        <td style="padding:5px 10px;font-size:12px;color:#888">${k.site}</td>
+        <td style="padding:5px 10px">${k.keyword}</td>
+        <td style="padding:5px 10px;font-size:12px;color:${color}">${k.reason}</td>
+      </tr>`).join('');
+    return `<table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f5f5f5">
+        <th style="padding:6px 10px;text-align:left;font-size:11px;color:#999">ID</th>
+        <th style="padding:6px 10px;text-align:left;font-size:11px;color:#999">SITO</th>
+        <th style="padding:6px 10px;text-align:left;font-size:11px;color:#999">KEYWORD</th>
+        <th style="padding:6px 10px;text-align:left;font-size:11px;color:#999">MOTIVO</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
 
-  // Also build CSV content as inline pre block
-  const csvLines = ['id,site,keyword,reason', ...flagged.map(k =>
-    `${k.id},${k.site},"${k.keyword.replace(/"/g, '""')}","${k.reason}"`
-  )];
-  const csvText = csvLines.join('\n');
+  const totalAction = excluded.length + notified.length;
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const html = `
 <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px">
-  <h2 style="color:#2c3e50;margin-bottom:4px">🔍 Keyword Review — ${flagged.length} item${flagged.length !== 1 ? 's' : ''} flagged</h2>
-  <p style="color:#666;font-size:13px;margin-top:0">Settimana del ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+  <h2 style="color:#2c3e50;margin-bottom:4px">🧹 Keyword Pool — Report Settimanale</h2>
+  <p style="color:#666;font-size:13px;margin-top:0">${dateStr}</p>
 
-  <p style="color:#444;font-size:14px">Rivedi la lista e rispondi in chat con i keyword ID da escludere definitivamente.<br>
-  Se tutto ok, nessuna azione richiesta.</p>
+  ${excluded.length > 0 ? `
+  <h3 style="color:#c0392b;font-size:14px;margin-bottom:8px">❌ Escluse automaticamente (${excluded.length})</h3>
+  ${buildTable(excluded, '#c0392b')}
+  <p style="font-size:12px;color:#888;margin-top:6px">Per ripristinarne qualcuna, rispondi in chat: "Ripristina keyword ID: 123, 456"</p>
+  ` : '<p style="color:#27ae60">✅ Nessuna keyword esclusa questa settimana.</p>'}
 
-  <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">
-    <thead>
-      <tr style="background:#f0f0f0">
-        <th style="padding:8px 10px;text-align:left;font-size:12px;color:#666">ID</th>
-        <th style="padding:8px 10px;text-align:left;font-size:12px;color:#666">SITO</th>
-        <th style="padding:8px 10px;text-align:left;font-size:12px;color:#666">KEYWORD</th>
-        <th style="padding:8px 10px;text-align:left;font-size:12px;color:#666">MOTIVO FLAG</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
+  ${notified.length > 0 ? `
+  <h3 style="color:#e67e22;font-size:14px;margin:20px 0 8px">⚠️ FYI — Non escluse, ma monitorate (${notified.length})</h3>
+  ${buildTable(notified, '#e67e22')}
+  <p style="font-size:12px;color:#888;margin-top:6px">Queste verranno generate normalmente — il review pass corregge l'anno nel titolo.</p>
+  ` : ''}
 
-  <div style="background:#f8f8f8;border-left:3px solid #3498db;padding:12px 16px;margin-top:16px;border-radius:2px">
-    <p style="margin:0;font-size:13px;color:#555"><strong>Come rispondere in chat:</strong><br>
-    "Escludi keyword: 12, 114, 223" → vengono marcate used=true e saltate per sempre<br>
-    "Ok tutto bene" → nessuna azione, il pool procede normalmente</p>
+  <div style="background:#f0f7ff;border-left:3px solid #3498db;padding:10px 14px;margin-top:20px;border-radius:2px">
+    <p style="margin:0;font-size:12px;color:#555">
+      <strong>Nessuna azione richiesta.</strong> Il pool procede in automatico.<br>
+      Se vuoi ripristinare keyword escluse o aggiungerne di nuove, scrivi in chat.
+    </p>
   </div>
 
-  <details style="margin-top:20px">
-    <summary style="cursor:pointer;font-size:12px;color:#888">CSV (copia/incolla)</summary>
-    <pre style="font-size:11px;background:#f5f5f5;padding:10px;border-radius:4px;overflow-x:auto">${csvText}</pre>
-  </details>
-
-  <p style="color:#bbb;font-size:11px;margin-top:24px">${new Date().toISOString()} — Content Network VPS</p>
+  <p style="color:#ccc;font-size:11px;margin-top:20px">${new Date().toISOString()} — Content Network</p>
 </div>`;
-
-  // Build attachment (base64 CSV)
-  const csvBase64 = Buffer.from(csvText, 'utf-8').toString('base64');
-
-  const body = {
-    from: FROM,
-    to: [TO],
-    subject: `🔍 Keyword Review — ${flagged.length} item${flagged.length !== 1 ? 's' : ''} da approvare`,
-    html,
-    attachments: [{
-      filename: `suspicious-keywords-${new Date().toISOString().slice(0, 10)}.csv`,
-      content: csvBase64,
-    }],
-  };
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -155,7 +159,12 @@ async function sendReviewEmail(flagged) {
       'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      from: FROM,
+      to: [TO],
+      subject: `🧹 Keyword Pool — ${excluded.length} escluse, ${notified.length} monitorate`,
+      html,
+    }),
   });
 
   if (!res.ok) {
@@ -163,7 +172,7 @@ async function sendReviewEmail(flagged) {
     throw new Error(`Resend error: ${err}`);
   }
 
-  console.log(`[review] Email sent to ${TO} (${flagged.length} flagged keywords)`);
+  console.log(`[review] Email sent to ${TO}`);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -171,7 +180,6 @@ async function sendReviewEmail(flagged) {
 async function run() {
   console.log('🔍 Suspicious keyword review...');
 
-  // Load all unused keywords with site domain via niche→sites join
   const rows = await sql`
     SELECT
       k.id,
@@ -187,44 +195,49 @@ async function run() {
 
   console.log(`  Scanning ${rows.length} unused keywords...`);
 
-  const flagged = [];
+  const toExclude = [];
+  const toNotify  = [];
+
   for (const row of rows) {
-    const reason = flagKeyword(row.keyword);
-    if (reason) {
-      flagged.push({
-        id: row.id,
-        site: row.site,
-        niche: row.niche,
-        keyword: row.keyword,
-        reason,
-      });
-    }
+    const flag = flagKeyword(row.keyword);
+    if (!flag) continue;
+    const item = { id: row.id, site: row.site, keyword: row.keyword, reason: flag.reason };
+    if (flag.auto) toExclude.push(item);
+    else           toNotify.push(item);
   }
 
-  console.log(`  Found ${flagged.length} suspicious keywords`);
+  console.log(`  Auto-exclude: ${toExclude.length} | Notify-only: ${toNotify.length}`);
 
-  if (flagged.length === 0) {
-    console.log('  ✅ Pool clean — no review needed');
+  if (toExclude.length === 0 && toNotify.length === 0) {
+    console.log('  ✅ Pool clean — nothing to do');
     return;
   }
 
-  // Print to console always
-  console.log('\n  ID     | Site                      | Keyword                                          | Reason');
-  console.log('  ' + '-'.repeat(110));
-  for (const k of flagged) {
-    const id = String(k.id).padEnd(6);
-    const site = k.site.padEnd(26);
-    const kw = k.keyword.padEnd(48);
-    console.log(`  ${id} | ${site} | ${kw} | ${k.reason}`);
+  // Print summary
+  if (toExclude.length) {
+    console.log('\n  EXCLUDED:');
+    for (const k of toExclude) console.log(`    [${k.id}] ${k.keyword} — ${k.reason}`);
+  }
+  if (toNotify.length) {
+    console.log('\n  NOTIFY-ONLY:');
+    for (const k of toNotify) console.log(`    [${k.id}] ${k.keyword} — ${k.reason}`);
   }
   console.log('');
 
   if (DRY_RUN) {
-    console.log('  [dry-run] Email not sent.');
+    console.log('  [dry-run] No DB changes, no email sent.');
     return;
   }
 
-  await sendReviewEmail(flagged);
+  // Auto-exclude in DB
+  if (toExclude.length) {
+    const ids = toExclude.map(k => k.id);
+    await sql`UPDATE keywords SET used = true WHERE id = ANY(${ids})`;
+    console.log(`  ✅ Excluded ${ids.length} keywords from pool`);
+  }
+
+  // Send notification email
+  await sendNotificationEmail(toExclude, toNotify);
 }
 
 run().catch(err => {
