@@ -15,6 +15,7 @@ import { createHash } from 'crypto';
 
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const PIXABAY_API = 'https://pixabay.com/api/';
+const UNSPLASH_API = 'https://api.unsplash.com/search/photos';
 const USED_IDS_FILE = '.pexels-used.json';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
 const POLLINATIONS_TIMEOUT_MS = 35000;
@@ -573,6 +574,37 @@ async function searchPexels(query, usedIds, pages = 2) {
   return null;
 }
 
+async function searchUnsplash(query, usedIds) {
+  const key = process.env.UNSPLASH_ACCESS_KEY;
+  if (!key) return null;
+  const url = `${UNSPLASH_API}?query=${encodeURIComponent(query)}&per_page=20&orientation=landscape`;
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}` } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.results?.length) return null;
+    return data.results.find(p => !usedIds.has(`us_${p.id}`)) || null;
+  } catch { return null; }
+}
+
+async function downloadUnsplashImage(photo, slug, imagesDir, usedIds, existingMd5s) {
+  try {
+    const imageUrl = photo.urls.regular; // ~1080px wide, landscape
+    const imgRes = await fetch(imageUrl);
+    if (!imgRes.ok) return null;
+    const imgBuf = Buffer.from(await imgRes.arrayBuffer());
+    if (imgBuf.length < 10000) return null;
+    const imgMd5 = md5(imgBuf);
+    if (existingMd5s.has(imgMd5)) return null;
+    const destPath = join(imagesDir, `${slug}.jpg`);
+    writeFileSync(destPath, imgBuf);
+    existingMd5s.add(imgMd5);
+    saveUsedId(imagesDir, `us_${photo.id}`);
+    postProcessImage(destPath);
+    return `/images/${slug}.jpg`;
+  } catch { return null; }
+}
+
 async function searchPixabay(query, usedIds) {
   const url = `${PIXABAY_API}?key=${process.env.PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&per_page=20&safesearch=true&min_width=1000`;
   const res = await fetch(url);
@@ -656,7 +688,28 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 2. Fallback: Pixabay (100 req/min, nessun limite mensile)
+  // 2. Fallback: Unsplash (5000 req/hour with free key — register at unsplash.com/developers)
+  if (process.env.UNSPLASH_ACCESS_KEY) {
+    const queries = buildQueries(keyword, title, nicheSlug);
+    const usedIds = loadUsedIds(imagesDir);
+    const existingMd5s = loadExistingMd5s(imagesDir);
+    console.log(`  [image] Trying Unsplash fallback...`);
+    for (const query of queries) {
+      try {
+        const photo = await searchUnsplash(query, usedIds);
+        if (!photo) continue;
+        const result = await downloadUnsplashImage(photo, slug, imagesDir, usedIds, existingMd5s);
+        if (result) {
+          console.log(`  [image] Saved /images/${slug}.jpg (Unsplash ${photo.id}, query: "${query}")`);
+          return result;
+        }
+      } catch (err) {
+        console.warn(`  [image] Unsplash error for query "${query}": ${err.message}`);
+      }
+    }
+  }
+
+  // 3. Fallback: Pixabay (register at pixabay.com for free API key)
   if (process.env.PIXABAY_API_KEY) {
     const queries = buildQueries(keyword, title, nicheSlug);
     const usedIds = loadUsedIds(imagesDir);
@@ -677,7 +730,7 @@ export async function fetchArticleImage(keyword, slug, destDir, { nicheSlug = ''
     }
   }
 
-  // 3. Last resort: Pollinations AI-generated image (requires POLLINATIONS_API_KEY)
+  // 4. Last resort: Pollinations AI-generated image (requires POLLINATIONS_API_KEY)
   const pollinationsResult = await fetchFromPollinations(keyword, title, slug, nicheSlug, imagesDir);
   if (pollinationsResult) return pollinationsResult;
 

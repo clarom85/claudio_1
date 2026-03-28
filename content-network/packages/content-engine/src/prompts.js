@@ -287,6 +287,8 @@ export function buildArticlePrompt(keyword, niche, options = {}) {
   const cfg = NICHE_PROMPT_CONFIGS[niche.slug] || DEFAULT_NICHE_CONFIG;
   const wordCount = options.targetWordCount || getVariedWordCount(cfg.wordCount);
   const liveDataBlock = options.liveDataBlock || '';
+  const CURRENT_YEAR = new Date().getFullYear();
+  const CURRENT_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return `You are ${cfg.persona}, writing for a ${niche.name} publication.
 
@@ -355,6 +357,7 @@ E-E-A-T LANGUAGE REQUIREMENTS (Google's quality signals — every article must d
 - TRUST: Be explicit when something is uncertain or varies by situation ("this depends on X, and here's how to know which applies to you"). Acknowledge trade-offs honestly. Tell the reader when they need a professional instead of pretending the article replaces one.
 
 ABSOLUTE RULES:
+- CURRENT YEAR IS ${CURRENT_YEAR}: Today is ${CURRENT_DATE}. All pricing guides, statistics, and trend references must reflect ${CURRENT_YEAR} data. If you include a year in the title or meta description, it MUST be ${CURRENT_YEAR}. NEVER write "${CURRENT_YEAR - 2}" or "${CURRENT_YEAR - 1}" as if they are the current year.
 - BANNED PHRASES — never use any of these: "${AI_PHRASE_BLACKLIST}"
 - Write like a human expert, not an AI assistant — use contractions, direct opinions, specific numbers
 - HUMAN WRITING PATTERNS — these are non-negotiable structural rules to prevent AI fingerprinting:

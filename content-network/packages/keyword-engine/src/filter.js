@@ -77,6 +77,19 @@ export function topicFingerprint(keyword) {
 // Soglia: anni <= anno corrente - 2 (mantieni anno scorso e anno corrente).
 const CURRENT_YEAR = new Date().getFullYear();
 
+// Patterns that indicate off-topic, non-US, or non-real-world keywords
+const OFF_TOPIC_PATTERNS = [
+  /\bbloxburg\b/i,          // Roblox game
+  /\broblox\b/i,            // game
+  /\bminecraft\b/i,         // game
+  /\bnetherlands\b/i,       // non-US geo
+  /\buk prices?\b/i,        // non-US market
+  /\bpound sterling\b/i,    // non-USD currency
+  /\baustralia(n)?\b/i,     // non-US geo (unless keyword is explicitly AU)
+  /\bcanada(ian)?\b/i,      // non-US geo (unless keyword is explicitly CA)
+  /[^\x00-\x7F]/,           // non-ASCII / non-English characters
+];
+
 export function filterKeywords(keywords) {
   const seen = new Set();
   const filtered = [];
@@ -95,6 +108,9 @@ export function filterKeywords(keywords) {
     // Scarta keywords con anni obsoleti (es. "2022", "2023" nel 2026 → skip)
     const yearMatch = normalized.match(/\b(20\d{2})\b/);
     if (yearMatch && parseInt(yearMatch[1]) <= CURRENT_YEAR - 2) continue;
+
+    // Rimuovi keywords off-topic o non-US
+    if (OFF_TOPIC_PATTERNS.some(p => p.test(normalized))) continue;
 
     // Deduplicazione fuzzy semplice (normalizza spazi multipli)
     const key = normalized.replace(/\s+/g, ' ');

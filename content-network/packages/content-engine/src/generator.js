@@ -91,6 +91,25 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         continue;
       }
 
+      // Valida che il titolo non contenga anni vecchi (es. 2024 nel 2026)
+      const CY = new Date().getFullYear();
+      const titleYearMatch = articleData.title.match(/\b(20\d{2})\b/);
+      if (titleYearMatch && parseInt(titleYearMatch[1]) < CY) {
+        console.warn(`  Stale year in title: "${articleData.title}" (attempt ${attempt})`);
+        if (attempt === retries) {
+          // Fallback: fix year in title rather than failing completely
+          articleData.title = articleData.title.replace(/\b(20\d{2})\b/g, String(CY));
+          console.warn(`  Fixed stale year in title → "${articleData.title}"`);
+        } else {
+          continue;
+        }
+      }
+
+      // Fix stale year in metaDescription (no retry needed — just fix in place)
+      if (articleData.metaDescription) {
+        articleData.metaDescription = articleData.metaDescription.replace(/\b(20\d{2})\b/g, y => parseInt(y) < CY ? String(CY) : y);
+      }
+
       // Build HTML
       const slug = slugify(keyword);
       const { html, schemas, metaDescription, wordCount } = buildArticleHTML(articleData, {
