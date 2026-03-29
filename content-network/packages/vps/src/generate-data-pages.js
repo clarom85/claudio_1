@@ -217,8 +217,8 @@ async function fetchEiaStateData() {
   if (cached) return cached;
 
   console.log('    Fetching EIA residential electricity prices for all states...');
-  // EIA v2 API — residential retail electricity price, most recent month, all states
-  const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${apiKey}&frequency=monthly&data[0]=price&facets[sectorName][]=residential&sort[0][column]=period&sort[0][direction]=desc&length=70&offset=0`;
+  // EIA v2 API — residential retail electricity price (sectorid=RES), most recent month, all states
+  const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${apiKey}&frequency=monthly&data[0]=price&facets[sectorid][]=RES&sort[0][column]=period&sort[0][direction]=desc&length=70`;
   const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
   if (!res.ok) return null;
   const json = await res.json();
