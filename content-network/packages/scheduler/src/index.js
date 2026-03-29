@@ -24,7 +24,8 @@ import { alertCritical, alertWarning, alertReport } from '@content-network/vps/s
 import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 import { getDailyArticleLimit, logScheduleInfo, isDeadDay, isWithinPublishingWindow } from '@content-network/content-engine/src/publishing-schedule.js';
-import { injectInternalLinks, injectPillarSatelliteLinks } from '@content-network/content-engine/src/link-injector.js';
+import { injectInternalLinks, injectPillarSatelliteLinks, injectGlossaryLinks } from '@content-network/content-engine/src/link-injector.js';
+import { GLOSSARY_TERMS } from '@content-network/content-engine/src/glossary-terms.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -588,9 +589,11 @@ async function relinkSite(site) {
   }));
 
   // Pass 1: Bidirectional pillar-satellite linking (structural, deterministic)
-  const clusterLinked = injectPillarSatelliteLinks(input);
-  // Pass 2: Random cross-linking for remaining link budget — idempotente
-  const relinked = injectInternalLinks(clusterLinked);
+  const clusterLinked  = injectPillarSatelliteLinks(input);
+  // Pass 2: Glossary term linking — linka termini a /glossary/[slug]/
+  const glossaryLinked = injectGlossaryLinks(clusterLinked, GLOSSARY_TERMS[site.niche_slug] || []);
+  // Pass 3: Random cross-linking for remaining link budget — idempotente
+  const relinked = injectInternalLinks(glossaryLinked);
 
   let updated = 0;
 

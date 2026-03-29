@@ -214,7 +214,7 @@ export function renderFooter(site){return`
 <footer class="site-footer">${adUnit('footer')}<div class="wrap">
   <div class="footer-grid">
     <div><div class="footer-logo">${esc(site.name)}</div><p style="font-size:13px;line-height:1.7">Inspiring guides for a better everyday life.</p></div>
-    <div class="footer-col"><h4>Explore</h4><ul><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li></ul></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li><li><a href="/glossary/">Glossary</a></li></ul></div>
     <div class="footer-col"><h4>Legal</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></div>
   </div>
   <div class="footer-bottom"><p>© ${new Date().getFullYear()} ${esc(site.name)} — For informational purposes only</p></div>
