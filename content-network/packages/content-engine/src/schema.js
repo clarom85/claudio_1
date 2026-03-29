@@ -150,10 +150,12 @@ export function patchArticleSchemas(schemas, { template, rating }) {
 
     const patched = { ...s };
 
+    // NewsArticle for tabloid/broadsheet templates
     if (template === 'pulse' || template === 'tribune') {
       patched['@type'] = 'NewsArticle';
     }
 
+    // AggregateRating from real user votes
     if (rating) {
       const total = (rating.thumbsUp || 0) + (rating.thumbsDown || 0);
       if (total >= MIN_RATINGS) {
@@ -165,6 +167,14 @@ export function patchArticleSchemas(schemas, { template, rating }) {
           worstRating: 1
         };
       }
+    }
+
+    // Speakable — always inject (backfills existing articles that predate this feature)
+    if (!patched.speakable) {
+      patched.speakable = {
+        '@type': 'SpeakableSpecification',
+        cssSelector: ['.article-intro', '.key-takeaways']
+      };
     }
 
     return patched;
