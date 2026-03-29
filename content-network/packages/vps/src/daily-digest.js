@@ -44,7 +44,7 @@ async function run() {
       ORDER BY s.domain, pq.scheduled_for
     `,
     // Info siti attivi
-    sql`SELECT id, domain, created_at, niche_slug FROM sites WHERE status != 'inactive' ORDER BY id`,
+    sql`SELECT id, domain, created_at FROM sites WHERE status != 'inactive' ORDER BY id`,
     // Totale articoli pubblicati per sito
     sql`
       SELECT site_id, COUNT(*) as total
