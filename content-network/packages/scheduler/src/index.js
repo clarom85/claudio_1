@@ -168,6 +168,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ generate-cost-tracker: ${e.message}`); }
   }
 
+  // Data pages refresh — ogni domenica alle 14:xx UTC (7-day file cache, so low cost)
+  if (now.getHours() === 14 && now.getDay() === 0) {
+    try {
+      console.log('  📊 Refreshing data pages...');
+      execSync('node packages/vps/src/generate-data-pages.js --all', { cwd: ROOT, stdio: 'pipe', timeout: 300000 });
+      console.log('  ✅ Data pages refreshed');
+    } catch (e) { console.error(`  ❌ generate-data-pages: ${e.message}`); }
+  }
+
   // 12. HARO weekly digest — ogni domenica alle 13:xx UTC
   if (now.getHours() === 13 && now.getDay() === 0) {
     try {

@@ -189,7 +189,7 @@ export function renderFooter(site){return`
   ${adUnit('footer')}
   <div class="wrap">
     <div class="footer-grid">
-      <div class="footer-col"><h4>Navigate</h4><ul><li><a href="/">Home</a></li><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li><li><a href="/glossary/">Glossary</a></li></ul></div>
+      <div class="footer-col"><h4>Navigate</h4><ul><li><a href="/">Home</a></li><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li><li><a href="/glossary/">Glossary</a></li><li><a href="/data/">Data</a></li></ul></div>
       <div class="footer-about"><h3>${esc(site.name)}</h3><p>Delivering trusted, expert-backed information since ${new Date().getFullYear()}.</p></div>
       <div class="footer-col"><h4>Legal &amp; Standards</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li><li><a href="/editorial-guidelines/">Editorial</a></li><li><a href="/methodology/">Methodology</a></li><li><a href="/editorial-process/">Review Process</a></li></ul></div>
     </div>

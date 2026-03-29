@@ -651,6 +651,7 @@ export function renderFooter(site) {
           <li><a href="/contact/">Contact</a></li>
           <li><a href="/advertise/">Advertise</a></li>
           <li><a href="/glossary/">Glossary</a></li>
+          <li><a href="/data/">Data</a></li>
         </ul>
       </div>
       <div class="footer-col">

@@ -28,6 +28,7 @@ import { getAllCategoryIntros } from '@content-network/content-engine/src/catego
 import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from './niche-methodology.js';
 import { generateGlossaryForSite } from '@content-network/vps/src/generate-glossary.js';
 import { generateCostTrackerForSite } from '@content-network/vps/src/generate-cost-tracker.js';
+import { generateDataPagesForSite } from '@content-network/vps/src/generate-data-pages.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../../..');
@@ -152,6 +153,19 @@ async function run() {
       if (dataPoints) console.log(`  ✅ Cost Tracker: /cost-tracker/ (${dataPoints} data points)`);
     } catch (err) {
       console.warn(`  ⚠️  Cost tracker generation failed (non-blocking): ${err.message}`);
+    }
+
+    // 7c.5. Data pages (FRED economic data — requires FRED_API_KEY)
+    try {
+      const dataPageCount = await generateDataPagesForSite({
+        domain,
+        nicheSlug,
+        nicheName: niche.name,
+        ga4MeasurementId: siteConfig.ga4MeasurementId || '',
+      });
+      if (dataPageCount) console.log(`  ✅ Data page: /data/ generated`);
+    } catch (err) {
+      console.warn(`  ⚠️  Data page generation failed (non-blocking): ${err.message}`);
     }
 
     // 7d. Pagina autore — genera bio lunga + scarica foto
