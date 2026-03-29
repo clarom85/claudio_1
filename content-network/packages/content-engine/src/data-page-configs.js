@@ -1,9 +1,13 @@
 /**
- * Data page configurations for all 20 niches.
- * Each niche maps to a FRED economic series (state-level) that produces
- * a "linkable asset" — a data table journalists cite organically.
+ * Data page configurations — 12 niches with genuine FRED relevance.
+ * Each produces a "linkable asset" journalists cite organically.
  *
- * Series types available:
+ * Excluded niches (connection to FRED state-level data too weak to be credible):
+ *   software-error-fixes, diet-specific-recipes, weight-loss-fitness,
+ *   online-education, cybersecurity-privacy, pet-care-by-breed,
+ *   small-town-tourism, solar-energy
+ *
+ * Series types:
  *   HPI  — FHFA House Price Index ({STATE}STHPI)
  *   PCPI — BEA Per Capita Personal Income ({STATE}PCPI)
  *   UR   — BLS Unemployment Rate ({STATE}UR)
@@ -59,6 +63,9 @@ export const DATA_SERIES = {
 };
 
 export const DATA_PAGE_CONFIGS = {
+
+  // ── HPI-based (housing/real-estate niches) ────────────────────────────────
+
   'home-improvement-costs': {
     slug: 'home-construction-costs-by-state',
     pageTitle: `Home Construction Cost Index by State (${new Date().getFullYear()})`,
@@ -69,6 +76,7 @@ export const DATA_PAGE_CONFIGS = {
     methodology: 'The Federal Housing Finance Agency (FHFA) House Price Index (HPI) measures the movement of single-family house prices. It is based on transactions involving conforming conventional mortgages purchased or securitized by Fannie Mae or Freddie Mac. The HPI is a weighted, repeat-sales index — meaning it measures average price changes in repeat sales or refinancings on the same properties. Higher index values correlate with higher renovation contractor rates, material costs, and permit fees in that state.',
     citationText: 'Home construction cost data by state',
   },
+
   'real-estate-investing': {
     slug: 'real-estate-price-index-by-state',
     pageTitle: `Real Estate Price Index by State (${new Date().getFullYear()})`,
@@ -76,49 +84,45 @@ export const DATA_PAGE_CONFIGS = {
     metaDescription: `FHFA House Price Index for all 50 US states — essential data for real estate investors evaluating market strength and appreciation potential.`,
     seriesType: 'HPI',
     tableIntro: 'The FHFA HPI measures house price appreciation on a state level. States with rapidly rising indexes signal strong appreciation potential. Investors use this to identify markets with strong price growth momentum before committing capital.',
-    methodology: 'The FHFA House Price Index uses repeat-sales methodology to measure house price appreciation. Data comes from conforming conventional mortgage transactions purchased or securitized by Fannie Mae or Freddie Mac. It is published quarterly and covers all 50 states plus the District of Columbia. Real estate investors use HPI trends to identify markets with momentum, price ceilings, and relative value.',
+    methodology: 'The FHFA House Price Index uses repeat-sales methodology to measure house price appreciation. Data comes from conforming conventional mortgage transactions purchased or securitized by Fannie Mae or Freddie Mac. Published quarterly and covering all 50 states. Real estate investors use HPI trends to identify markets with momentum, price ceilings, and relative value.',
     citationText: 'Real estate price appreciation data by state',
   },
+
   'home-security-systems': {
     slug: 'home-values-by-state',
     pageTitle: `Home Values by State — Security Investment Reference (${new Date().getFullYear()})`,
     h1: 'House Price Index by State — Home Value Reference',
     metaDescription: `FHFA House Price Index data for all 50 states. Higher-value homes warrant greater security investment. Compare home values across the US.`,
     seriesType: 'HPI',
-    tableIntro: 'Home value correlates directly with the appropriate level of security investment. Homes in high-HPI states carry greater asset value that justifies more comprehensive security system installations.',
+    tableIntro: 'Home value directly determines the appropriate level of security investment. Homes in high-HPI states carry greater asset value that justifies more comprehensive security system installations, professional monitoring, and smart home integration.',
     methodology: 'The FHFA House Price Index (HPI) tracks single-family house price changes across all 50 US states, published quarterly. It uses repeat-sales data from conforming conventional mortgage transactions. Higher HPI values indicate stronger markets where homes carry greater replacement value, justifying investment in professional security monitoring, smart locks, cameras, and alarm systems.',
     citationText: 'Home value data by state for security planning',
   },
-  'small-town-tourism': {
-    slug: 'cost-of-living-by-state',
-    pageTitle: `Cost of Living Index by State — Travel Reference (${new Date().getFullYear()})`,
-    h1: 'Housing Cost Index by State — Travel Affordability',
-    metaDescription: `State housing cost index data helping travelers compare lodging and accommodation costs across all 50 US states. Source: FHFA via FRED.`,
-    seriesType: 'HPI',
-    tableIntro: 'Housing costs are a reliable proxy for overall travel expenses. States with lower HPI values offer more affordable lodging, dining, and activities — making them ideal destinations for budget-conscious travelers exploring small towns.',
-    methodology: 'The FHFA House Price Index is used here as a cost-of-living proxy. States with higher HPI values tend to have higher accommodation costs, restaurant prices, and activity fees. This data helps travelers identify affordable destinations and budget appropriately for travel to different US states.',
-    citationText: 'Cost of living index by state for travel planning',
-  },
+
+  // ── PCPI-based (finance/professional services niches) ────────────────────
+
   'personal-finance': {
     slug: 'per-capita-income-by-state',
     pageTitle: `Per Capita Personal Income by State (${new Date().getFullYear()})`,
     h1: 'Per Capita Personal Income by State',
     metaDescription: `Bureau of Economic Analysis per capita personal income data for all 50 US states. Essential reference for personal finance planning, budgeting, and savings benchmarking.`,
     seriesType: 'PCPI',
-    tableIntro: 'Per capita personal income varies significantly across states — from below $45,000 to over $90,000 annually. This data directly affects realistic budgeting targets, savings rates, retirement projections, and financial benchmarking.',
+    tableIntro: 'Per capita personal income varies significantly across states — from below $45,000 to over $90,000 annually. This data directly affects realistic budgeting targets, savings rates, retirement projections, and financial benchmarking for individuals and households.',
     methodology: 'Per Capita Personal Income is calculated by the Bureau of Economic Analysis (BEA) and published annually. It represents total personal income for a state divided by its total midyear population. The income measure includes wages and salaries, supplements to wages and salaries, proprietors income, rental income, personal dividend income, personal interest income, and government social benefits minus personal current taxes.',
     citationText: 'Per capita personal income data by state',
   },
+
   'insurance-guide': {
     slug: 'insurance-affordability-by-state',
     pageTitle: `Insurance Affordability by State (${new Date().getFullYear()})`,
     h1: 'Per Capita Income by State — Insurance Cost Reference',
-    metaDescription: `State per capita income data from the BEA to compare insurance premium affordability across all 50 US states. Higher income states absorb higher premiums.`,
+    metaDescription: `State per capita income data from the BEA to compare insurance premium affordability across all 50 US states. Higher-income states absorb higher premiums.`,
     seriesType: 'PCPI',
     tableIntro: 'Insurance premium affordability is directly tied to local income levels. A $2,000 annual homeowners insurance premium represents a very different burden in a state averaging $45,000 per capita vs. one averaging $75,000. Use this data to contextualize insurance costs in your state.',
     methodology: 'Per Capita Personal Income data from the Bureau of Economic Analysis (BEA) published via FRED. Insurance pricing models factor in regional income levels, property values, and litigation environments. States with higher per capita income typically have higher insurance premiums, but the premium-to-income ratio determines actual affordability.',
     citationText: 'Income-adjusted insurance affordability data by state',
   },
+
   'legal-advice': {
     slug: 'legal-costs-by-state',
     pageTitle: `Attorney Hourly Rates & Legal Costs by State (${new Date().getFullYear()})`,
@@ -129,66 +133,40 @@ export const DATA_PAGE_CONFIGS = {
     methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA) is the standard proxy for legal service costs. Studies by the National Legal Aid & Defender Association and the American Bar Foundation consistently show that attorney hourly rates in a market correlate with the median household income of that market — typically ranging from 3x to 5x median hourly wages.',
     citationText: 'Legal cost factors by state based on income data',
   },
+
   'health-symptoms': {
     slug: 'healthcare-affordability-by-state',
     pageTitle: `Healthcare Affordability by State (${new Date().getFullYear()})`,
     h1: 'Per Capita Income by State — Healthcare Cost Comparison',
     metaDescription: `BEA state income data to assess healthcare out-of-pocket cost burdens across all 50 US states. Lower-income states face proportionally higher medical cost burdens.`,
     seriesType: 'PCPI',
-    tableIntro: 'Out-of-pocket healthcare costs consume a larger share of income in lower-income states. This index helps patients understand the relative healthcare cost burden in their state and plan for medical expenses.',
+    tableIntro: 'Out-of-pocket healthcare costs consume a larger share of income in lower-income states. This index helps patients understand the relative healthcare cost burden in their state and plan for medical expenses accordingly.',
     methodology: 'Per Capita Personal Income data from the Bureau of Economic Analysis (BEA). The Commonwealth Fund and Kaiser Family Foundation research consistently shows that healthcare affordability burdens are highest in lower-income states, where medical costs represent a larger share of household income. This data contextualizes out-of-pocket healthcare spending relative to state economic conditions.',
     citationText: 'Healthcare affordability index by state',
   },
+
   'credit-cards-banking': {
     slug: 'credit-access-by-state',
     pageTitle: `Credit Access & Income by State (${new Date().getFullYear()})`,
     h1: 'Per Capita Personal Income by State — Credit & Banking Reference',
     metaDescription: `State per capita income data from the BEA — key reference for credit card limits, banking rates, and financial product eligibility across all 50 US states.`,
     seriesType: 'PCPI',
-    tableIntro: 'Credit card limits, loan approval rates, and premium banking product eligibility all correlate with state income levels. Higher-income states have consumers with stronger credit profiles, enabling access to better financial products.',
-    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The Federal Reserve\'s Survey of Consumer Finances shows credit access and utilization vary significantly by income level. States with higher per capita income have higher median credit scores, lower default rates, and greater access to premium credit products with better reward programs and lower APRs.',
+    tableIntro: 'Credit card limits, loan approval rates, and premium banking product eligibility all correlate with state income levels. Higher-income states have consumers with stronger credit profiles, enabling access to better financial products and lower APRs.',
+    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The Federal Reserve\'s Survey of Consumer Finances shows credit access and utilization vary significantly by income level. States with higher per capita income have higher median credit scores, lower default rates, and greater access to premium credit products with better reward programs.',
     citationText: 'Income and credit access data by state',
   },
-  'weight-loss-fitness': {
-    slug: 'fitness-costs-by-state',
-    pageTitle: `Gym & Fitness Costs by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — Fitness & Wellness Affordability',
-    metaDescription: `State income data from the BEA showing where gym memberships and personal training are most and least affordable across all 50 US states.`,
-    seriesType: 'PCPI',
-    tableIntro: 'Gym memberships, personal training, and fitness class costs are highest in high-income states where demand from affluent consumers drives premium pricing. This data helps consumers benchmark fitness costs relative to their local economy.',
-    methodology: 'Per Capita Personal Income data from the Bureau of Economic Analysis (BEA). The International Health, Racquet & Sportsclub Association (IHRSA) reports that fitness facility pricing correlates with regional income levels. Premium gym markets (New York, California, Connecticut) charge 2-3x the national average for equivalent services.',
-    citationText: 'Fitness cost index by state',
-  },
-  'online-education': {
-    slug: 'education-roi-by-state',
-    pageTitle: `Online Education ROI by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — Education Return on Investment',
-    metaDescription: `BEA state income data to evaluate online education ROI — compare income potential and wage premiums for credentials across all 50 US states.`,
-    seriesType: 'PCPI',
-    tableIntro: 'Online education ROI depends heavily on where you live and work. States with higher per capita income offer greater wage premiums for additional credentials, making the same course or degree worth significantly more in some states vs. others.',
-    methodology: 'Per Capita Personal Income data from the Bureau of Economic Analysis (BEA). The Georgetown Center on Education and the Workforce research shows the income premium from credentials varies significantly by state. Online learners should factor local income levels when calculating expected returns on education investments.',
-    citationText: 'Education ROI and income data by state',
-  },
-  'cybersecurity-privacy': {
-    slug: 'tech-salaries-by-state',
-    pageTitle: `Tech & Cybersecurity Salaries by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — Tech Sector Reference',
-    metaDescription: `BEA per capita income data by state — essential reference for cybersecurity professionals evaluating salary expectations and career relocation decisions.`,
-    seriesType: 'PCPI',
-    tableIntro: 'Cybersecurity professional salaries correlate strongly with state income levels and the concentration of tech employers. Tech hubs in high-income states (California, Washington, New York, Virginia) offer significantly higher compensation packages for security professionals.',
-    methodology: 'Per Capita Personal Income data from the Bureau of Economic Analysis (BEA). The BLS Occupational Employment and Wage Statistics (OEWS) program shows information security analyst wages are highest in states with higher overall per capita income and larger tech sector concentrations.',
-    citationText: 'Tech income data by state for cybersecurity career planning',
-  },
+
   'mental-health-wellness': {
     slug: 'therapy-costs-by-state',
     pageTitle: `Therapy & Mental Health Costs by State (${new Date().getFullYear()})`,
     h1: 'Per Capita Income by State — Therapy Cost Comparison',
     metaDescription: `BEA state income data to compare therapist and counseling costs across all 50 US states. Higher-income states have significantly higher therapy session rates.`,
     seriesType: 'PCPI',
-    tableIntro: 'Therapist hourly rates vary from $75 to $300+ depending on your state. Rates track closely with local per capita income levels, as mental health professionals price their services based on what the local market can bear.',
-    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The American Psychological Association reports that therapist fees are closely tied to local cost of living and income levels. States with higher per capita income have higher average therapy session costs, but may also have more therapists accepting insurance.',
+    tableIntro: 'Therapist hourly rates vary from $75 to $300+ depending on your state, and track closely with local per capita income levels. Mental health professionals price services based on what the local market can bear.',
+    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The American Psychological Association reports that therapist fees are closely tied to local cost of living and income levels. States with higher per capita income have higher average therapy session costs, but may also have more therapists accepting insurance and sliding-scale fees.',
     citationText: 'Mental health service costs by state',
   },
+
   'senior-care-medicare': {
     slug: 'senior-care-costs-by-state',
     pageTitle: `Nursing Home & Senior Care Costs by State (${new Date().getFullYear()})`,
@@ -199,46 +177,20 @@ export const DATA_PAGE_CONFIGS = {
     methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). Genworth\'s Cost of Care Survey consistently shows senior care facility costs track with regional labor costs and per capita income. A private nursing home room averages $108,000/year nationally but ranges from under $70,000 in lower-income states to over $160,000 in the highest-cost states.',
     citationText: 'Senior care cost index by state',
   },
+
   'business-startup': {
     slug: 'business-startup-costs-by-state',
     pageTitle: `Business Startup Cost Index by State (${new Date().getFullYear()})`,
     h1: 'Per Capita Income by State — Startup Cost & Labor Reference',
     metaDescription: `BEA state income data to compare business startup costs, labor rates, and commercial real estate affordability across all 50 US states.`,
     seriesType: 'PCPI',
-    tableIntro: 'Startup costs — commercial rent, employee wages, professional services — all correlate with state per capita income. Understanding local income levels helps entrepreneurs forecast operating costs before choosing where to launch a business.',
+    tableIntro: 'Startup costs — commercial rent, employee wages, professional services — all correlate with state per capita income. Understanding local income levels helps entrepreneurs forecast operating costs before choosing where to launch.',
     methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The Kauffman Foundation\'s State of Entrepreneurship reports confirm that business formation costs, including commercial rents and minimum wage floors, are directly tied to regional income levels. This data helps founders make data-informed decisions about business location.',
     citationText: 'Business startup cost index by state',
   },
-  'pet-care-by-breed': {
-    slug: 'veterinary-costs-by-state',
-    pageTitle: `Veterinary & Pet Care Costs by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — Veterinary Cost Reference',
-    metaDescription: `BEA state income data helping pet owners compare veterinary costs and pet care affordability across all 50 US states.`,
-    seriesType: 'PCPI',
-    tableIntro: 'Veterinary fees vary dramatically by state — a routine wellness exam can cost $45 in a rural Southern state or $150+ in a major coastal metro. This data helps pet owners set accurate budgets and understand relative vet costs in their state.',
-    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The American Veterinary Medical Association (AVMA) reports that veterinary fees are priced based on local cost of living, which tracks closely with per capita income. Higher-income states have higher vet labor costs, facility costs, and equipment amortization — all passed on to pet owners.',
-    citationText: 'Veterinary cost index by state',
-  },
-  'software-error-fixes': {
-    slug: 'it-support-costs-by-state',
-    pageTitle: `IT Support & Tech Service Costs by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — IT Service Cost Reference',
-    metaDescription: `BEA state income data to compare IT support and software consulting rates across all 50 US states.`,
-    seriesType: 'PCPI',
-    tableIntro: 'IT support hourly rates and software consulting fees vary significantly by state. Higher-income states have higher IT labor costs — a remote IT support session that costs $75/hour in one state may cost $150/hour in a high-cost tech market.',
-    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The BLS Occupational Employment Statistics show IT support specialist wages correlate strongly with regional per capita income. States with larger tech sector concentrations and higher incomes command premium rates for technology services.',
-    citationText: 'IT service cost index by state',
-  },
-  'diet-specific-recipes': {
-    slug: 'healthy-food-costs-by-state',
-    pageTitle: `Healthy & Specialty Food Costs by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — Specialty Food Affordability',
-    metaDescription: `BEA state income data to compare organic, specialty diet, and healthy food costs across all 50 US states.`,
-    seriesType: 'PCPI',
-    tableIntro: 'Organic, keto, gluten-free, and other specialty diet foods cost more in high-income states where consumer demand drives premium pricing. This data helps dieters and health-conscious consumers understand food cost variations by state.',
-    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The USDA Economic Research Service reports that specialty and organic food price premiums are highest in states with higher per capita income, where consumer willingness to pay supports higher pricing. Budget-conscious shoppers in lower-income states typically pay less for the same specialty items.',
-    citationText: 'Specialty food cost index by state',
-  },
+
+  // ── UR-based ──────────────────────────────────────────────────────────────
+
   'automotive-guide': {
     slug: 'auto-market-by-state',
     pageTitle: `Auto Market Conditions by State (${new Date().getFullYear()})`,
@@ -249,14 +201,5 @@ export const DATA_PAGE_CONFIGS = {
     methodology: 'State unemployment rates from the Bureau of Labor Statistics (BLS) via FRED, published monthly (seasonally adjusted). The University of Michigan Consumer Sentiment Index and auto industry research consistently show vehicle purchase intentions rise when unemployment falls below 4% and drop when it exceeds 6%. This data serves as a leading indicator for auto market conditions by state.',
     citationText: 'Auto market conditions by state based on unemployment data',
   },
-  'solar-energy': {
-    slug: 'solar-investment-by-state',
-    pageTitle: `Solar Investment Potential by State (${new Date().getFullYear()})`,
-    h1: 'Per Capita Income by State — Solar Panel ROI Index',
-    metaDescription: `BEA state income data to evaluate solar panel investment affordability and payback period potential across all 50 US states.`,
-    seriesType: 'PCPI',
-    tableIntro: 'Solar panel payback periods depend on household income, local electricity rates, and available incentives. Higher-income states can invest in larger systems and leverage better financing terms, while many offer additional state tax credits on top of the federal ITC.',
-    methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The National Renewable Energy Laboratory (NREL) and Lawrence Berkeley National Laboratory research show solar adoption rates correlate with household income. Higher-income households can absorb upfront installation costs, qualify for larger systems, and access better solar loan terms — all reducing effective payback periods.',
-    citationText: 'Solar investment potential data by state',
-  },
+
 };
