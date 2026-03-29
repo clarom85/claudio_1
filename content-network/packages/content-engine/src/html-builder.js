@@ -5,6 +5,8 @@
 
 import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema, buildHowToSchema } from './schema.js';
 
+const NEWS_TEMPLATES = new Set(['pulse', 'tribune']);
+
 // Ad unit helper — returns '' when no ad network configured (avoids CLS flash)
 function adUnit(type) {
   const ezoicId = process.env.EZOIC_SITE_ID || '';
@@ -101,7 +103,7 @@ function escapeRegexChars(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '' }) {
+export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '', template = '', rating = null }) {
   const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations, comparisonTable } = articleData;
   // Enforce Google's 160-char limit — Claude occasionally overshoots
   const metaDescription = (articleData.metaDescription || '').slice(0, 160);
@@ -114,7 +116,9 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
   const articleSchema = buildArticleSchema({
     title, description: metaDescription, slug, author,
     siteName, siteUrl, datePublished, dateModified: datePublished, imageSlug: slug,
-    wordCount
+    wordCount,
+    articleType: NEWS_TEMPLATES.has(template) ? 'NewsArticle' : 'Article',
+    rating
   });
 
   const faqSchema = buildFAQSchema(faq);

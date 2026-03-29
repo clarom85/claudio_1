@@ -455,6 +455,15 @@ ${renderFooter(site)}`;
     description: site.tagline || site.name,
     potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: `${site.url}/?s={search_term_string}` }, 'query-input': 'required name=search_term_string' }
   };
+  const itemListSchema = articles.length ? {
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    name: `Latest Articles — ${site.name}`,
+    numberOfItems: Math.min(articles.length, 10),
+    itemListElement: articles.slice(0, 10).map((a, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      url: `${site.url}/${a.slug}/`, name: a.title
+    }))
+  } : null;
   const heroImg = hero ? (hero.image || `/images/${hero.slug}.jpg`) : '';
   const metaDesc = site.tagline ? `${site.tagline}. Trusted guides, real data, expert advice.` : `${site.name}: trusted source for expert guides, practical advice, and in-depth how-to articles.`;
   return renderBase({
@@ -462,7 +471,7 @@ ${renderFooter(site)}`;
     description: metaDesc,
     siteName: site.name, siteUrl: site.url, body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: heroImg ? `${site.url}${heroImg}` : '',
-    schemas: [orgSchema, webSiteSchema],
+    schemas: [orgSchema, webSiteSchema, ...(itemListSchema ? [itemListSchema] : [])],
     lcpImage: heroImg ? `${site.url}${heroImg}` : '',
     mgidSiteId: site.mgidSiteId || ''
   });

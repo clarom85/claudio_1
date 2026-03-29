@@ -295,9 +295,10 @@ export function renderHomePage(articles,site){
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">${adUnit('leaderboard')}${h1Html}${heroHtml}${costTrackerHtml}${adUnit('leaderboard')}${gridHtml}${adUnit('leaderboard')}</div></main>${renderFooter(site)}`;
   const orgSchema={'@context':'https://schema.org','@type':'Organization','@id':`${site.url}/#organization`,name:site.name,url:site.url,logo:{'@type':'ImageObject',url:`${site.url}/logo.png`,width:200,height:60}};
   const webSiteSchema={'@context':'https://schema.org','@type':'WebSite','@id':`${site.url}/#website`,url:site.url,name:site.name,description:site.tagline||site.name,potentialAction:{'@type':'SearchAction',target:{'@type':'EntryPoint',urlTemplate:`${site.url}/?s={search_term_string}`},'query-input':'required name=search_term_string'}};
+  const itemListSchema=articles.length?{'@context':'https://schema.org','@type':'ItemList',name:`Latest Coverage — ${site.name}`,numberOfItems:Math.min(articles.length,10),itemListElement:articles.slice(0,10).map((a,i)=>({'@type':'ListItem',position:i+1,url:`${site.url}/${a.slug}/`,name:a.title}))}:null;
   const heroImg=hero?(hero.image||`/images/${hero.slug}.jpg`):'';
   const metaDesc=site.tagline?`${site.tagline}. Trusted guides, real costs, expert advice.`:`${site.name}: authoritative expert-backed articles.`;
-  return renderBase({title:`Expert Coverage & Analysis`,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:hero?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema],lcpImage:heroImg?`${site.url}${heroImg}`:'',mgidSiteId:site.mgidSiteId||''});
+  return renderBase({title:`Expert Coverage & Analysis`,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:hero?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema,...(itemListSchema?[itemListSchema]:[])],lcpImage:heroImg?`${site.url}${heroImg}`:'',mgidSiteId:site.mgidSiteId||''});
 }
 
 export function renderCategoryPage(articles,category,site,page=1,totalPages=1){

@@ -9,6 +9,7 @@ import { join } from 'path';
 import { sql } from '@content-network/db';
 import { classifyArticle } from '@content-network/content-engine/src/categories.js';
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { patchArticleSchemas } from '@content-network/content-engine/src/schema.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 const TEMPLATES_DIR = new URL('../../../templates', import.meta.url).pathname;
@@ -32,6 +33,17 @@ async function run() {
     WHERE a.site_id = ${siteId} AND a.status = 'published'
     ORDER BY a.id
   `;
+
+  // Aggregate feedback votes per article slug for AggregateRating schema
+  const feedbackRows = await sql`
+    SELECT slug,
+      COUNT(*) FILTER (WHERE vote = 'yes')::int AS thumbs_up,
+      COUNT(*) FILTER (WHERE vote = 'no')::int  AS thumbs_down
+    FROM article_feedback
+    WHERE site = ${site.domain}
+    GROUP BY slug
+  `;
+  const feedbackMap = new Map(feedbackRows.map(r => [r.slug, { thumbsUp: r.thumbs_up, thumbsDown: r.thumbs_down }]));
 
   const { renderArticlePage } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
   const author = AUTHOR_PERSONAS[site.niche_slug] || AUTHOR_PERSONAS['home-improvement-costs'];
@@ -113,10 +125,15 @@ async function run() {
     try {
       const cat = classifyArticle(site.niche_slug, a.keyword || '', a.title);
       const related = allPublished.filter(r => r.slug !== a.slug).sort(() => Math.random() - .5).slice(0, 4);
+      const rating = feedbackMap.get(a.slug) || null;
+      const patchedSchemas = patchArticleSchemas(a.schema_markup || [], {
+        template: site.template,
+        rating
+      });
       const articleData = {
         slug: a.slug, title: a.title, metaDescription: a.meta_description,
         excerpt: (a.meta_description || '').slice(0, 120) + '...',
-        content: a.content, schemas: a.schema_markup || [],
+        content: a.content, schemas: patchedSchemas,
         category: cat.name, categorySlug: cat.slug,
         date: a.published_at || a.created_at,
         updatedAt: a.updated_at,

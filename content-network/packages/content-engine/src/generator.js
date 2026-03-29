@@ -168,7 +168,8 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         slug,
         keyword,
         relatedArticles: existingArticles,
-        toolSlug: site.toolSlug || ''
+        toolSlug: site.toolSlug || '',
+        template: site.template || ''
       });
 
       // Fetch image from Pexels if a public directory is provided

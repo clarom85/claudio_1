@@ -3,10 +3,16 @@
  * Aumenta significativamente la probabilità di rich snippets in SERP
  */
 
-export function buildArticleSchema({ title, description, slug, author, siteName, siteUrl, datePublished, dateModified, imageSlug, wordCount }) {
-  return {
+const MIN_RATINGS = 5; // min votes needed to emit AggregateRating
+
+/**
+ * @param {string} [articleType='Article'] — 'Article' or 'NewsArticle'
+ * @param {object|null} [rating] — { thumbsUp, thumbsDown } from article_feedback
+ */
+export function buildArticleSchema({ title, description, slug, author, siteName, siteUrl, datePublished, dateModified, imageSlug, wordCount, articleType = 'Article', rating = null }) {
+  const schema = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': articleType,
     headline: title,
     description,
     url: `${siteUrl}/${slug}`,
@@ -48,6 +54,23 @@ export function buildArticleSchema({ title, description, slug, author, siteName,
       url: siteUrl
     }
   };
+
+  // Embed AggregateRating when enough real votes exist
+  if (rating) {
+    const total = (rating.thumbsUp || 0) + (rating.thumbsDown || 0);
+    if (total >= MIN_RATINGS) {
+      const ratingValue = parseFloat(((rating.thumbsUp / total) * 4 + 1).toFixed(1));
+      schema.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue,
+        ratingCount: total,
+        bestRating: 5,
+        worstRating: 1
+      };
+    }
+  }
+
+  return schema;
 }
 
 export function buildFAQSchema(faqs) {
@@ -109,4 +132,37 @@ export function buildBreadcrumbSchema(items, siteUrl) {
       item: `${siteUrl}${item.path}`
     }))
   };
+}
+
+/**
+ * Patch a stored schema_markup array:
+ * - Article → NewsArticle for pulse/tribune templates
+ * - Inject AggregateRating when enough real votes exist
+ * Used at re-render time in rerender-articles.js
+ */
+export function patchArticleSchemas(schemas, { template, rating }) {
+  return schemas.map(s => {
+    if (s['@type'] !== 'Article' && s['@type'] !== 'NewsArticle') return s;
+
+    const patched = { ...s };
+
+    if (template === 'pulse' || template === 'tribune') {
+      patched['@type'] = 'NewsArticle';
+    }
+
+    if (rating) {
+      const total = (rating.thumbsUp || 0) + (rating.thumbsDown || 0);
+      if (total >= MIN_RATINGS) {
+        patched.aggregateRating = {
+          '@type': 'AggregateRating',
+          ratingValue: parseFloat(((rating.thumbsUp / total) * 4 + 1).toFixed(1)),
+          ratingCount: total,
+          bestRating: 5,
+          worstRating: 1
+        };
+      }
+    }
+
+    return patched;
+  });
 }
