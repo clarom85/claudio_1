@@ -12,8 +12,13 @@
  *   node packages/vps/src/generate-data-pages.js --all
  *   node packages/vps/src/generate-data-pages.js --site-id 5
  *
- * Requires: FRED_API_KEY in .env (free — fred.stlouisfed.org)
- * Cache: /tmp/content-network-fred-{seriesType}.json (7-day TTL)
+ * Data sources (all free, API keys where required):
+ *   FRED_API_KEY           — fred.stlouisfed.org (HPI, PCPI, UR)
+ *   EIA_API_KEY            — eia.gov/opendata (electricity rates)
+ *   COLLEGE_SCORECARD_API_KEY — api.data.gov (college earnings)
+ *   NPS_API_KEY            — developer.nps.gov (park counts)
+ *   CDC BRFSS              — data.cdc.gov (no key required)
+ * Cache: /tmp/content-network-data-{key}.json (7-day TTL)
  */
 import 'dotenv/config';
 import { writeFileSync, mkdirSync, readFileSync, existsSync, statSync } from 'fs';
@@ -136,7 +141,27 @@ h2.data-section-title{font-size:20px;font-weight:700;margin:36px 0 16px;padding-
 </html>`;
 }
 
-// ── FRED fetcher with file cache ─────────────────────────────────────────────
+// ── Generic file cache helper ─────────────────────────────────────────────────
+
+function readCache(key) {
+  const f = join(CACHE_DIR, `content-network-data-${key}.json`);
+  if (!existsSync(f)) return null;
+  try {
+    if (Date.now() - statSync(f).mtimeMs < CACHE_TTL) {
+      const d = JSON.parse(readFileSync(f, 'utf-8'));
+      if (Array.isArray(d) && d.length > 0) return d;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function writeCache(key, data) {
+  try {
+    writeFileSync(join(CACHE_DIR, `content-network-data-${key}.json`), JSON.stringify(data, null, 2), 'utf-8');
+  } catch (_) {}
+}
+
+// ── FRED fetcher ──────────────────────────────────────────────────────────────
 
 async function fetchFredObservation(seriesId, apiKey) {
   const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=1`;
@@ -148,41 +173,24 @@ async function fetchFredObservation(seriesId, apiKey) {
   return { value: parseFloat(obs.value), date: obs.date };
 }
 
-/**
- * Fetch data for all 50 states for a given series type.
- * Results are cached in a JSON file for CACHE_TTL (7 days).
- * Returns array of { abbrev, name, value, date } sorted by value desc.
- * Returns null if no FRED API key configured.
- */
-async function fetchAllStateData(seriesType) {
+async function fetchFredStateData(seriesType) {
   const apiKey = process.env.FRED_API_KEY;
   if (!apiKey) return null;
 
-  const cacheFile = join(CACHE_DIR, `content-network-fred-${seriesType}.json`);
-
-  // Check file cache
-  if (existsSync(cacheFile)) {
-    try {
-      const ageSecs = (Date.now() - statSync(cacheFile).mtimeMs);
-      if (ageSecs < CACHE_TTL) {
-        const cached = JSON.parse(readFileSync(cacheFile, 'utf-8'));
-        if (Array.isArray(cached) && cached.length > 0) return cached;
-      }
-    } catch (_) { /* stale/corrupt cache — refetch */ }
-  }
+  const cached = readCache(`fred-${seriesType}`);
+  if (cached) return cached;
 
   const seriesDef = DATA_SERIES[seriesType];
   const results   = [];
-  const BATCH     = 5; // concurrent FRED requests
+  const BATCH     = 5;
 
   console.log(`    Fetching FRED ${seriesType} for ${US_STATES.length} states...`);
 
   for (let i = 0; i < US_STATES.length; i += BATCH) {
-    const batch = US_STATES.slice(i, i + BATCH);
+    const batch   = US_STATES.slice(i, i + BATCH);
     const settled = await Promise.allSettled(
       batch.map(async ([abbrev, name]) => {
-        const seriesId = seriesDef.buildId(abbrev);
-        const obs = await fetchFredObservation(seriesId, apiKey);
+        const obs = await fetchFredObservation(seriesDef.buildId(abbrev), apiKey);
         if (!obs) return null;
         return { abbrev, name, value: obs.value, date: obs.date };
       })
@@ -190,23 +198,227 @@ async function fetchAllStateData(seriesType) {
     for (const r of settled) {
       if (r.status === 'fulfilled' && r.value) results.push(r.value);
     }
-    // Small pause between batches to respect FRED rate limits
-    if (i + BATCH < US_STATES.length) {
-      await new Promise(r => setTimeout(r, 300));
-    }
+    if (i + BATCH < US_STATES.length) await new Promise(r => setTimeout(r, 300));
   }
 
   if (!results.length) return null;
-
-  // Sort descending by value
   results.sort((a, b) => b.value - a.value);
-
-  // Save to file cache
-  try {
-    writeFileSync(cacheFile, JSON.stringify(results, null, 2), 'utf-8');
-  } catch (_) { /* non-fatal */ }
-
+  writeCache(`fred-${seriesType}`, results);
   return results;
+}
+
+// ── EIA fetcher (electricity rates by state) ──────────────────────────────────
+
+async function fetchEiaStateData() {
+  const apiKey = process.env.EIA_API_KEY;
+  if (!apiKey) return null;
+
+  const cached = readCache('eia-elec');
+  if (cached) return cached;
+
+  console.log('    Fetching EIA residential electricity prices for all states...');
+  // EIA v2 API — residential retail electricity price, most recent month, all states
+  const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${apiKey}&frequency=monthly&data[0]=price&facets[sectorName][]=residential&sort[0][column]=period&sort[0][direction]=desc&length=70&offset=0`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const rows = json?.response?.data || [];
+
+  // Keep most recent entry per state (rows already sorted desc by period)
+  const seen    = new Set();
+  const results = [];
+  for (const row of rows) {
+    const id = row.stateid;
+    if (!id || id.length !== 2 || id === 'US' || seen.has(id)) continue;
+    const val = parseFloat(row.price);
+    if (isNaN(val) || val <= 0) continue;
+    seen.add(id);
+    // Match full state name from US_STATES list
+    const entry = US_STATES.find(([abbrev]) => abbrev === id);
+    results.push({
+      abbrev: id,
+      name: entry ? entry[1] : (row.stateDescription || id),
+      value: val,
+      date: row.period,
+    });
+  }
+
+  if (results.length < 10) return null;
+  results.sort((a, b) => b.value - a.value);
+  writeCache('eia-elec', results);
+  return results;
+}
+
+// ── CDC BRFSS fetcher (no API key required) ───────────────────────────────────
+
+async function fetchCdcStateData(questionText, cacheKey) {
+  const cached = readCache(`cdc-${cacheKey}`);
+  if (cached) return cached;
+
+  console.log(`    Fetching CDC BRFSS data (${cacheKey})...`);
+  const params = new URLSearchParams({
+    question: questionText,
+    stratificationcategory1: 'Total',
+    '$limit': '300',
+    '$order': 'yearstart DESC',
+  });
+  const url = `https://data.cdc.gov/resource/hn4x-zwk7.json?${params}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  if (!Array.isArray(rows)) return null;
+
+  // Most recent year per state
+  const byState = new Map();
+  for (const row of rows) {
+    const abbrev = row.locationabbr;
+    if (!abbrev || abbrev.length !== 2 || abbrev === 'US') continue;
+    const val = parseFloat(row.data_value);
+    if (isNaN(val)) continue;
+    const year = parseInt(row.yearstart) || 0;
+    if (!byState.has(abbrev) || year > byState.get(abbrev)._year) {
+      byState.set(abbrev, { abbrev, name: row.locationdesc, value: val, date: String(row.yearstart), _year: year });
+    }
+  }
+
+  const results = [...byState.values()].map(({ _year, ...r }) => r);
+  if (results.length < 10) return null;
+  results.sort((a, b) => b.value - a.value);
+  writeCache(`cdc-${cacheKey}`, results);
+  return results;
+}
+
+// ── College Scorecard fetcher (earnings by state) ────────────────────────────
+
+async function fetchScorecardEarningsData() {
+  const apiKey = process.env.COLLEGE_SCORECARD_API_KEY;
+  if (!apiKey) return null;
+
+  const cached = readCache('scorecard-earn');
+  if (cached) return cached;
+
+  console.log('    Fetching College Scorecard earnings by state...');
+  // Fetch median earnings (4yr after entry) grouped by state, averaging across institutions
+  // We page through institutions with school.main_campus=1, fields=school.state + latest.earnings
+  const stateAccum = new Map(); // abbrev → { total, count }
+
+  let page = 0;
+  const PER_PAGE = 100;
+
+  while (true) {
+    const params = new URLSearchParams({
+      'api_key': apiKey,
+      'school.main_campus': '1',
+      'fields': 'school.state,latest.earnings.4_yrs_after_entry.median',
+      'per_page': String(PER_PAGE),
+      'page': String(page),
+    });
+    const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?${params}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) break;
+    const json = await res.json();
+    const schools = json?.results || [];
+    if (!schools.length) break;
+
+    for (const s of schools) {
+      const abbrev   = s['school.state'];
+      const earnings = s['latest.earnings.4_yrs_after_entry.median'];
+      if (!abbrev || !earnings || earnings <= 0) continue;
+      if (!stateAccum.has(abbrev)) stateAccum.set(abbrev, { total: 0, count: 0 });
+      const acc = stateAccum.get(abbrev);
+      acc.total += earnings;
+      acc.count++;
+    }
+
+    if (schools.length < PER_PAGE) break;
+    page++;
+    if (page > 60) break; // safety cap ~6000 institutions
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  const results = [];
+  for (const [abbrev, acc] of stateAccum) {
+    if (acc.count < 2) continue; // skip states with too few data points
+    const entry = US_STATES.find(([a]) => a === abbrev);
+    if (!entry) continue;
+    results.push({
+      abbrev,
+      name: entry[1],
+      value: Math.round(acc.total / acc.count),
+      date: new Date().getFullYear().toString(),
+    });
+  }
+
+  if (results.length < 10) return null;
+  results.sort((a, b) => b.value - a.value);
+  writeCache('scorecard-earn', results);
+  return results;
+}
+
+// ── NPS fetcher (parks count by state) ───────────────────────────────────────
+
+async function fetchNpsStateData() {
+  const apiKey = process.env.NPS_API_KEY;
+  if (!apiKey) return null;
+
+  const cached = readCache('nps-parks');
+  if (cached) return cached;
+
+  console.log('    Fetching NPS parks by state...');
+  const url = `https://developer.nps.gov/api/v1/parks?limit=600&api_key=${apiKey}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const parks = json?.data || [];
+
+  // Count parks per state
+  const byState = new Map();
+  for (const [abbrev, name] of US_STATES) {
+    byState.set(abbrev, { abbrev, name, value: 0 });
+  }
+  for (const park of parks) {
+    const states = (park.states || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+    for (const abbrev of states) {
+      if (byState.has(abbrev)) byState.get(abbrev).value++;
+    }
+  }
+
+  const dateStr  = new Date().getFullYear().toString();
+  const results  = [...byState.values()]
+    .filter(r => r.value > 0)
+    .map(r => ({ ...r, date: dateStr }))
+    .sort((a, b) => b.value - a.value);
+
+  if (results.length < 10) return null;
+  writeCache('nps-parks', results);
+  return results;
+}
+
+// ── Main router ───────────────────────────────────────────────────────────────
+
+/**
+ * Dispatches to the correct data source based on seriesType.
+ * Returns array of { abbrev, name, value, date } sorted desc, or null on failure.
+ */
+async function fetchAllStateData(seriesType) {
+  switch (seriesType) {
+    case 'HPI':
+    case 'PCPI':
+    case 'UR':
+      return fetchFredStateData(seriesType);
+    case 'EIA_ELEC':
+      return fetchEiaStateData();
+    case 'CDC_OBESITY':
+      return fetchCdcStateData('Percent of adults aged 18 years and older who have obesity', 'obesity');
+    case 'CDC_VEGGIES':
+      return fetchCdcStateData('Percent of adults who report consuming vegetables less than one time daily', 'veggies');
+    case 'SCORECARD_EARN':
+      return fetchScorecardEarningsData();
+    case 'NPS_PARKS':
+      return fetchNpsStateData();
+    default:
+      return null;
+  }
 }
 
 // ── HTML builders ────────────────────────────────────────────────────────────

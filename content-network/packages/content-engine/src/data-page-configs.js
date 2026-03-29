@@ -30,6 +30,7 @@ export const US_STATES = [
 ];
 
 export const DATA_SERIES = {
+  // ── FRED series (state prefix + suffix) ──────────────────────────────────
   HPI: {
     buildId: state => `${state}STHPI`,
     label: 'House Price Index',
@@ -58,6 +59,59 @@ export const DATA_SERIES = {
     sourceUrl: 'https://fred.stlouisfed.org',
     notes: 'Monthly, seasonally adjusted. Percentage of labor force.',
     formatValue: v => `${v.toFixed(1)}%`,
+    rawFormat: v => v,
+  },
+
+  // ── EIA (Energy Information Administration) ───────────────────────────────
+  EIA_ELEC: {
+    label: 'Avg Residential Electricity Price',
+    unit: '¢/kWh',
+    source: 'U.S. Energy Information Administration (EIA)',
+    sourceUrl: 'https://www.eia.gov/electricity/state/',
+    notes: 'Monthly retail electricity price for residential customers (cents per kWh). Higher price = stronger solar ROI.',
+    formatValue: v => `${v.toFixed(2)}¢/kWh`,
+    rawFormat: v => v,
+  },
+
+  // ── CDC BRFSS (no API key required) ──────────────────────────────────────
+  CDC_OBESITY: {
+    label: 'Adult Obesity Rate',
+    unit: '%',
+    source: 'CDC Behavioral Risk Factor Surveillance System (BRFSS)',
+    sourceUrl: 'https://www.cdc.gov/brfss/',
+    notes: 'Percent of adults aged 18+ with BMI ≥ 30. Annual telephone survey of 400,000+ US adults.',
+    formatValue: v => `${v.toFixed(1)}%`,
+    rawFormat: v => v,
+  },
+  CDC_VEGGIES: {
+    label: 'Adults Not Meeting Vegetable Intake Guidelines',
+    unit: '%',
+    source: 'CDC Behavioral Risk Factor Surveillance System (BRFSS)',
+    sourceUrl: 'https://www.cdc.gov/brfss/',
+    notes: 'Percent of adults consuming vegetables less than once daily. Annual survey.',
+    formatValue: v => `${v.toFixed(1)}%`,
+    rawFormat: v => v,
+  },
+
+  // ── College Scorecard (api.data.gov, key required) ────────────────────────
+  SCORECARD_EARN: {
+    label: 'Median Earnings 4 Years After Graduation',
+    unit: '$',
+    source: 'U.S. Department of Education College Scorecard',
+    sourceUrl: 'https://collegescorecard.ed.gov',
+    notes: 'Median earnings of former students working and not enrolled 4 years after graduation. State average across all Title IV institutions.',
+    formatValue: v => `$${Math.round(v).toLocaleString()}`,
+    rawFormat: v => Math.round(v),
+  },
+
+  // ── NPS (National Park Service, key required) ────────────────────────────
+  NPS_PARKS: {
+    label: 'NPS-Managed Sites',
+    unit: '',
+    source: 'National Park Service (NPS)',
+    sourceUrl: 'https://www.nps.gov',
+    notes: 'Total number of National Park Service-managed parks, monuments, recreation areas, and historic sites per state.',
+    formatValue: v => v.toString(),
     rawFormat: v => v,
   },
 };
@@ -187,6 +241,69 @@ export const DATA_PAGE_CONFIGS = {
     tableIntro: 'Startup costs — commercial rent, employee wages, professional services — all correlate with state per capita income. Understanding local income levels helps entrepreneurs forecast operating costs before choosing where to launch.',
     methodology: 'Per Capita Personal Income from the Bureau of Economic Analysis (BEA). The Kauffman Foundation\'s State of Entrepreneurship reports confirm that business formation costs, including commercial rents and minimum wage floors, are directly tied to regional income levels. This data helps founders make data-informed decisions about business location.',
     citationText: 'Business startup cost index by state',
+  },
+
+  // ── EIA-based ─────────────────────────────────────────────────────────────
+
+  'solar-energy': {
+    slug: 'electricity-rates-by-state',
+    pageTitle: `Residential Electricity Rates by State (${new Date().getFullYear()})`,
+    h1: 'Average Residential Electricity Rates by State',
+    metaDescription: `EIA monthly residential electricity prices for all 50 US states. Higher electricity rates mean faster solar panel payback and better ROI.`,
+    seriesType: 'EIA_ELEC',
+    tableIntro: 'Solar panel ROI depends directly on your local electricity rate — the higher you pay per kWh, the faster your system pays for itself. This EIA data shows which states offer the strongest financial case for going solar.',
+    methodology: 'Residential electricity price data from the U.S. Energy Information Administration (EIA) monthly Electric Power Monthly report. Values represent the average retail price paid by residential customers in cents per kilowatt-hour (¢/kWh), inclusive of all rates, riders, and taxes. States with higher electricity rates typically see solar payback periods 30-50% shorter than the national average.',
+    citationText: 'Residential electricity rate data by state',
+  },
+
+  // ── CDC BRFSS-based ───────────────────────────────────────────────────────
+
+  'weight-loss-fitness': {
+    slug: 'obesity-rates-by-state',
+    pageTitle: `Adult Obesity Rates by State (${new Date().getFullYear()})`,
+    h1: 'Adult Obesity Rate by State — CDC BRFSS Data',
+    metaDescription: `CDC BRFSS data showing adult obesity rates across all 50 US states. See which states have the highest and lowest rates of obesity.`,
+    seriesType: 'CDC_OBESITY',
+    tableIntro: 'Adult obesity rates vary dramatically by state — from under 25% in the lowest states to over 40% in the highest. This CDC surveillance data identifies where weight management resources are most needed and helps contextualize local fitness market demand.',
+    methodology: 'Data from the CDC Behavioral Risk Factor Surveillance System (BRFSS), an annual telephone survey of more than 400,000 US adults. Obesity is defined as a Body Mass Index (BMI) of 30.0 or higher based on self-reported height and weight. The BRFSS is the world\'s largest continuously conducted health survey system and is the gold standard for state-level health behavioral data.',
+    citationText: 'Adult obesity rate data by state from CDC BRFSS',
+  },
+
+  'diet-specific-recipes': {
+    slug: 'vegetable-consumption-by-state',
+    pageTitle: `Vegetable Consumption Rates by State (${new Date().getFullYear()})`,
+    h1: 'Adults Not Meeting Vegetable Intake Guidelines — by State',
+    metaDescription: `CDC BRFSS data showing the percentage of adults consuming vegetables less than once daily across all 50 US states.`,
+    seriesType: 'CDC_VEGGIES',
+    tableIntro: 'The percentage of adults who fail to eat vegetables even once per day varies significantly by state — a direct indicator of where dietary education and accessible healthy recipes are most needed.',
+    methodology: 'Data from the CDC Behavioral Risk Factor Surveillance System (BRFSS). Respondents were asked how many times per day, week, or month they ate vegetables (not counting salads). Adults consuming vegetables less than once daily are considered below minimum dietary guidelines. The CDC defines the recommended intake as at least 2.5 cups of vegetables daily for adults.',
+    citationText: 'Vegetable consumption compliance data by state from CDC BRFSS',
+  },
+
+  // ── College Scorecard-based ───────────────────────────────────────────────
+
+  'online-education': {
+    slug: 'college-earnings-by-state',
+    pageTitle: `College Graduate Earnings by State (${new Date().getFullYear()})`,
+    h1: 'Median Post-College Earnings by State',
+    metaDescription: `US Department of Education College Scorecard data — median earnings of graduates 4 years after completing their degree, by state. Compare education ROI across all 50 states.`,
+    seriesType: 'SCORECARD_EARN',
+    tableIntro: 'The financial return on a college degree varies significantly by state. This Department of Education data shows median earnings 4 years after graduation, helping prospective students evaluate where online and in-person degrees deliver the strongest ROI.',
+    methodology: 'Data from the US Department of Education College Scorecard (collegescorecard.ed.gov). The earnings metric represents the median annual earnings of former students who received federal financial aid and were working (not enrolled) approximately 4 years after completing their degree program. Values are aggregated across all Title IV-eligible institutions within each state. Data is based on federal tax records matched to student enrollment records.',
+    citationText: 'Post-college earnings data by state from US Department of Education',
+  },
+
+  // ── NPS-based ─────────────────────────────────────────────────────────────
+
+  'small-town-tourism': {
+    slug: 'national-parks-by-state',
+    pageTitle: `National Parks & Recreation Sites by State (${new Date().getFullYear()})`,
+    h1: 'National Park Service Sites by State',
+    metaDescription: `Complete count of NPS-managed national parks, monuments, recreation areas, and historic sites for every US state. Source: National Park Service.`,
+    seriesType: 'NPS_PARKS',
+    tableIntro: 'States with more NPS-managed sites offer greater variety for small-town road trips and nature tourism. From national parks to historic battlefields to scenic rivers, this data maps where America\'s public outdoor recreation is concentrated.',
+    methodology: 'Data from the National Park Service (NPS) official parks API. Counts include all NPS-managed designations: National Parks, National Monuments, National Recreation Areas, National Historic Sites, National Seashores, National Lakeshores, National Parkways, National Trails, and National Preserves. A site that spans multiple states is counted for each state it covers.',
+    citationText: 'NPS park and recreation site count by state',
   },
 
   // ── UR-based ──────────────────────────────────────────────────────────────
