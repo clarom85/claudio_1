@@ -162,6 +162,9 @@ img{max-width:100%;height:auto;display:block}
   .art-body{padding:16px}
   .trust-box{padding:14px 16px}
   .trust-box-hdr{flex-direction:column;align-items:flex-start}
+  .art-section h2,.article-section h2{margin-top:16px}
+  .faq-wrap,.article-faq{margin-top:24px;padding-top:16px}
+  .key-takeaways{padding:14px 16px}
 }
 /* Article hero + cost table */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0;border-radius:var(--r)}
@@ -249,6 +252,8 @@ ${ezoicId ? '' : COOKIE_BANNER_JS}
 ${EMAIL_FORM_JS}
 ${NATIVE_ADS_JS}
 document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
+// Collapse unfilled ad slots — iOS Safari <16 doesn't support :has()
+(function(){var c=function(el){el.style.cssText='min-height:0!important;margin:0!important;padding:0!important;border:none!important;background:none!important;overflow:hidden';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},4000);})();
 // Trending ticker
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{
   const el=document.getElementById('ticker-inner');

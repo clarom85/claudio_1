@@ -27,7 +27,7 @@ const GAP_MAX = 180;
  * I siti maturi hanno deadDayProb più bassa perché pubblicano regolarmente.
  */
 const RAMP = [
-  { maxDays:  14, minPerDay:  3, maxPerDay:  5, deadDayProb: 0.05, label: 'Warm-up (week 1-2)' },
+  { maxDays:  14, minPerDay:  3, maxPerDay:  5, deadDayProb: 0.02, label: 'Warm-up (week 1-2)' },
   { maxDays:  30, minPerDay:  5, maxPerDay:  8, deadDayProb: 0.15, label: 'Early growth (month 1)' },
   { maxDays:  60, minPerDay:  7, maxPerDay: 11, deadDayProb: 0.25, label: 'Growth (month 2)' },
   { maxDays:  90, minPerDay:  9, maxPerDay: 13, deadDayProb: 0.20, label: 'Established (month 3)' },
