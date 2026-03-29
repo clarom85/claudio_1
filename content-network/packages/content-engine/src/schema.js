@@ -52,6 +52,10 @@ export function buildArticleSchema({ title, description, slug, author, siteName,
       '@id': `${siteUrl}/#website`,
       name: siteName,
       url: siteUrl
+    },
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['.article-intro', '.key-takeaways']
     }
   };
 
