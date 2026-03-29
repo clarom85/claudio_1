@@ -32,7 +32,7 @@ async function run() {
         AND a.published_at >= ${since.toISOString()}
       ORDER BY s.domain, a.published_at DESC
     `,
-    // Articoli in coda per oggi (non ancora pubblicati)
+    // Articoli in coda per oggi (non ancora pubblicati) — solo siti live
     sql`
       SELECT pq.scheduled_for, pq.status, a.title, a.word_count, s.domain, s.id as site_id
       FROM publish_queue pq
@@ -41,6 +41,7 @@ async function run() {
       WHERE pq.scheduled_for >= ${now.toISOString()}
         AND pq.scheduled_for <= ${endOfDayEst.toISOString()}
         AND pq.status IN ('pending', 'scheduled')
+        AND s.status = 'live'
       ORDER BY s.domain, pq.scheduled_for
     `,
     // Info siti attivi

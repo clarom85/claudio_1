@@ -6,6 +6,7 @@ import 'dotenv/config';
 import { generateArticle } from './generator.js';
 import { injectInternalLinks } from './link-injector.js';
 import { getPublishTime, logScheduleInfo } from './publishing-schedule.js';
+import { topicFingerprint } from '../../keyword-engine/src/filter.js';
 import {
   getSitesByStatus, getUnusedKeywords, markKeywordUsed,
   insertArticle, enqueueArticle, getNicheBySlug, sql
@@ -55,13 +56,21 @@ async function run() {
     process.exit(1);
   }
 
-  // Carica slug e titoli già esistenti per il sito — usati per dedup
+  // Carica slug, titoli e keyword sorgente già esistenti — usati per dedup
   // Escludi articoli rimossi (status='removed') per non bloccare keyword legittime
   const existingArticles = await sql`
-    SELECT slug, title FROM articles WHERE site_id = ${siteId} AND status != 'removed'
+    SELECT a.slug, a.title, k.keyword AS src_kw
+    FROM articles a
+    LEFT JOIN keywords k ON a.keyword_id = k.id
+    WHERE a.site_id = ${siteId} AND a.status != 'removed'
   `;
   const existingSlugs = new Set(existingArticles.map(a => a.slug));
   const existingTitles = existingArticles.map(a => a.title.toLowerCase());
+  // Fingerprint delle keyword sorgente già pubblicate — per semantic dedup
+  const existingSrcFingerprints = existingArticles
+    .filter(a => a.src_kw)
+    .map(a => topicFingerprint(a.src_kw))
+    .filter(fp => fp.length > 0);
 
   let success = 0;
   let failed = 0;
@@ -77,7 +86,7 @@ async function run() {
       process.stdout.write(`  [${success + failed + skipped + 1}/${keywords.length}] "${kw.keyword}" ... `);
 
       // Pre-generation anti-cannibalization check (zero API cost)
-      const canniCheck = checkKeywordCannibalization(kw.keyword, existingSlugs, existingTitles);
+      const canniCheck = checkKeywordCannibalization(kw.keyword, existingSlugs, existingTitles, existingSrcFingerprints);
       if (canniCheck.skip) {
         await markKeywordUsed(kw.id);
         skipped++;
@@ -267,7 +276,7 @@ function stripGeoFromKeyword(kw) {
  *
  * @returns {{ skip: boolean, reason?: string }}
  */
-function checkKeywordCannibalization(keyword, existingSlugs, existingTitles) {
+function checkKeywordCannibalization(keyword, existingSlugs, existingTitles, existingSrcFingerprints = []) {
   const kw = keyword.toLowerCase();
 
   // Level 1: predicted slug collision (free, no API)
@@ -280,6 +289,34 @@ function checkKeywordCannibalization(keyword, existingSlugs, existingTitles) {
   const kwDup = existingTitles.find(t => jaccardSimilarity(kw, t) >= 0.62);
   if (kwDup) {
     return { skip: true, reason: `keyword too similar to existing title: "${kwDup}"` };
+  }
+
+  // Level 2.5: topic fingerprint check against source keywords of published articles.
+  // Confronta la keyword stripped (senza stop words, con sinonimi) contro le keyword sorgente
+  // degli articoli già pubblicati. Cattura duplicati semantici che Jaccard non rileva.
+  // Es: "hvac repair cost calculator" fp=[calcul,fix,hvac] ⊆ [calcul,fix,hvac] di articolo esistente.
+  if (existingSrcFingerprints.length > 0) {
+    const kwFp = topicFingerprint(kw);
+    if (kwFp.length > 0) {
+      const kwTokens = new Set(kwFp.split(' ').filter(Boolean));
+      for (const exFp of existingSrcFingerprints) {
+        if (!exFp) continue;
+        const exTokens = new Set(exFp.split(' ').filter(Boolean));
+        if (exTokens.size === 0 || kwTokens.size === 0) continue;
+        // Jaccard sui fingerprint (più semantico del Jaccard sul testo grezzo)
+        const intersection = [...kwTokens].filter(t => exTokens.has(t)).length;
+        const union = new Set([...kwTokens, ...exTokens]).size;
+        const fpJaccard = intersection / union;
+        if (fpJaccard >= 0.70) {
+          return { skip: true, reason: `topic fingerprint overlap (${(fpJaccard * 100).toFixed(0)}%) with published keyword: "${exFp}"` };
+        }
+        // Subset check: se i token della keyword nuova sono tutti contenuti in quelli esistenti
+        // (la nuova è una specializzazione della già pubblicata) → skip
+        if (kwTokens.size >= 2 && [...kwTokens].every(t => exTokens.has(t))) {
+          return { skip: true, reason: `keyword fingerprint subset of published: "${exFp}"` };
+        }
+      }
+    }
   }
 
   // Level 3: geo-variant cap — max 8 geo-variants of same core topic

@@ -138,15 +138,55 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 // Patterns that indicate off-topic, non-US, or non-real-world keywords
 const OFF_TOPIC_PATTERNS = [
-  /\bbloxburg\b/i,          // Roblox game
-  /\broblox\b/i,            // game
-  /\bminecraft\b/i,         // game
-  /\bnetherlands\b/i,       // non-US geo
-  /\buk prices?\b/i,        // non-US market
-  /\bpound sterling\b/i,    // non-USD currency
-  /\baustralia(n)?\b/i,     // non-US geo (unless keyword is explicitly AU)
-  /\bcanada(ian)?\b/i,      // non-US geo (unless keyword is explicitly CA)
-  /[^\x00-\x7F]/,           // non-ASCII / non-English characters
+  // Games
+  /\bbloxburg\b/i,
+  /\broblox\b/i,
+  /\bminecraft\b/i,
+  /\bfortnite\b/i,
+  // Non-US geos (countries)
+  /\bnetherlands\b/i,
+  /\baustralia(n)?\b/i,
+  /\bcanada(ian)?\b/i,
+  /\bgerman(y)?\b/i,
+  /\bfrance\b/i,
+  /\bfrench\b/i,
+  /\bitaly\b/i,
+  /\bitalian\b/i,
+  /\bjapan(ese)?\b/i,
+  /\bindia(n)?\b/i,
+  /\bpakistan(i)?\b/i,
+  /\bkenya(n)?\b/i,
+  /\bnigeria(n)?\b/i,
+  /\bchina\b/i,
+  /\bchinese\b/i,
+  /\bbrazil(ian)?\b/i,
+  /\bphilippines?\b/i,
+  /\bsouth africa(n)?\b/i,
+  // Non-US market signals
+  /\buk prices?\b/i,
+  /\bpound sterling\b/i,
+  /\bgbp\b/i,
+  /\beur(os?)?\b/i,
+  // Car brands (irrelevant to home improvement / insurance niches)
+  // Remove these patterns if an automotive niche is ever added
+  /\bbmw\b/i,
+  /\bmercedes\b/i,
+  /\bvolkswagen\b/i,
+  /\btoyota\b/i,
+  /\bhonda\b/i,
+  /\bnissan\b/i,
+  /\bhyundai\b/i,
+  /\bporsche\b/i,
+  /\blexus\b/i,
+  /\bsubaru\b/i,
+  /\bmazda\b/i,
+  /\bkia\b/i,
+  /\bjeep\b/i,
+  /\bdodge\b/i,
+  /\bchevrolet\b/i,
+  /\bchevy\b/i,
+  // Non-ASCII / non-English characters
+  /[^\x00-\x7F]/,
 ];
 
 export function filterKeywords(keywords) {
