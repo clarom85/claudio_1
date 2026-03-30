@@ -1198,6 +1198,45 @@ async function autoTriggerRegen(site) {
     warn(`[${site.domain}] orphan-tag-fix failed: ${e.message}`);
   }
 
+  // Broken links from nginx 301 redirects — auto-fix href references in all article HTML.
+  // Reads /etc/nginx/sites-enabled/<domain> to build redirectMap, then replaces stale hrefs.
+  try {
+    const nginxConf = `/etc/nginx/sites-enabled/${site.domain}`;
+    if (existsSync(nginxConf)) {
+      const confText = readFileSync(nginxConf, 'utf-8');
+      // Parse: location = /old-slug/ { return 301 /new-slug/; }
+      const redirectMap = new Map();
+      for (const m of confText.matchAll(/location\s*=\s*\/([a-z0-9][a-z0-9-]+)\/\s*\{\s*return\s+301\s+\/([a-z0-9][a-z0-9-]+)\/\s*;\s*\}/g)) {
+        redirectMap.set(m[1], m[2]);
+      }
+
+      if (redirectMap.size > 0) {
+        const articleDirsAll = readdirSync(siteDir).filter(d => {
+          try { return statSync(join(siteDir, d)).isDirectory() && existsSync(join(siteDir, d, 'index.html')); } catch { return false; }
+        });
+
+        let fixedFiles = 0, fixedLinks = 0;
+        for (const dir of articleDirsAll) {
+          const htmlPath = join(siteDir, dir, 'index.html');
+          let html = readFileSync(htmlPath, 'utf-8');
+          let changed = false;
+          for (const [oldSlug, newSlug] of redirectMap) {
+            const re = new RegExp(`href="/${oldSlug}/?"`, 'g');
+            const replaced = html.replace(re, `href="/${newSlug}/"`);
+            if (replaced !== html) { html = replaced; changed = true; fixedLinks++; }
+          }
+          if (changed) { writeFileSync(htmlPath, html, 'utf-8'); fixedFiles++; }
+        }
+
+        if (fixedLinks > 0) {
+          fix(`[${site.domain}] Replaced ${fixedLinks} redirect-broken links in ${fixedFiles} files (${redirectMap.size} redirect rules)`);
+        }
+      }
+    }
+  } catch (e) {
+    warn(`[${site.domain}] redirect-link-fix failed: ${e.message}`);
+  }
+
   // Se nessuna regen necessaria → log OK
   if (!needsCSS && !needsHomepage && !needsStaticPages) {
     log(`  [regen] ${site.domain}: No structural regen needed`);
