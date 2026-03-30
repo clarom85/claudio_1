@@ -880,7 +880,7 @@ async function checkMonetization(site) {
 
   // ── b. MGID ─────────────────────────────────────────────────────────────
   // MGID widgets are in-article only — check a sample article, not homepage
-  const mgidSiteId = process.env.MGID_SITE_ID || site.mgid_site_id;
+  const mgidSiteId = site.mgid_site_id; // only check sites with MGID configured in DB
   if (mgidSiteId) {
     const sampleArticleDirs = readdirSync(siteDir).filter(d => {
       const p = join(siteDir, d);
