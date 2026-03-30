@@ -292,6 +292,7 @@ async function writeArticlePage(article, siteConfig, template) {
     categorySlug: cat.slug,
     date: article.published_at || article.created_at,
     image: article.image || null,
+    tags: article.tags || [],
   };
 
   const html = renderArticlePage(articleData, siteConfig, related.map(r => ({
@@ -1028,6 +1029,7 @@ async function writeRefreshedArticlePage(article, rewritten, site, template) {
     category: cat.name,
     categorySlug: cat.slug,
     date: new Date().toISOString(),
+    tags: article.tags || [],
   };
 
   const html = renderArticlePage(articleData, siteConfig, related.map(r => ({ slug: r.slug, title: r.title })));

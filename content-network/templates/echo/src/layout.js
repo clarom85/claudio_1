@@ -222,6 +222,8 @@ export function renderFooter(site){return`
 
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
+  const slugifyTag=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const tagsHtml=(article.tags||[]).length?`<div class="article-tags"><span class="tags-label">Topics:</span>${(article.tags||[]).map(t=>`<a href="/tag/${slugifyTag(t)}" class="tag">${t}</a>`).join('')}</div>`:'';
   const trustBlockHtml=buildTrustBlock(article,site);
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="${r.image||'/images/'+r.slug+'.jpg'}" alt="${esc(r.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">
@@ -234,7 +236,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
     </header>
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:''}
     <div class="art-layout">
-      <div class="art-body">${trustBlockHtml}${injectMgidInArticle(article.content,site.mgidInArticleId)}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
+      <div class="art-body">${trustBlockHtml}${injectMgidInArticle(article.content,site.mgidInArticleId)}${tagsHtml}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>
         ${adUnit('sidebar')}
         ${relatedHtml?`<div class="sidebar-box"><h3>You May Also Like</h3>${relatedHtml}</div>`:''}

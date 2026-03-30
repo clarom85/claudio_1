@@ -266,10 +266,6 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       </div>
     </div>`).join('');
 
-  const tagsHTML = tags.map(tag =>
-    `<a href="/tag/${slugify(tag)}" class="tag">${escapeHtml(tag)}</a>`
-  ).join('');
-
   return {
     html: `
 <article class="article" itemscope itemtype="https://schema.org/Article">
@@ -462,11 +458,6 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         w.querySelector('.helpful-thanks').style.display='block';
       }
       </script>
-
-      <div class="article-tags">
-        <span class="tags-label">Topics:</span>
-        ${tagsHTML}
-      </div>
 
       <!-- Last updated + editorial note -->
       <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">

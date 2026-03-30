@@ -130,11 +130,13 @@ async function run() {
         template: site.template,
         rating
       });
+      const strippedContent = (a.content || '').replace(/<div class="article-tags">[\s\S]*?<\/div>/, '');
       const articleData = {
         slug: a.slug, title: a.title, metaDescription: a.meta_description,
         excerpt: (a.meta_description || '').slice(0, 120) + '...',
-        content: a.content, schemas: patchedSchemas,
+        content: strippedContent, schemas: patchedSchemas,
         category: cat.name, categorySlug: cat.slug,
+        tags: a.tags || [],
         date: a.published_at || a.created_at,
         updatedAt: a.updated_at,
         image: a.image || null

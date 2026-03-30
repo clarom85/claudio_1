@@ -277,6 +277,8 @@ export function renderArticlePage(article, site, relatedArticles = []) {
       <a class="related-title" href="/${r.slug}/">${esc(r.title)}</a>
     </div>`).join('');
 
+  const slugifyTag=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const tagsHtml=(article.tags||[]).length?`<div class="article-tags"><span class="tags-label">Topics:</span>${(article.tags||[]).map(t=>`<a href="/tag/${slugifyTag(t)}" class="tag">${t}</a>`).join('')}</div>`:'';
   const trustBlockHtml = buildTrustBlock(article, site);
   const calcCtaHtml = site.toolSlug ? `<div style="background:linear-gradient(135deg,var(--navy),#0d0d1f);padding:24px;margin:32px 0 0;border-radius:var(--r);text-align:center"><strong style="color:#fff;font-size:16px;display:block;margin-bottom:8px">Free Rate Calculator</strong><p style="color:rgba(255,255,255,.85);font-size:14px;margin:0 0 16px;line-height:1.5">Get your personalized estimate in 60 seconds.</p><a href="/tools/${site.toolSlug}/" style="display:inline-block;background:var(--red);color:#fff;padding:12px 28px;border-radius:var(--r);font-weight:700;font-size:15px;text-decoration:none">Calculate Now →</a></div>` : '';
 
@@ -305,6 +307,7 @@ ${renderHeader(site)}
     <div class="art-layout">
       <div class="art-body">
         ${injectCalcCtaMidArticle(injectMgidInArticle(content, site.mgidInArticleId), calcCtaHtml)}
+        ${tagsHtml}
         ${site.ymyl ? `<div style="margin:36px 0 0;padding:16px 20px;background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:4px">
   <p style="font-size:13px;line-height:1.65;margin:0;color:#78350f"><strong style="display:block;margin-bottom:4px">Insurance Information Disclosure</strong>This article is for educational and informational purposes only. It does not constitute professional insurance advice, a solicitation, or a recommendation to purchase any specific policy. Premium estimates and coverage terms vary significantly by insurer, state, age, claims history, and individual underwriting criteria. Always compare quotes from multiple licensed carriers and consult a licensed insurance professional before making coverage decisions. <a href="/disclaimer/" style="color:#92400e;font-weight:600;text-decoration:underline">Read our full disclaimer →</a></p>
 </div>` : ''}

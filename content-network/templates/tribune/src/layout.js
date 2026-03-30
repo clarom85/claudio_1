@@ -248,6 +248,8 @@ setTimeout(function(){document.querySelectorAll('[data-type="_mgwidget"]').forEa
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="${r.image||`/images/${r.slug}.jpg`}" alt="${esc(r.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
+  const slugifyTag=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const tagsHtml=(article.tags||[]).length?`<div class="article-tags"><span class="tags-label">Topics:</span>${(article.tags||[]).map(t=>`<a href="/tag/${slugifyTag(t)}" class="tag">${t}</a>`).join('')}</div>`:'';
   const trustBlockHtml=buildTrustBlock(article,site);
   const calcCtaHtml=site.toolSlug?`<div style="background:linear-gradient(135deg,#1a5c3a,#134d2e);padding:24px;margin:32px 0 0;border-radius:4px;text-align:center"><strong style="color:#fff;font-size:16px;display:block;margin-bottom:8px">${site.toolLabel||'Free Calculator'}</strong><p style="color:rgba(255,255,255,.85);font-size:14px;margin:0 0 16px;line-height:1.5">Get an instant estimate for your project in 60 seconds.</p><a href="/tools/${site.toolSlug}/" style="display:inline-block;background:#c9a84c;color:#1a1a2e;padding:12px 28px;border-radius:3px;font-weight:700;font-size:15px;text-decoration:none">Calculate My Cost →</a></div>`:'';
   const body=`${renderHeader(site)}<main class="site-main"><div class="wrap">
@@ -264,7 +266,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:''}
     ${trustBlockHtml}
     <div class="art-layout">
-      <div class="art-body">${injectCalcCtaMidArticle(injectMgidInArticle(article.content,site.mgidInArticleId),calcCtaHtml)}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
+      <div class="art-body">${injectCalcCtaMidArticle(injectMgidInArticle(article.content,site.mgidInArticleId),calcCtaHtml)}${tagsHtml}${(()=>{const sn=process.env.DISQUS_SHORTNAME||'';if(!sn)return '';const pu=`${site.url}/${article.slug}/`;return '<div style="margin-top:48px;padding-top:32px;border-top:2px solid var(--border)"><div id="disqus_thread"></div><scr'+'ipt>var disqus_config=function(){this.page.url="'+pu+'";this.page.identifier="'+article.slug+'";};<\/scr'+'ipt><scr'+'ipt>(function(){var d=document,sc=d.createElement("script");sc.src="https://'+sn+'.disqus.com/embed.js";sc.setAttribute("data-timestamp",+new Date());(d.head||d.body).appendChild(sc);})();<\/scr'+'ipt></div>';})()}</div>
       <aside>
         ${adUnit('sidebar')}
         ${relatedHtml?`<div class="sidebar-box"><h3>Related</h3>${relatedHtml}</div>`:''}
