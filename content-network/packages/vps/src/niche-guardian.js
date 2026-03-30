@@ -8,7 +8,7 @@
  * PM2   : cron every 12 hours
  */
 import 'dotenv/config';
-import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, statSync, readdirSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync, execSync } from 'child_process';
@@ -784,6 +784,35 @@ async function checkSiteLevel(site) {
       if (missing.length > 0) warn(`[${site.domain}] Google Site Verification tag missing from homepage`);
     }
   }
+
+  // 4j. Orphan tag pages — tag hrefs in article HTML without a /tag/xxx/ directory
+  // Root cause: buildArticleHTML embeds tag links in content HTML at generation time;
+  // if articles.tags is later updated in DB, regenerate-tag-pages creates new pages but
+  // the old href slugs in stored HTML remain, causing 404s for Googlebot.
+  try {
+    const tagDir = join(siteDir, 'tag');
+    const existingTags = new Set(existsSync(tagDir) ? readdirSync(tagDir) : []);
+    const orphanSlugs = new Set();
+
+    const articleDirs = readdirSync(siteDir).filter(d => {
+      try { return statSync(join(siteDir, d)).isDirectory() && existsSync(join(siteDir, d, 'index.html')); } catch { return false; }
+    });
+
+    for (const dir of articleDirs) {
+      try {
+        const html = readFileSync(join(siteDir, dir, 'index.html'), 'utf-8');
+        for (const m of html.matchAll(/href="\/tag\/([^"\/]+)\/?"/g)) {
+          if (!existingTags.has(m[1])) orphanSlugs.add(m[1]);
+        }
+      } catch { /* skip unreadable files */ }
+    }
+
+    if (orphanSlugs.size > 0) {
+      warn(`[${site.domain}] ${orphanSlugs.size} orphan tag link(s) → 404 for Googlebot: ${[...orphanSlugs].join(', ')}`);
+    } else {
+      log(`  [site] Tag pages OK (all /tag/ hrefs have corresponding directories)`);
+    }
+  } catch (e) { warn(`orphan-tag-check failed: ${e.message}`); }
 }
 
 // ── 5. Keyword Pipeline ───────────────────────────────────────────────────────
@@ -962,12 +991,47 @@ async function checkMonetization(site) {
 async function regenerateSitemap(site) {
   try {
     const articles = await sql`
-      SELECT slug, published_at FROM articles
+      SELECT slug, published_at, title, image FROM articles
       WHERE site_id = ${site.id} AND status = 'published'
       ORDER BY published_at DESC
     `;
-    generateSitemap(site.domain, articles, { siteName: site.domain });
-    fix(`[${site.domain}] Sitemap regenerated (${articles.length} articles)`);
+
+    const siteDir = join(WWW_ROOT, site.domain);
+    const today = new Date().toISOString();
+
+    // Include tag pages da disco (non solo quelle nel DB) per catturare orphan tags
+    const tagEntries = [];
+    const tagDir = join(siteDir, 'tag');
+    if (existsSync(tagDir)) {
+      for (const slug of readdirSync(tagDir)) {
+        tagEntries.push({ slug: `tag/${slug}`, published_at: today });
+      }
+    }
+
+    // Include category pages da disco
+    const catEntries = [];
+    const catDir = join(siteDir, 'category');
+    if (existsSync(catDir)) {
+      for (const slug of readdirSync(catDir)) {
+        catEntries.push({ slug: `category/${slug}`, published_at: today });
+      }
+    }
+
+    // Author slugs
+    const authorSlugs = [];
+    const authorDir = join(siteDir, 'author');
+    if (existsSync(authorDir)) authorSlugs.push(...readdirSync(authorDir));
+
+    // Tool slug
+    let toolSlug = null;
+    try {
+      const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
+      toolSlug = TOOL_CONFIGS[site.niche_slug]?.slug || null;
+    } catch {}
+
+    const allEntries = [...articles, ...tagEntries, ...catEntries];
+    generateSitemap(site.domain, allEntries, { siteName: site.domain, authorSlugs, toolSlug });
+    fix(`[${site.domain}] Sitemap regenerated (${articles.length} articles, ${tagEntries.length} tags, ${catEntries.length} categories)`);
   } catch (e) {
     warn(`sitemap regeneration failed: ${e.message}`);
   }
@@ -1048,6 +1112,81 @@ async function autoTriggerRegen(site) {
   if (needsStaticPages) {
     log(`  [regen] ${site.domain}: Static pages missing → regenerating static pages`);
     runScript('regenerate-static-pages.js');
+  }
+
+  // Orphan tag pages — crea tag pages mancanti scansionando gli href nell'HTML
+  // Questo risolve il mismatch tra tag slug embedded nel content HTML (al momento della
+  // generazione) e le tag pages create da regenerate-tag-pages (che usa articles.tags nel DB).
+  try {
+    const tagDir = join(siteDir, 'tag');
+    const existingTags = new Set(existsSync(tagDir) ? readdirSync(tagDir) : []);
+
+    // Mappa: tag slug → { name, articles: Set<slug> }
+    const orphanMap = new Map();
+    const articleDirs = readdirSync(siteDir).filter(d => {
+      try { return statSync(join(siteDir, d)).isDirectory() && existsSync(join(siteDir, d, 'index.html')); } catch { return false; }
+    });
+
+    for (const dir of articleDirs) {
+      try {
+        const html = readFileSync(join(siteDir, dir, 'index.html'), 'utf-8');
+        for (const m of html.matchAll(/href="\/tag\/([^"\/]+)\/?"/g)) {
+          const slug = m[1];
+          if (!existingTags.has(slug)) {
+            if (!orphanMap.has(slug)) {
+              const nameMatch = html.match(new RegExp(`href="/tag/${slug}[/"]">([^<]+)<`));
+              orphanMap.set(slug, { name: nameMatch ? nameMatch[1] : slug.replace(/-/g, ' '), slug, articleSlugs: new Set() });
+            }
+            orphanMap.get(slug).articleSlugs.add(dir);
+          }
+        }
+      } catch { /* skip unreadable files */ }
+    }
+
+    if (orphanMap.size > 0) {
+      log(`  [regen] ${site.domain}: ${orphanMap.size} orphan tag pages → creating...`);
+
+      // Fetch articoli dal DB per costruire le tag page entries
+      const dbArticles = await sql`
+        SELECT slug, title, tags, image, published_at, meta_description
+        FROM articles WHERE site_id = ${site.id} AND status = 'published'
+        ORDER BY published_at DESC
+      `;
+      const dbBySlug = new Map(dbArticles.map(a => [a.slug, a]));
+
+      // Carica siteConfig minimale per renderTagPage
+      let categories = [];
+      try { categories = JSON.parse(readFileSync(join(siteDir, 'api', 'categories.json'), 'utf-8')).slice(0, 7); } catch {}
+      const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const siteConfig = {
+        id: site.id, domain: site.domain, name: siteName, url: `https://${site.domain}`,
+        template: site.template, nicheSlug: site.niche_slug, categories,
+        authorName: '', authorTitle: '', authorBio: '', authorAvatar: '',
+        adsenseId: process.env.ADSENSE_ID || '', ga4MeasurementId: site.ga4_measurement_id || '',
+        mgidSiteId: site.mgid_site_id || '', mgidInArticleId: site.mgid_in_article_id || '',
+        mgidSmartId: site.mgid_smart_id || '', tagline: '', toolSlug: null,
+      };
+
+      const TEMPLATES_DIR = join(ROOT, 'templates');
+      const { renderTagPage } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
+
+      let created = 0;
+      for (const [slug, entry] of orphanMap) {
+        const articles = [...entry.articleSlugs].map(s => dbBySlug.get(s)).filter(Boolean);
+        const html = renderTagPage({ name: entry.name, slug }, articles, siteConfig);
+        const dir = join(tagDir, slug);
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+        created++;
+      }
+
+      fix(`[${site.domain}] Created ${created} orphan tag pages: ${[...orphanMap.keys()].join(', ')}`);
+
+      // Rigenera sitemap per includere le nuove tag pages
+      await regenerateSitemap(site);
+    }
+  } catch (e) {
+    warn(`[${site.domain}] orphan-tag-fix failed: ${e.message}`);
   }
 
   // Se nessuna regen necessaria → log OK
