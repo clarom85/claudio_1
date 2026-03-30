@@ -879,11 +879,20 @@ async function checkMonetization(site) {
   }
 
   // ── b. MGID ─────────────────────────────────────────────────────────────
+  // MGID widgets are in-article only — check a sample article, not homepage
   const mgidSiteId = process.env.MGID_SITE_ID || site.mgid_site_id;
-  if (mgidSiteId && existsSync(homePath)) {
-    const homeHtml = readFileSync(homePath, 'utf-8');
-    if (!homeHtml.includes('jsc.mgid.com') && !homeHtml.includes('cm.mgid.com')) {
-      issue(`[${site.domain}] MGID loader script missing from homepage`);
+  if (mgidSiteId) {
+    const sampleArticleDirs = readdirSync(siteDir).filter(d => {
+      const p = join(siteDir, d);
+      try { return statSync(p).isDirectory() && existsSync(join(p, 'index.html'))
+        && !['tag','category','author','tools','data','api','images','assets'].includes(d); } catch { return false; }
+    }).slice(0, 3);
+    const mgidMissing = sampleArticleDirs.filter(d => {
+      const html = readFileSync(join(siteDir, d, 'index.html'), 'utf-8');
+      return !html.includes('jsc.mgid.com') && !html.includes('cm.mgid.com') && !html.includes('mgid.com');
+    });
+    if (mgidMissing.length === sampleArticleDirs.length && sampleArticleDirs.length > 0) {
+      issue(`[${site.domain}] MGID widget missing from articles (checked: ${sampleArticleDirs.join(', ')})`);
       monStats.missingAds++;
     }
   }
