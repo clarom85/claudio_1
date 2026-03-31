@@ -18,12 +18,20 @@ import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-en
 function detectArticleAuthor(content, nicheSlug) {
   const primary = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
   if (!content) return primary;
-  const match = content.match(/author-([a-z][a-z0-9-]+)\.jpg/);
-  if (!match) return primary;
-  const avatarSlug = match[1];
-  if (primary.avatar === avatarSlug) return primary;
   const extras = ADDITIONAL_AUTHORS[nicheSlug] || [];
-  return extras.find(a => a.avatar === avatarSlug) || primary;
+  // Try avatar image URL (new-format articles: /images/author-{slug}.jpg)
+  const match = content.match(/author-([a-z][a-z0-9-]+)\.jpg/);
+  if (match) {
+    const avatarSlug = match[1];
+    if (primary.avatar === avatarSlug) return primary;
+    const found = extras.find(a => a.avatar === avatarSlug);
+    if (found) return found;
+  }
+  // Fallback: detect by author name in content (old articles with pravatar.cc URLs)
+  for (const extra of extras) {
+    if (content.includes(extra.name)) return extra;
+  }
+  return primary;
 }
 import { patchArticleSchemas } from '@content-network/content-engine/src/schema.js';
 
@@ -144,7 +152,12 @@ async function run() {
         template: site.template,
         rating
       });
-      const strippedContent = (a.content || '').replace(/<div class="article-tags">[\s\S]*?<\/div>/, '');
+      // Use the author actually embedded in the content HTML (preserves original variant)
+      const articleAuthor = detectArticleAuthor(a.content, site.niche_slug);
+      // Replace old pravatar.cc placeholder URLs with correct local author image
+      const strippedContent = (a.content || '')
+        .replace(/<div class="article-tags">[\s\S]*?<\/div>/, '')
+        .replace(/https:\/\/i\.pravatar\.cc\/150\?u=[^"']+/g, `/images/author-${articleAuthor.avatar}.jpg`);
       const articleData = {
         slug: a.slug, title: a.title, metaDescription: a.meta_description,
         excerpt: (a.meta_description || '').slice(0, 120) + '...',
@@ -156,8 +169,6 @@ async function run() {
         image: a.image || null
       };
 
-      // Use the author actually embedded in the content HTML (preserves original variant)
-      const articleAuthor = detectArticleAuthor(a.content, site.niche_slug);
       const siteConfig = {
         ...baseSiteConfig,
         authorName: articleAuthor.name,
