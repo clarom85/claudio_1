@@ -13,13 +13,19 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // ── Author / style / model rotation ──────────────────────────────────────────
 
 /**
- * Deterministic variant index 0|1|2 based on cluster_slug (or keyword id).
- * Cluster-coherent: all articles in the same cluster get the same author + style.
+ * Deterministic variant index 0|1|2.
+ * - If cluster_slug is set: all articles in the same cluster get the same author (djb2 hash, uniform).
+ * - Otherwise: keyword.id % 3 — perfectly uniform distribution, no bias.
  */
-function computeVariant(keyword, siteId = 0) {
-  const key = keyword.cluster_slug || String(keyword.id);
-  const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-  return (hash + siteId) % 3;
+function computeVariant(keyword) {
+  if (keyword.cluster_slug) {
+    let h = 5381;
+    for (let i = 0; i < keyword.cluster_slug.length; i++) {
+      h = (Math.imul(31, h) + keyword.cluster_slug.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h) % 3;
+  }
+  return keyword.id % 3;
 }
 
 /**
@@ -68,7 +74,7 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
   }
 
   const nichePersona = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
-  const variantIdx   = computeVariant(keyword, site.id || 0);
+  const variantIdx   = computeVariant(keyword);
   const author       = selectAuthor(niche.slug, variantIdx);
   const model        = selectModel(keyword, nichePersona);
   const prompt       = buildArticlePrompt(keyword, niche, {

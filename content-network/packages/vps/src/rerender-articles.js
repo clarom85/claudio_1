@@ -8,7 +8,23 @@ import { mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { classifyArticle } from '@content-network/content-engine/src/categories.js';
-import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
+
+/**
+ * Detects the article author from the baked-in content HTML.
+ * Falls back to primary AUTHOR_PERSONAS if not detectable.
+ * Keeps reviewer/trustSources/ymyl from the site-level primary author.
+ */
+function detectArticleAuthor(content, nicheSlug) {
+  const primary = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  if (!content) return primary;
+  const match = content.match(/author-([a-z][a-z0-9-]+)\.jpg/);
+  if (!match) return primary;
+  const avatarSlug = match[1];
+  if (primary.avatar === avatarSlug) return primary;
+  const extras = ADDITIONAL_AUTHORS[nicheSlug] || [];
+  return extras.find(a => a.avatar === avatarSlug) || primary;
+}
 import { patchArticleSchemas } from '@content-network/content-engine/src/schema.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
@@ -46,7 +62,8 @@ async function run() {
   const feedbackMap = new Map(feedbackRows.map(r => [r.slug, { thumbsUp: r.thumbs_up, thumbsDown: r.thumbs_down }]));
 
   const { renderArticlePage } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
-  const author = AUTHOR_PERSONAS[site.niche_slug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  // Primary used for site-level trust data (reviewer, trustSources, ymyl)
+  const primaryAuthor = AUTHOR_PERSONAS[site.niche_slug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
   let categories = [];
   try {
@@ -86,16 +103,12 @@ async function run() {
     toolLabel = TOOL_CONFIGS[site.niche_slug]?.navLabel || 'Free Calculator';
   } catch {}
 
-  const siteConfig = {
+  const baseSiteConfig = {
     id: site.id,
     domain: site.domain,
     name: siteName,
     url: `https://${site.domain}`,
     template: site.template,
-    authorName: author.name,
-    authorTitle: author.title,
-    authorBio: author.bio,
-    authorAvatar: author.avatar,
     adsenseId: process.env.ADSENSE_ID || '',
     ga4MeasurementId: site.ga4_measurement_id || '',
     mgidSiteId: site.mgid_site_id || '',
@@ -107,10 +120,11 @@ async function run() {
     toolSlug,
     toolLabel,
     hasCostTracker: true,
-    reviewer: author.reviewer || null,
-    trustSources: author.trustSources || '',
-    trustMethodology: author.trustMethodology || '',
-    ymyl: author.ymyl || false,
+    // Trust data always from primary author (site-level, not per-article)
+    reviewer: primaryAuthor.reviewer || null,
+    trustSources: primaryAuthor.trustSources || '',
+    trustMethodology: primaryAuthor.trustMethodology || '',
+    ymyl: primaryAuthor.ymyl || false,
   };
 
   // Carica articoli correlati per ogni articolo (cached in memoria)
@@ -140,6 +154,16 @@ async function run() {
         date: a.published_at || a.created_at,
         updatedAt: a.updated_at,
         image: a.image || null
+      };
+
+      // Use the author actually embedded in the content HTML (preserves original variant)
+      const articleAuthor = detectArticleAuthor(a.content, site.niche_slug);
+      const siteConfig = {
+        ...baseSiteConfig,
+        authorName: articleAuthor.name,
+        authorTitle: articleAuthor.title,
+        authorBio: articleAuthor.bio,
+        authorAvatar: articleAuthor.avatar,
       };
 
       const html = renderArticlePage(articleData, siteConfig, related);
