@@ -4,19 +4,27 @@
  *      node packages/vps/src/regenerate-static-pages.js --all
  */
 import 'dotenv/config';
-import { writeFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { sql } from '@content-network/db';
 import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from '@content-network/site-spawner/src/niche-methodology.js';
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..', '..');
+const TEMPLATES_DIR = join(ROOT, 'templates');
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
+
+// Dark templates need content wrapped in a white card to be readable
+const DARK_TEMPLATES = new Set(['nexus', 'vortex']);
 
 function htmlEsc(str = '') {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function simplePageWrapper(title, description, content, site, { noindex = false, canonical = '', ogImage = '' } = {}) {
+function simplePageWrapper(title, description, content, site, { noindex = false, canonical = '', ogImage = '', template = '' } = {}) {
   const effectiveOgImage = ogImage || `${site.url}/images/og-default.jpg`;
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -24,6 +32,11 @@ function simplePageWrapper(title, description, content, site, { noindex = false,
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
+  // Wrap content in white card for dark templates so text is readable
+  const isDark = DARK_TEMPLATES.has(template);
+  const wrappedContent = isDark
+    ? `<div style="background:#fff;color:#1a1a1a;border-radius:8px;padding:32px 24px;margin:32px auto;max-width:1000px;box-shadow:0 2px 16px rgba(0,0,0,.18)">${content}</div>`
+    : content;
 
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -49,7 +62,7 @@ ${ga4Script}
 <header style="background:#1a1a2e;padding:14px 20px">
   <a href="/" style="color:#fff;text-decoration:none;font-size:22px;font-weight:800">${site.name}</a>
 </header>
-<main style="padding:20px 0;min-height:60vh">${content}</main>
+<main style="padding:20px 0;min-height:60vh">${wrappedContent}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
   <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a></p>
 </footer>
@@ -463,7 +476,7 @@ async function regenerateStaticPages(site) {
     const dir = join(WWW_ROOT, site.domain, path.replace('/index.html', ''));
     mkdirSync(dir, { recursive: true });
     const canonical = `${siteUrl}/${path.replace('index.html', '')}`;
-    const html = simplePageWrapper(page.title, page.description, page.body, siteConfig, { noindex: page.noindex || false, canonical });
+    const html = simplePageWrapper(page.title, page.description, page.body, siteConfig, { noindex: page.noindex || false, canonical, template: site.template || '' });
     writeFileSync(join(WWW_ROOT, site.domain, path), html, 'utf-8');
   }
 
@@ -474,7 +487,7 @@ async function regenerateStaticPages(site) {
     const revDir = join(WWW_ROOT, site.domain, 'author', rev.slug);
     mkdirSync(revDir, { recursive: true });
     const canonical = `${siteUrl}/author/${rev.slug}/`;
-    const html = simplePageWrapper(rev.title, rev.description, rev.body, siteConfig, { noindex: false, canonical });
+    const html = simplePageWrapper(rev.title, rev.description, rev.body, siteConfig, { noindex: false, canonical, template: site.template || '' });
     writeFileSync(join(revDir, 'index.html'), html, 'utf-8');
   }
 
@@ -503,7 +516,7 @@ async function regenerateStaticPages(site) {
   }).catch(()=>{});
 </script>`;
   writeFileSync(join(WWW_ROOT, site.domain, '404.html'),
-    simplePageWrapper('Page Not Found', `The page you're looking for doesn't exist — ${siteName}`, notFoundBody, siteConfig, { noindex: true }),
+    simplePageWrapper('Page Not Found', `The page you're looking for doesn't exist — ${siteName}`, notFoundBody, siteConfig, { noindex: true, template: site.template || '' }),
     'utf-8');
 }
 
@@ -519,8 +532,8 @@ async function run() {
   }
 
   const sites = all
-    ? await sql`SELECT s.id, s.domain, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
-    : await sql`SELECT s.id, s.domain, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
+    ? await sql`SELECT s.id, s.domain, s.template, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
+    : await sql`SELECT s.id, s.domain, s.template, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
 
   if (!sites.length) { console.error('Nessun sito trovato'); process.exit(1); }
 
