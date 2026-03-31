@@ -391,7 +391,7 @@ Sitemap: https://${domain}/sitemap.xml
  * Senza questo file i DSP pagano meno (o non comprano) l'inventory AdSense.
  * f08c47fec0942fa0 è il TAG-ID pubblico di Google (non un segreto).
  */
-export function generateAdsTxt(domain, adsensePublisherId, ezoicSiteId) {
+export function generateAdsTxt(domain, adsensePublisherId, ezoicSiteId, mgidSiteId) {
   const lines = [];
   if (adsensePublisherId) {
     lines.push(`google.com, ${adsensePublisherId}, DIRECT, f08c47fec0942fa0`);
@@ -400,6 +400,10 @@ export function generateAdsTxt(domain, adsensePublisherId, ezoicSiteId) {
     // Ezoic is a Google Certified Publishing Partner — resells inventory from multiple networks
     lines.push(`ezoic.com, ${ezoicSiteId}, DIRECT`);
     lines.push(`ezoic.com, ${ezoicSiteId}, RESELLER`);
+  }
+  if (mgidSiteId) {
+    // MGID native/content-discovery — TAG-ID d4c29acad76ce94f (IAB sellers.json)
+    lines.push(`mgid.com, ${mgidSiteId}, DIRECT, d4c29acad76ce94f`);
   }
   if (!lines.length) return;
   writeSiteFile(domain, 'ads.txt', lines.join('\n') + '\n');

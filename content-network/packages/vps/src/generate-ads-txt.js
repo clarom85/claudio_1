@@ -35,10 +35,12 @@ if (!targets.length) {
 }
 
 for (const site of targets) {
-  generateAdsTxt(site.domain, adsenseId, ezoicId);
+  const mgidSiteId = site.mgid_site_id || '';
+  generateAdsTxt(site.domain, adsenseId, ezoicId, mgidSiteId);
   const lines = [];
-  if (adsenseId) lines.push(`google.com, ${adsenseId}, DIRECT, f08c47fec0942fa0`);
-  if (ezoicId)   lines.push(`ezoic.com, ${ezoicId}, DIRECT`);
+  if (adsenseId)  lines.push(`google.com, ${adsenseId}, DIRECT, f08c47fec0942fa0`);
+  if (ezoicId)    lines.push(`ezoic.com, ${ezoicId}, DIRECT`);
+  if (mgidSiteId) lines.push(`mgid.com, ${mgidSiteId}, DIRECT, d4c29acad76ce94f`);
   console.log(`✅  ${site.domain}/ads.txt`);
   lines.forEach(l => console.log(`    ${l}`));
 }
