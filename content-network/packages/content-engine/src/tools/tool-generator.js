@@ -48,7 +48,7 @@ export function generateToolBody(config, site = {}) {
 
   return `<style>
     :root{--tool-color:${color};--tool-color-dark:${colorDark};--tool-color-bg:color-mix(in srgb,${color} 10%,#fff);--tool-color-border:color-mix(in srgb,${color} 30%,#fff)}
-    .tool-page{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+    .tool-page{max-width:760px;margin:0 auto;padding:28px 16px 60px;background:#fff;color:#1a1a1a;border-radius:12px}
     .tool-breadcrumb{font-size:13px;color:#999;margin-bottom:20px}
     .tool-breadcrumb a{color:#999;text-decoration:none}.tool-breadcrumb a:hover{text-decoration:underline}
     .tool-hero{text-align:center;margin-bottom:28px}

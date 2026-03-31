@@ -73,6 +73,9 @@ a{color:inherit}
 .art-body .article-citations *{color:var(--muted)!important}
 .art-body .article-citations h3{color:var(--cyan)!important}
 .art-body .article-citations a{color:var(--cyan)!important}
+.art-body .related-card{background:var(--surface2)!important;border-color:var(--border)!important}
+.art-body .related-card p{color:var(--muted)!important}
+.art-body .related-card p:first-of-type{color:var(--white)!important}
 .intro{font-size:18px;line-height:1.75;color:var(--white);font-weight:500;border-left:3px solid var(--cyan);padding-left:16px;margin-bottom:24px}
 .art-section{margin:28px 0}
 .art-section h2{font-size:20px;font-weight:700;margin-top:36px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--cyan)}

@@ -387,7 +387,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
           .slice(0, 3);
         if (!related.length) return '';
         const cards = related.map(a => `
-          <a href="/${a.slug}/" style="display:block;text-decoration:none;background:#fff;border:1px solid #e8e8e8;border-radius:6px;overflow:hidden;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
+          <a href="/${a.slug}/" class="related-card" style="display:block;text-decoration:none;background:#fff;border:1px solid #e8e8e8;border-radius:6px;overflow:hidden;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
             ${a.image ? `<img src="${escapeHtml(a.image)}" alt="${escapeHtml(a.title)}" loading="lazy" style="width:100%;height:140px;object-fit:cover;display:block;" onerror="this.style.display='none'" />` : `<div style="height:6px;background:#c0392b;"></div>`}
             <div style="padding:14px 16px;">
               <p style="font-size:14px;font-weight:600;color:#1a1a2e;line-height:1.4;margin:0 0 6px;">${escapeHtml(a.title)}</p>

@@ -65,7 +65,7 @@ img{max-width:100%;height:auto;display:block}
 .art-date{font-size:13px;color:var(--muted)}
 
 /* Ad units — hidden until AdSense fills them */
-.ad{border-radius:var(--r);overflow:hidden}
+.ad{border-radius:var(--r);overflow:hidden;min-height:0}
 .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
 .mgid-wrap{min-height:0;overflow:hidden}
 .ad-leader{width:100%;margin:16px 0}
@@ -531,12 +531,12 @@ export function renderCategoryPage(articles, category, site, page = 1, totalPage
 ${renderHeader(site)}
 <main class="site-main">
   <div class="wrap">
-    <div class="ad ad-leader" style="min-height:90px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    <div class="ad ad-leader"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
     <div class="breadcrumb" style="margin:16px 0 4px"><a href="/">Home</a> › <span>${esc(category.name)}</span></div>
     <h1 class="section-title">${esc(category.name)}</h1>
     <p style="color:var(--muted);margin-bottom:28px">${articles.length} expert article${articles.length !== 1 ? 's' : ''}</p>
     <div class="art-grid">${gridHtml}</div>
-    <div class="ad ad-leader" style="min-height:90px;margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
+    <div class="ad ad-leader" style="margin-top:32px"><ins class="adsbygoogle" style="display:block" data-ad-format="leaderboard"></ins></div>
     ${paginationHtml}
   </div>
 </main>
@@ -690,7 +690,7 @@ function adUnit(type) {
   if (!adsenseId) return '';
   const cls = { leaderboard: 'ad-leader', inline: 'ad-inline', sidebar: 'ad-sidebar', footer: 'ad-footer' };
   const fmt = { leaderboard: 'leaderboard', inline: 'fluid', sidebar: 'rectangle', footer: 'leaderboard' };
-  return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="${fmt[type]}"></ins></div>`;
+  return `<div class="ad ${cls[type]}"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="${fmt[type]}"></ins></div>`;
 }
 
 function esc(str = '') {

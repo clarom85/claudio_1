@@ -53,7 +53,7 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .art-date{font-size:12px;color:var(--muted)}
 
 /* Ad units — hidden until AdSense fills them */
-.ad{overflow:hidden}
+.ad{overflow:hidden;min-height:0}
 .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
 .mgid-wrap{min-height:0;overflow:hidden}
 .ad-leader{width:100%;margin:16px 0}
@@ -64,6 +64,9 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 /* Content */
 .art-body{background:rgba(255,255,255,.03);padding:28px;border:1px solid var(--border);border-radius:8px}
 .art-body .article-header{display:none}.art-body .article-hero-image{display:none}.art-body .article-sidebar{display:none}
+.art-body .related-card{background:rgba(255,255,255,.07)!important;border-color:var(--border)!important}
+.art-body .related-card p{color:var(--muted)!important}
+.art-body .related-card p:first-of-type{color:var(--light)!important}
 .intro{font-size:18px;line-height:1.8;color:#e0e8f0;font-weight:600;border-left:4px solid var(--orange);padding-left:16px;margin-bottom:24px}
 .art-section{margin:28px 0}
 .art-section h2{font-family:var(--ff-head);font-size:26px;letter-spacing:2px;color:var(--orange);margin-top:36px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
@@ -169,7 +172,7 @@ function adUnit(type){
   if(!adsenseId) return '';
   const cls={leaderboard:'ad-leader',inline:'ad-inline',sidebar:'ad-sidebar',footer:'ad-footer'};
   const fmt={leaderboard:'leaderboard',inline:'fluid',sidebar:'rectangle',footer:'leaderboard'};
-  return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="${fmt[type]}"></ins></div>`;}
+  return `<div class="ad ${cls[type]}"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="${fmt[type]}"></ins></div>`;}
 
 export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl='',lcpImage='',ga4MeasurementId='',mgidSiteId=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;

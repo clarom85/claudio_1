@@ -45,7 +45,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 .art-byline strong{color:var(--dark)}
 
 /* Ad units — hidden until AdSense fills them */
-.ad{overflow:hidden}
+.ad{overflow:hidden;min-height:0}
 .ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])){min-height:0!important;border:none!important;background:none!important;margin:0!important;padding:0!important}
 .mgid-wrap{min-height:0;overflow:hidden}
 .ad-leader{width:100%;margin:16px 0}
@@ -206,7 +206,7 @@ function adUnit(type){
   if(!adsenseId) return '';
   const cls={leaderboard:'ad-leader',inline:'ad-inline',sidebar:'ad-sidebar',footer:'ad-footer'};
   const fmt={leaderboard:'leaderboard',inline:'fluid',sidebar:'rectangle',footer:'leaderboard'};
-  return `<div class="ad ${cls[type]}" style="min-height:${minH}px"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="${fmt[type]}"></ins></div>`;}
+  return `<div class="ad ${cls[type]}"><ins class="adsbygoogle" style="display:block" data-ad-client="${adsenseId}" data-ad-format="${fmt[type]}"></ins></div>`;}
 
 export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],body,adsenseId='',ogImage='',noindex=false,datePublished='',dateModified='',authorUrl='',prevUrl='',nextUrl='',lcpImage='',ga4MeasurementId='',mgidSiteId=''}){
   const canonical=slug?`${siteUrl}/${slug}/`:`${siteUrl}/`;
