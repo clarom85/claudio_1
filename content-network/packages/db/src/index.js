@@ -106,6 +106,7 @@ export async function getUnusedKeywords(nicheId, limit = 60) {
       FROM keywords k
       LEFT JOIN published_per_cluster p ON p.cluster_slug = k.cluster_slug
       WHERE k.niche_id = ${nicheId} AND k.used = FALSE
+        AND k.keyword !~* '\bnear me\b'
     )
     SELECT * FROM ranked
     WHERE (rn + already_published) <= ${MAX_PER_CLUSTER}
@@ -149,6 +150,7 @@ export async function getUnusedKeywordCount(nicheId) {
   const [row] = await sql`
     SELECT COUNT(*) as count FROM keywords
     WHERE niche_id = ${nicheId} AND used = FALSE
+      AND keyword !~* '\bnear me\b'
   `;
   return parseInt(row.count);
 }
