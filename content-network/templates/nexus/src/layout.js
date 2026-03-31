@@ -273,7 +273,7 @@ export function renderHomePage(articles,site){
   const webSiteSchema={'@context':'https://schema.org','@type':'WebSite','@id':`${site.url}/#website`,url:site.url,name:site.name,description:site.tagline||site.name,potentialAction:{'@type':'SearchAction',target:{'@type':'EntryPoint',urlTemplate:`${site.url}/?s={search_term_string}`},'query-input':'required name=search_term_string'}};
   const heroImg=hero?(hero.image||`/images/${hero.slug}.jpg`):'';
   const metaDesc=site.tagline?`${site.tagline}. Trusted guides, real data, expert advice.`:`${site.name}: expert-driven guides and solutions.`;
-  return renderBase({title:`Expert Technical Guides`,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:heroImg?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema],lcpImage:heroImg?`${site.url}${heroImg}`:'',mgidSiteId:site.mgidSiteId||''});
+  return renderBase({title:site.tagline||site.name,description:metaDesc,siteName:site.name,siteUrl:site.url,body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',ogImage:heroImg?`${site.url}${heroImg}`:'',schemas:[orgSchema,webSiteSchema],lcpImage:heroImg?`${site.url}${heroImg}`:'',mgidSiteId:site.mgidSiteId||''});
 }
 
 export function renderCategoryPage(articles,category,site,page=1,totalPages=1){
