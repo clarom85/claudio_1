@@ -64,6 +64,23 @@ server {
         add_header Access-Control-Allow-Headers "Content-Type" always;
         if ($request_method = OPTIONS) { return 204; }
     }
+
+    location = /api/feedback {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    location = /status {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        add_header Cache-Control "no-store";
+    }
 ${customBlock}
     # HTML pages — cache at Cloudflare edge for 1 hour, revalidate after
     location / {
@@ -141,6 +158,23 @@ server {
         add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
         add_header Access-Control-Allow-Headers "Content-Type" always;
         if ($request_method = OPTIONS) { return 204; }
+    }
+
+    location = /api/feedback {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    location = /status {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        add_header Cache-Control "no-store";
     }
 
     location / {
