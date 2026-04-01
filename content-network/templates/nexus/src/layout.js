@@ -153,6 +153,8 @@ a{color:inherit}
 .art-section p strong,.article-section p strong{color:var(--white)}
 .article-section{margin:28px 0}
 .article-section h2{font-size:20px;font-weight:700;margin-top:36px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--cyan)}
+/* Author pages: white cards — force dark text (overrides body color:var(--white)) */
+.author-hero-flex,.author-bio-grid{color:#1a1a2e}
 /* HowTo steps have light bg (#f9fafb) — override dark-theme text colors */
 .how-to-step{color:#1a1a2e}
 .how-to-step h2{color:#1a1a2e!important;border-bottom-color:#c7d2fe!important}
