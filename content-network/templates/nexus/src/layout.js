@@ -153,12 +153,18 @@ a{color:inherit}
 .art-section p strong,.article-section p strong{color:var(--white)}
 .article-section{margin:28px 0}
 .article-section h2{font-size:20px;font-weight:700;margin-top:36px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--cyan)}
+/* HowTo steps have light bg (#f9fafb) — override dark-theme text colors */
+.how-to-step{color:#1a1a2e}
+.how-to-step h2{color:#1a1a2e!important;border-bottom-color:#c7d2fe!important}
+.how-to-step p,.how-to-step .article-section p,.how-to-step .art-body p{color:#333!important}
+.how-to-step .art-list li{color:#1a1a2e!important;background:rgba(59,91,219,.06)!important;border-left-color:#3b5bdb!important}
+.how-to-step .art-list li::before{color:#3b5bdb!important}
 .trust-box{background:#f5f0ff;border:1px solid #c5b8e8;border-left:5px solid var(--purple);padding:18px 22px;margin:0 0 24px;border-radius:2px}
 .trust-box-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 .trust-box-title{font-family:var(--ff-head);font-size:15px;font-weight:700;color:var(--purple);display:flex;align-items:center;gap:6px}
-.trust-box-date{font-size:11px;color:var(--muted);background:rgba(0,0,0,.05);padding:3px 8px;border-radius:10px;white-space:nowrap}
+.trust-box-date{font-size:11px;color:#5a5a7a;background:rgba(0,0,0,.05);padding:3px 8px;border-radius:10px;white-space:nowrap}
 .trust-box-body{font-size:13px;color:#3a3a5a;line-height:1.65;margin-bottom:10px}
-.trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);border-top:1px solid #c5b8e8;padding-top:8px;margin-top:4px}
+.trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#5a5a7a;border-top:1px solid #c5b8e8;padding-top:8px;margin-top:4px}
 .trust-box-reviewer{color:var(--purple);font-weight:600}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 

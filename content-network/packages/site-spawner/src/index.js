@@ -1078,7 +1078,7 @@ async function generateAuthorPage(domain, author, siteConfig, template) {
   const bioParagraphs = (author.longBio || author.shortBio)
     .split(/\n\n|\n/)
     .filter(p => p.trim().length > 30)
-    .map(p => `<p style="font-size:16px;line-height:1.9;margin-bottom:22px">${p.trim()}</p>`)
+    .map(p => `<p style="font-size:16px;line-height:1.9;margin-bottom:22px;color:#333">${p.trim()}</p>`)
     .join('');
 
   const socialLinks = author.socialLinks
@@ -1101,7 +1101,7 @@ async function generateAuthorPage(domain, author, siteConfig, template) {
 </style>
 <div style="max-width:900px;margin:32px auto;padding:0 20px">
   <!-- Hero -->
-  <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:36px;">
+  <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;margin-bottom:36px;color:#1a1a2e">
     <div style="height:4px;background:#c0392b;"></div>
     <div class="author-hero-flex" style="padding:40px;display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
       <img src="/images/author-${author.avatar}.jpg"
@@ -1120,12 +1120,12 @@ async function generateAuthorPage(domain, author, siteConfig, template) {
 
   <!-- Bio lunga -->
   <div class="author-bio-grid">
-    <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:32px;">
+    <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:32px;color:#1a1a2e">
       <h2 style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #c0392b;">About ${author.name}</h2>
       ${bioParagraphs}
     </div>
     <aside>
-      <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:24px;border-top:3px solid #c0392b;margin-bottom:20px;">
+      <div style="background:white;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:24px;border-top:3px solid #c0392b;margin-bottom:20px;color:#1a1a2e">
         <h3 style="font-family:Georgia,serif;font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Role at ${siteName}</h3>
         <p style="font-size:14px;line-height:1.7;color:#555;">${author.title} — writes and reviews all content in this area to ensure accuracy and real-world relevance.</p>
       </div>
