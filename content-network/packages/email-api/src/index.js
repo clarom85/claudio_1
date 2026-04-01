@@ -88,7 +88,7 @@ app.get('/status', async (req, res) => {
     const since30d = new Date(now - 30 * 86400e3).toISOString();
     const todayStart = new Date(now); todayStart.setUTCHours(0,0,0,0);
 
-    const [sites, kwPool, recent7d, recent30d, queueToday, cost7d] = await Promise.all([
+    const [sites, kwPool, recent7d, recent30d, queueToday, cost7d, linkStats, nextUp] = await Promise.all([
       sql`
         SELECT s.id, s.domain, s.template, n.slug AS niche_slug, n.name AS niche_name,
                COUNT(a.id) FILTER (WHERE a.status='published') AS published,
@@ -136,13 +136,42 @@ app.get('/status', async (req, res) => {
         WHERE published_at >= ${since7d} AND tokens_in > 0
         GROUP BY site_id
       `,
+      sql`
+        SELECT site_id,
+               COUNT(*) FILTER (WHERE status='published') AS total,
+               COUNT(*) FILTER (WHERE status='published'
+                 AND content ~ 'href="/[a-z]') AS linked
+        FROM articles
+        GROUP BY site_id
+      `,
+      sql`
+        SELECT site_id, keyword, scheduled_for
+        FROM (
+          SELECT pq.site_id, k.keyword, pq.scheduled_for,
+                 ROW_NUMBER() OVER (PARTITION BY pq.site_id ORDER BY pq.scheduled_for) AS rn
+          FROM publish_queue pq
+          JOIN articles a ON pq.article_id = a.id
+          JOIN keywords k ON a.keyword_id = k.id
+          WHERE pq.status IN ('pending','scheduled')
+            AND pq.scheduled_for >= NOW()
+        ) t
+        WHERE rn <= 3
+        ORDER BY site_id, scheduled_for
+      `,
     ]);
 
-    const map7d   = Object.fromEntries(recent7d.map(r  => [r.site_id, parseInt(r.cnt)]));
-    const map30d  = Object.fromEntries(recent30d.map(r => [r.site_id, parseInt(r.cnt)]));
-    const mapQ    = Object.fromEntries(queueToday.map(r => [r.site_id, parseInt(r.cnt)]));
-    const mapCost = Object.fromEntries(cost7d.map(r => [r.site_id, r]));
-    const kwMap   = Object.fromEntries(kwPool.map(r => [r.slug, parseInt(r.unused)]));
+    const map7d     = Object.fromEntries(recent7d.map(r  => [r.site_id, parseInt(r.cnt)]));
+    const map30d    = Object.fromEntries(recent30d.map(r => [r.site_id, parseInt(r.cnt)]));
+    const mapQ      = Object.fromEntries(queueToday.map(r => [r.site_id, parseInt(r.cnt)]));
+    const mapCost   = Object.fromEntries(cost7d.map(r => [r.site_id, r]));
+    const kwMap     = Object.fromEntries(kwPool.map(r => [r.slug, parseInt(r.unused)]));
+    const mapLinks  = Object.fromEntries(linkStats.map(r => [r.site_id, r]));
+    // nextUp grouped by site_id
+    const mapNextUp = {};
+    for (const r of nextUp) {
+      if (!mapNextUp[r.site_id]) mapNextUp[r.site_id] = [];
+      mapNextUp[r.site_id].push(r);
+    }
 
     // Model rates (USD per 1M tokens)
     const RATES = { sonnet: { in: 3.00, out: 15.00 }, haiku: { in: 0.80, out: 4.00 } };
@@ -168,12 +197,32 @@ app.get('/status', async (req, res) => {
       const lastPub = s.last_published
         ? new Date(s.last_published).toLocaleString('en-US', { timeZone: 'America/New_York', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
         : '—';
+
+      // Link health
+      const ls = mapLinks[s.id];
+      const linkPct = ls && parseInt(ls.total) > 0
+        ? Math.round(parseInt(ls.linked) / parseInt(ls.total) * 100)
+        : null;
+      const linkColor = linkPct === null ? '#aaa' : linkPct >= 80 ? '#27ae60' : linkPct >= 50 ? '#e67e22' : '#e74c3c';
+      const linkHtml = linkPct === null ? '—' : `<span style="color:${linkColor};font-weight:700">${linkPct}%</span>`;
+
+      // Next 3 articles
+      const upcoming = mapNextUp[s.id] || [];
+      const nextHtml = upcoming.length > 0
+        ? upcoming.map(r => {
+            const t = new Date(r.scheduled_for).toLocaleString('en-US', { timeZone: 'America/New_York', hour:'2-digit', minute:'2-digit' });
+            return `<div style="font-size:11px;color:#555;margin-bottom:3px">🕐 ${t} — ${r.keyword}</div>`;
+          }).join('')
+        : '<span style="color:#aaa;font-size:11px">—</span>';
+
       return `<tr>
         <td><strong>${s.domain}</strong><br><span style="color:#888;font-size:11px">${s.template} · ${s.niche_name}</span></td>
         <td style="text-align:center">${pub}</td>
         <td style="text-align:center">${d7}</td>
         <td style="text-align:center">${d30}</td>
+        <td style="text-align:center">${linkHtml}</td>
         <td style="text-align:center">${queue > 0 ? `<span style="color:#27ae60;font-weight:700">${queue}</span>` : '0'}</td>
+        <td>${nextHtml}</td>
         <td style="text-align:center">${kw}<br><span style="color:#888;font-size:11px">~${kwDays}d</span></td>
         <td style="text-align:center">${costWeek > 0 ? '$' + costWeek.toFixed(3) : '—'}</td>
         <td style="font-size:11px;color:#888">${lastPub}</td>
@@ -205,7 +254,7 @@ app.get('/status', async (req, res) => {
 <table>
   <thead><tr>
     <th>Site</th><th>Published</th><th>7d</th><th>30d</th>
-    <th>Queue today</th><th>KW pool</th><th>API cost/wk</th><th>Last pub</th>
+    <th>Links %</th><th>Queue</th><th>Next 3</th><th>KW pool</th><th>Cost/wk</th><th>Last pub</th>
   </tr></thead>
   <tbody>${siteRows}</tbody>
 </table>
