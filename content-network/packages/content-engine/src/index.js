@@ -94,7 +94,7 @@ async function run() {
         continue;
       }
 
-      const article = await generateArticle(kw.keyword, niche, site, 3, sitePublicDir);
+      const article = await generateArticle(kw, niche, site, 3, sitePublicDir);
 
       // Dedup: salta se slug già esiste
       if (existingSlugs.has(article.slug)) {

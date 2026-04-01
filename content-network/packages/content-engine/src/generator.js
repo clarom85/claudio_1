@@ -66,6 +66,10 @@ async function throttle() {
 }
 
 export async function generateArticle(keyword, niche, site, retries = 3, sitePublicDir = null, existingArticles = []) {
+  // keyword can be a string (legacy callers) or a full keyword object {keyword, id, cluster_slug, ...}
+  const kwText = typeof keyword === 'string' ? keyword : keyword.keyword;
+  const kwObj  = typeof keyword === 'string' ? { keyword } : keyword;
+
   // Fetch live data for this niche (cached 24h, fails silently if no API key)
   const liveDataPoints = await fetchLiveData(niche.slug);
   const liveDataBlock = formatLiveDataBlock(liveDataPoints);
@@ -74,10 +78,10 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
   }
 
   const nichePersona = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
-  const variantIdx   = computeVariant(keyword);
+  const variantIdx   = computeVariant(kwObj);
   const author       = selectAuthor(niche.slug, variantIdx);
-  const model        = selectModel(keyword, nichePersona);
-  const prompt       = buildArticlePrompt(keyword, niche, {
+  const model        = selectModel(kwObj, nichePersona);
+  const prompt       = buildArticlePrompt(kwText, niche, {
     liveDataBlock,
     styleVariant: variantIdx,
     authorPersona: variantIdx > 0 ? author.promptPersona : null,
