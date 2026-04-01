@@ -9,7 +9,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql } from '@content-network/db';
 import { NICHE_METHODOLOGY, DEFAULT_METHODOLOGY, renderMethodologyBody } from '@content-network/site-spawner/src/niche-methodology.js';
-import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,7 +64,7 @@ ${ga4Script}
 </header>
 <main style="padding:20px 0;min-height:60vh">${wrappedContent}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
-  <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a></p>
+  <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot; <a href="/disclaimer/" style="color:rgba(255,255,255,.5)">Disclaimer</a> &middot; <a href="/contact/" style="color:rgba(255,255,255,.5)">Contact</a></p>
 </footer>
 </body></html>`;
 }
@@ -449,6 +449,69 @@ function buildPrivacyPage(siteName, domain) {
   };
 }
 
+function buildAboutPage(siteName, domain, nicheSlug) {
+  const lead = AUTHOR_PERSONAS[nicheSlug];
+  const additionals = ADDITIONAL_AUTHORS[nicheSlug] || [];
+  const allAuthors = [];
+  if (lead) allAuthors.push({ name: lead.name, title: lead.title, bio: lead.bio });
+  additionals.forEach(a => allAuthors.push({ name: a.name, title: a.title, bio: a.bio }));
+
+  const authorCards = allAuthors.map(a => `
+    <div style="display:flex;gap:20px;padding:20px 0;border-bottom:1px solid #f0f0f0">
+      <div style="flex:1">
+        <p style="font-size:17px;font-weight:700;margin:0 0 4px;color:#1a1a1a">${htmlEsc(a.name)}</p>
+        <p style="font-size:13px;font-weight:600;color:#c0392b;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em">${htmlEsc(a.title)}</p>
+        <p style="font-size:15px;line-height:1.75;color:#444;margin:0">${htmlEsc(a.bio)}</p>
+      </div>
+    </div>`).join('');
+
+  return {
+    title: 'About Us',
+    noindex: false,
+    description: `Learn about ${siteName}, our editorial mission, and the experts behind our content.`,
+    body: `<div style="max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a">
+      <h1 style="font-size:32px;font-weight:700;margin-bottom:20px">About ${htmlEsc(siteName)}</h1>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+        ${htmlEsc(siteName)} was founded on a simple premise: people deserve access to clear,
+        expert-level information without having to wade through vague, generic content.
+        We publish in-depth guides written by verified subject matter experts with
+        real-world experience — not generalists writing about everything.
+      </p>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:24px">
+        Every article on this site goes through our editorial review process before
+        publication and is updated regularly to reflect current data, costs, and best practices.
+      </p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Our Editorial Mission</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">
+        We publish articles because real people have real questions that deserve
+        substantive, accurate answers. Our editorial team reviews every piece for
+        factual accuracy, source quality, and practical value before it goes live.
+        We do not accept sponsored content or payment to influence editorial decisions.
+      </p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">How We Ensure Accuracy</h2>
+      <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px">Every article is written by a vetted expert in the relevant field</li>
+        <li style="margin-bottom:8px">Claims are supported by citations from government agencies, academic institutions, and established industry bodies</li>
+        <li style="margin-bottom:8px">Articles are reviewed and updated at least every 90 days</li>
+        <li style="margin-bottom:8px">We do not accept sponsored content or payment to influence editorial decisions</li>
+      </ul>
+
+      ${allAuthors.length ? `
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Meet Our Contributors</h2>
+      ${authorCards}` : ''}
+
+      <div style="margin-top:32px;padding:16px 20px;background:#f8f9fa;border-radius:6px;font-size:14px;color:#555">
+        Questions? Reach us at <a href="mailto:editor@${domain}" style="color:#c0392b">editor@${domain}</a> &middot;
+        <a href="/editorial-guidelines/" style="color:#c0392b">Editorial Guidelines</a> &middot;
+        <a href="/editorial-process/" style="color:#c0392b">Review Process</a> &middot;
+        <a href="/disclaimer/" style="color:#c0392b">Disclaimer</a>
+      </div>
+    </div>`
+  };
+}
+
 async function regenerateStaticPages(site) {
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const siteUrl = `https://${site.domain}`;
@@ -464,6 +527,9 @@ async function regenerateStaticPages(site) {
 
   // Add niche-specific methodology page
   const nicheSlug = site.niche_slug || '';
+
+  // About page — lists all contributors, indexed for E-E-A-T
+  pages['about/index.html'] = buildAboutPage(siteName, site.domain, nicheSlug);
   const methMeta = NICHE_METHODOLOGY[nicheSlug] || DEFAULT_METHODOLOGY;
   pages['methodology/index.html'] = {
     title: methMeta.title,
