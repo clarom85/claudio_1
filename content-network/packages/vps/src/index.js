@@ -108,7 +108,7 @@ ${customBlock}
 
     # Gzip
     gzip on;
-    gzip_types text/html text/css application/javascript application/json;
+    gzip_types text/css application/javascript application/json;
 
     error_page 404 /404.html;
     access_log /var/log/nginx/${domain}.access.log;
@@ -170,7 +170,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     gzip on;
-    gzip_types text/html text/css application/javascript application/json;
+    gzip_types text/css application/javascript application/json;
 
     error_page 404 /404.html;
     access_log /var/log/nginx/${domain}.access.log;
