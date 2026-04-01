@@ -4,7 +4,7 @@
  * Gira direttamente sul VPS (no SSH remoto)
  */
 import { execSync } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, lstatSync, unlinkSync } from 'fs';
 import { join } from 'path';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
@@ -229,10 +229,18 @@ server {
     }
   }
 
-  // Enable
+  // Enable — ensure sites-enabled entry is always a symlink (never a plain file)
   const enabledPath = join(NGINX_ENABLED, domain);
-  if (!existsSync(enabledPath)) {
-    execSync(`ln -s ${join(NGINX_AVAILABLE, domain)} ${enabledPath}`);
+  const availablePath = join(NGINX_AVAILABLE, domain);
+  if (existsSync(enabledPath)) {
+    const isSymlink = lstatSync(enabledPath).isSymbolicLink();
+    if (!isSymlink) {
+      console.warn(`[nginx] sites-enabled/${domain} was a plain file — replacing with symlink`);
+      unlinkSync(enabledPath);
+      execSync(`ln -s ${availablePath} ${enabledPath}`);
+    }
+  } else {
+    execSync(`ln -s ${availablePath} ${enabledPath}`);
   }
 }
 
