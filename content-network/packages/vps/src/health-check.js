@@ -258,7 +258,7 @@ async function run() {
         fail(`robots.txt Sitemap URL errato: "${sitemapLine}" — auto-fix in corso`);
         issues.push('robots-sitemap-url');
         writeFileSync(robotsPath,
-          `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://${site.domain}/sitemap.xml\n`);
+          `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /status\n\nSitemap: https://${site.domain}/sitemap.xml\n`);
         ok('→ robots.txt Sitemap URL corretto automaticamente');
       } else {
         ok(`robots.txt Sitemap URL: ${sitemapLine}`);
