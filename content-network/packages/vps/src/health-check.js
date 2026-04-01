@@ -8,11 +8,13 @@
  * - Articoli DB vs file HTML su disco
  * - Category pages presenti
  * - HTTP response (se SKIP_HTTP non impostato)
- * - Sitemap non vuota
- * - ads.txt presente
+ * - Sitemap non vuota e senza IP hardcoded
+ * - robots.txt Sitemap URL usa dominio (auto-fix se errato)
+ * - Nginx config: www redirect usa https (non http)
+ * - Nginx systemd: active (alert se failed — rischio downtime su reboot)
  */
 import 'dotenv/config';
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 import { getSitesByStatus, sql } from '@content-network/db';
@@ -226,6 +228,46 @@ async function run() {
       ok('Publish queue up to date');
     }
 
+    // ── 9. Nginx config — www redirect usa https, non http ───────────────
+    const nginxConfigPath = `/etc/nginx/sites-available/${site.domain}`;
+    if (existsSync(nginxConfigPath)) {
+      const nginxConf = readFileSync(nginxConfigPath, 'utf-8');
+      if (nginxConf.includes(`return 301 http://${site.domain}`)) {
+        fail('Nginx www redirect usa http:// — correggere con regenerate-nginx-configs.js --all');
+        issues.push('nginx-www-http');
+      } else {
+        ok('Nginx www→https redirect corretto');
+      }
+    } else {
+      warn('Nginx config non trovato in sites-available');
+      warnings.push('nginx-config-missing');
+    }
+
+    // ── 10. robots.txt — Sitemap usa dominio, non IP ──────────────────────
+    const robotsPath = join(siteDir, 'robots.txt');
+    if (existsSync(robotsPath)) {
+      const robotsContent = readFileSync(robotsPath, 'utf-8');
+      const sitemapLine = (robotsContent.match(/Sitemap:\s*(\S+)/) || [])[1] || '';
+      if (!sitemapLine.startsWith('https://') || !sitemapLine.includes(site.domain)) {
+        fail(`robots.txt Sitemap URL errato: "${sitemapLine}" — auto-fix in corso`);
+        issues.push('robots-sitemap-url');
+        writeFileSync(robotsPath,
+          `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://${site.domain}/sitemap.xml\n`);
+        ok('→ robots.txt Sitemap URL corretto automaticamente');
+      } else {
+        ok(`robots.txt Sitemap URL: ${sitemapLine}`);
+      }
+    }
+
+    // ── 11. sitemap.xml — nessun IP hardcoded ────────────────────────────
+    if (existsSync(join(siteDir, 'sitemap.xml'))) {
+      const sitemapContent = readFileSync(join(siteDir, 'sitemap.xml'), 'utf-8');
+      if (/https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(sitemapContent)) {
+        fail('sitemap.xml contiene un IP address invece del dominio');
+        issues.push('sitemap-ip-url');
+      }
+    }
+
     // ── Risultato sito ────────────────────────────────────────────────────
     if (issues.length === 0 && warnings.length === 0) {
       console.log(`  ${GREEN}${BOLD}→ HEALTHY${RESET}`);
@@ -254,6 +296,19 @@ async function run() {
       console.log(`${GREEN}✓ Disk usage: ${dfOut}${RESET}`);
     }
   } catch (e) { /* non bloccante */ }
+
+  // ── Nginx systemd status ──────────────────────────────────────────────
+  try {
+    const nginxState = execSync('systemctl is-active nginx 2>/dev/null', { encoding: 'utf-8' }).trim();
+    if (nginxState === 'active') {
+      console.log(`${GREEN}✓ nginx systemd: active${RESET}`);
+    } else {
+      console.log(`${RED}✗ nginx systemd: ${nginxState} — eseguire: systemctl reset-failed nginx && systemctl start nginx${RESET}`);
+      await alertCritical('Nginx systemd non attivo', `nginx status: ${nginxState} — siti potrebbero essere irraggiungibili al prossimo riavvio`);
+    }
+  } catch (e) {
+    console.log(`${YELLOW}⚠ nginx systemd check non disponibile${RESET}`);
+  }
 
   // ── Summary ───────────────────────────────────────────────────────────
   console.log(`\n${BOLD}Summary${RESET}: ${summary.total} sites checked`);
