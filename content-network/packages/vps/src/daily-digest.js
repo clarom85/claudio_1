@@ -25,7 +25,8 @@ async function run() {
   const [published, upcoming, sites, totalCounts] = await Promise.all([
     // Articoli pubblicati nelle ultime 24h
     sql`
-      SELECT a.title, a.slug, a.word_count, a.image, a.published_at, s.domain
+      SELECT a.title, a.slug, a.word_count, a.image, a.published_at, s.domain,
+             a.tokens_in, a.tokens_out, a.model_used
       FROM articles a
       JOIN sites s ON a.site_id = s.id
       WHERE a.status = 'published'
@@ -69,6 +70,16 @@ async function run() {
 
   await sendEmail(subject, html);
   console.log(`[digest] Sent — ${pubCount} published, ${upCount} upcoming`);
+}
+
+// API cost per token (USD per 1M tokens)
+const MODEL_RATES = {
+  'claude-sonnet-4-6':          { in: 3.00,  out: 15.00 },
+  'claude-haiku-4-5-20251001':  { in: 0.80,  out: 4.00  },
+};
+function computeCost(tokensIn, tokensOut, model) {
+  const rates = MODEL_RATES[model] || MODEL_RATES['claude-haiku-4-5-20251001'];
+  return (tokensIn / 1e6) * rates.in + (tokensOut / 1e6) * rates.out;
 }
 
 function buildHtml(published, upcoming, sites, totalMap, dateStr, now) {
@@ -210,6 +221,32 @@ function buildHtml(published, upcoming, sites, totalMap, dateStr, now) {
     </table>
   </div>`;
 
+  // ── Sezione: API cost (ultime 24h) ───────────────────────────────────
+  let costSection = '';
+  const articlesWithTokens = published.filter(a => a.tokens_in > 0 || a.tokens_out > 0);
+  if (articlesWithTokens.length > 0) {
+    let totalCost = 0;
+    let totalTokensIn = 0, totalTokensOut = 0;
+    let haiku = 0, sonnet = 0;
+    for (const a of articlesWithTokens) {
+      totalCost += computeCost(a.tokens_in || 0, a.tokens_out || 0, a.model_used);
+      totalTokensIn  += a.tokens_in  || 0;
+      totalTokensOut += a.tokens_out || 0;
+      if ((a.model_used || '').includes('sonnet')) sonnet++;
+      else haiku++;
+    }
+    const perArticle = totalCost / articlesWithTokens.length;
+    costSection = `<div style="margin-bottom:24px;background:#f9fff4;border-left:3px solid #27ae60;padding:12px 16px;border-radius:2px">
+      <h3 style="color:#27ae60;font-size:14px;margin:0 0 8px">💰 API Cost — ultime 24h (${articlesWithTokens.length} articoli)</h3>
+      <table style="font-size:13px;border-collapse:collapse">
+        <tr><td style="padding:2px 12px 2px 0;color:#555">Costo totale:</td><td style="font-weight:700;color:#2c3e50">$${totalCost.toFixed(4)}</td></tr>
+        <tr><td style="padding:2px 12px 2px 0;color:#555">Costo medio/articolo:</td><td style="color:#2c3e50">$${perArticle.toFixed(4)}</td></tr>
+        <tr><td style="padding:2px 12px 2px 0;color:#555">Token input/output:</td><td style="color:#2c3e50">${totalTokensIn.toLocaleString()} / ${totalTokensOut.toLocaleString()}</td></tr>
+        <tr><td style="padding:2px 12px 2px 0;color:#555">Haiku / Sonnet:</td><td style="color:#2c3e50">${haiku} / ${sonnet}</td></tr>
+      </table>
+    </div>`;
+  }
+
   return `<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:20px">
   <h2 style="color:#2c3e50;margin-bottom:2px">📰 Daily Digest — Content Network</h2>
   <p style="color:#888;font-size:13px;margin-top:0 0 24px">${dateStr}</p>
@@ -217,6 +254,7 @@ function buildHtml(published, upcoming, sites, totalMap, dateStr, now) {
   ${statusSection}
   ${upSection}
   ${pubSection}
+  ${costSection}
 
   <div style="background:#f0f7ff;border-left:3px solid #3498db;padding:10px 14px;border-radius:2px;margin-top:8px">
     <p style="margin:0;font-size:12px;color:#555">

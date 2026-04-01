@@ -169,10 +169,10 @@ export async function getExpansionSeeds(nicheId, limit = 15) {
 }
 
 // ── Articles ─────────────────────────────────────────────────
-export async function insertArticle({ siteId, keywordId, slug, title, metaDescription, content, wordCount, schemaMarkup, tags = [] }) {
+export async function insertArticle({ siteId, keywordId, slug, title, metaDescription, content, wordCount, schemaMarkup, tags = [], tokensIn = 0, tokensOut = 0, modelUsed = null }) {
   const [article] = await sql`
-    INSERT INTO articles (site_id, keyword_id, slug, title, meta_description, content, word_count, schema_markup, tags)
-    VALUES (${siteId}, ${keywordId}, ${slug}, ${title}, ${metaDescription}, ${content}, ${wordCount}, ${JSON.stringify(schemaMarkup || [])}, ${tags})
+    INSERT INTO articles (site_id, keyword_id, slug, title, meta_description, content, word_count, schema_markup, tags, tokens_in, tokens_out, model_used)
+    VALUES (${siteId}, ${keywordId}, ${slug}, ${title}, ${metaDescription}, ${content}, ${wordCount}, ${JSON.stringify(schemaMarkup || [])}, ${tags}, ${tokensIn}, ${tokensOut}, ${modelUsed})
     ON CONFLICT (site_id, slug) DO NOTHING
     RETURNING *
   `;

@@ -7,6 +7,7 @@ import 'dotenv/config';
 import { mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
+import { purgeCache } from './cloudflare.js';
 import { classifyArticle } from '@content-network/content-engine/src/categories.js';
 import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
 
@@ -202,6 +203,11 @@ async function run() {
   writeFileSync(join(apiDir, 'trending.json'),  JSON.stringify(lite.slice(0, 8)), 'utf-8');
 
   console.log(`\n✅ Completato: ${ok} ok, ${fail} falliti`);
+  if (process.env.CLOUDFLARE_API_TOKEN) {
+    console.log('\nPurgando CF cache...');
+    await purgeCache(site.domain).catch(e => console.warn(`  ⚠ CF ${site.domain}: ${e.message}`));
+    console.log('CF cache purgata ✓');
+  }
   process.exit(0);
 }
 

@@ -148,7 +148,10 @@ async function run() {
         category: article.category,
         author: article.author,
         excerpt: article.excerpt,
-        date: article.date
+        date: article.date,
+        tokensIn: article.tokensIn || 0,
+        tokensOut: article.tokensOut || 0,
+        modelUsed: article.modelUsed || null,
       });
 
       if (saved) {

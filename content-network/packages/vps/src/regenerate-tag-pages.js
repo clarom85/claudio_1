@@ -12,6 +12,7 @@ import 'dotenv/config';
 import { readFileSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
+import { purgeCache } from './cloudflare.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 const TEMPLATES_DIR = new URL('../../../templates', import.meta.url).pathname;
@@ -93,6 +94,11 @@ async function run() {
   }
 
   console.log('\nDone.');
+  if (process.env.CLOUDFLARE_API_TOKEN) {
+    console.log('\nPurgando CF cache...');
+    await Promise.all(sites.map(s => purgeCache(s.domain).catch(e => console.warn(`  ⚠ CF ${s.domain}: ${e.message}`))));
+    console.log('CF cache purgata ✓');
+  }
   process.exit(0);
 }
 

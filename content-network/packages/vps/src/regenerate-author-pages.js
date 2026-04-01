@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql } from '@content-network/db';
+import { purgeCache } from './cloudflare.js';
 import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 
@@ -232,6 +233,11 @@ async function run() {
   }
 
   console.log(`\nCompletato: ${ok} ok, ${fail} falliti`);
+  if (process.env.CLOUDFLARE_API_TOKEN) {
+    console.log('\nPurgando CF cache...');
+    await Promise.all(sites.map(s => purgeCache(s.domain).catch(e => console.warn(`  ⚠ CF ${s.domain}: ${e.message}`))));
+    console.log('CF cache purgata ✓');
+  }
   process.exit(0);
 }
 

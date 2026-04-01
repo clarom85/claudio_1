@@ -139,3 +139,8 @@ CREATE TABLE IF NOT EXISTS price_snapshots (
   UNIQUE(niche_slug, metric_key, period)
 );
 CREATE INDEX IF NOT EXISTS idx_price_snapshots_niche ON price_snapshots(niche_slug, period DESC);
+
+-- API token tracking per cost monitoring
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tokens_in INTEGER DEFAULT 0;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS tokens_out INTEGER DEFAULT 0;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS model_used TEXT;

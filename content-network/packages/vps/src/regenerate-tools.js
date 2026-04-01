@@ -8,6 +8,7 @@ import 'dotenv/config';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
+import { purgeCache } from './cloudflare.js';
 import { TOOL_CONFIGS } from '@content-network/content-engine/src/tools/tool-configs.js';
 import { generateToolBody } from '@content-network/content-engine/src/tools/tool-generator.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
@@ -104,6 +105,11 @@ async function run() {
   }
 
   console.log(`\nCompletato: ${ok} ok, ${skip} skip, ${fail} falliti`);
+  if (process.env.CLOUDFLARE_API_TOKEN) {
+    console.log('\nPurgando CF cache...');
+    await Promise.all(sites.map(s => purgeCache(s.domain).catch(e => console.warn(`  ⚠ CF ${s.domain}: ${e.message}`))));
+    console.log('CF cache purgata ✓');
+  }
   process.exit(0);
 }
 

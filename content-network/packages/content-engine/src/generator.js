@@ -95,6 +95,8 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         messages: [{ role: 'user', content: prompt }]
       });
 
+      const tokensIn  = message.usage?.input_tokens  || 0;
+      const tokensOut = message.usage?.output_tokens || 0;
       const rawContent = message.content[0].text;
 
       // Parse JSON response
@@ -178,6 +180,12 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         template: site.template || ''
       });
 
+      // Reject suspiciously short articles (Claude API partial response / JSON truncation)
+      const MIN_WORD_COUNT = 400;
+      if (wordCount < MIN_WORD_COUNT) {
+        throw new Error(`Articolo troppo corto: ${wordCount} parole (minimo ${MIN_WORD_COUNT}) — possibile risposta API troncata`);
+      }
+
       // Fetch image from Pexels if a public directory is provided
       let image = null;
       if (sitePublicDir) {
@@ -199,7 +207,10 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         category: articleData.category || niche.name,
         author: author.name,
         excerpt: articleData.intro?.slice(0, 160) || metaDescription,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        tokensIn,
+        tokensOut,
+        modelUsed: model,
       };
 
     } catch (err) {

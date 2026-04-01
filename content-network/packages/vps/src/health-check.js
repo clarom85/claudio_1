@@ -206,8 +206,14 @@ async function run() {
           issues.push(`http-${res.status}`);
         }
       } catch (e) {
-        warn(`HTTP check failed: ${e.message} (DNS may not have propagated yet)`);
-        warnings.push('http-unreachable');
+        const isNetworkError = /ECONNREFUSED|ENOTFOUND|ERR_NAME_NOT_RESOLVED|ECONNRESET/.test(String(e.message));
+        if (isNetworkError) {
+          // VPS può non riuscire a fare self-fetch tramite CF — non è un problema reale
+          warn(`HTTP check non disponibile dal VPS (${e.code || e.message.split(' ')[0]}) — verificare manualmente`);
+        } else {
+          warn(`HTTP check failed: ${e.message}`);
+          warnings.push('http-unreachable');
+        }
       }
     }
 
@@ -267,6 +273,24 @@ async function run() {
         issues.push('sitemap-ip-url');
       }
     }
+
+    // ── 12. Articoli pubblicati senza hero image ─────────────────────────
+    try {
+      const noImgRows = await sql`
+        SELECT COUNT(*) as count FROM articles
+        WHERE site_id = ${site.id} AND status = 'published'
+          AND (image IS NULL OR image = '')
+      `;
+      const noImgCount = parseInt(noImgRows[0].count);
+      if (noImgCount > 5) {
+        warn(`${noImgCount} articoli senza hero image — eseguire Pexels fetcher`);
+        warnings.push('articles-no-image');
+      } else if (noImgCount > 0) {
+        warn(`${noImgCount} articoli senza hero image`);
+      } else {
+        ok('Tutti gli articoli hanno hero image');
+      }
+    } catch (e) { /* non bloccante */ }
 
     // ── Risultato sito ────────────────────────────────────────────────────
     if (issues.length === 0 && warnings.length === 0) {

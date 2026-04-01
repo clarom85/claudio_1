@@ -76,6 +76,9 @@ export async function runBackup() {
     );
 
     const size = statSync(dbFile).size;
+    if (size < 10_000) {
+      throw new Error(`pg_dump output troppo piccolo (${formatSize(size)}) — backup probabilmente vuoto o corrotto`);
+    }
     results.db = `${dbFile} (${formatSize(size)})`;
     console.log(`  ✅ DB backup: ${formatSize(size)}`);
     pruneOldBackups('db');
@@ -97,6 +100,9 @@ export async function runBackup() {
     });
 
     const size = statSync(wwwFile).size;
+    if (size < 100_000) {
+      throw new Error(`tar output troppo piccolo (${formatSize(size)}) — backup probabilmente vuoto`);
+    }
     results.www = `${wwwFile} (${formatSize(size)})`;
     console.log(`  ✅ WWW backup: ${formatSize(size)}`);
     pruneOldBackups('www');
@@ -104,8 +110,7 @@ export async function runBackup() {
     const msg = e.message?.slice(0, 200) || 'unknown error';
     console.error(`  ❌ WWW backup failed: ${msg}`);
     results.wwwError = msg;
-    // WWW è meno critico del DB — solo warning
-    // I file HTML possono essere rigenerati, il DB no
+    await alertCritical('WWW backup failed', msg);
   }
 
   // ── 3. Lista backup esistenti ─────────────────────────────────────────
