@@ -35,7 +35,10 @@ export function writeSiteFile(domain, filename, content) {
 }
 
 // ── Nginx virtual host ───────────────────────────────────────
-export function createNginxConfig(domain) {
+export function createNginxConfig(domain, customRedirects = '') {
+  const customBlock = customRedirects.trim()
+    ? `\n    # BEGIN CUSTOM REDIRECTS\n${customRedirects.trim().split('\n').map(l => '    ' + l.trim()).join('\n')}\n    # END CUSTOM REDIRECTS\n`
+    : '\n    # BEGIN CUSTOM REDIRECTS\n    # END CUSTOM REDIRECTS\n';
   const config = `# Redirect www → non-www (301 permanent)
 server {
     listen 80;
@@ -61,7 +64,7 @@ server {
         add_header Access-Control-Allow-Headers "Content-Type" always;
         if ($request_method = OPTIONS) { return 204; }
     }
-
+${customBlock}
     # HTML pages — cache at Cloudflare edge for 1 hour, revalidate after
     location / {
         try_files $uri $uri/ $uri/index.html =404;
