@@ -822,7 +822,7 @@ async function generateStaticPages(domain, siteConfig, template) {
       const isYmyl = author.ymyl === true;
       return {
         title: 'Disclaimer',
-        noindex: true,
+        noindex: !isYmyl,   // YMYL sites: disclaimer indexed (AdSense/trust signal)
         description: isYmyl
           ? `Legal disclaimer for ${siteName} — not professional advice, affiliate disclosure, limitation of liability.`
           : `Disclaimer for ${domain}`,
