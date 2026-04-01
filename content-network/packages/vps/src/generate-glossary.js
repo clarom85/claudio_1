@@ -16,8 +16,13 @@ function htmlEsc(str = '') {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+const DARK_TEMPLATES = new Set(['nexus', 'vortex']);
+
 function simplePageWrapper(title, description, content, siteConfig, opts = {}) {
-  const { noindex = false, canonical = '' } = opts;
+  const { noindex = false, canonical = '', template = '' } = opts;
+  const wrappedContent = DARK_TEMPLATES.has(template)
+    ? `<div style="background:#fff;color:#1a1a1a;border-radius:8px;padding:32px 24px;margin:32px auto;max-width:1000px;box-shadow:0 2px 16px rgba(0,0,0,.18)">${content}</div>`
+    : content;
   const effectiveOgImage = `${siteConfig.url}/images/og-default.jpg`;
   const ga4Id = siteConfig.ga4MeasurementId || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -52,7 +57,7 @@ ${ga4Script}
     <a href="/tools/" style="color:rgba(255,255,255,.7);text-decoration:none">Calculator</a>
   </nav>
 </header>
-<main style="padding:20px 0;min-height:60vh">${content}</main>
+<main style="padding:20px 0;min-height:60vh">${wrappedContent}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
   <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
      <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;
@@ -190,7 +195,7 @@ function buildTermPage(term, allTerms, nicheName, siteConfig) {
  * Exported function for site-spawner integration.
  * @param {object} opts - { domain, nicheSlug, nicheName, ga4MeasurementId }
  */
-export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4MeasurementId = '' }) {
+export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4MeasurementId = '', template = '' }) {
   const terms = GLOSSARY_TERMS[nicheSlug];
   if (!terms?.length) return 0;
 
@@ -208,7 +213,7 @@ export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4Measu
     `Complete glossary of ${resolvedNicheName.toLowerCase()} terms. ${terms.length} key concepts explained in plain English.`,
     buildGlossaryIndex(terms, resolvedNicheName, siteConfig),
     siteConfig,
-    { noindex: false, canonical: `${siteConfig.url}/glossary/` }
+    { noindex: false, canonical: `${siteConfig.url}/glossary/`, template }
   );
   writeFileSync(join(glossaryRoot, 'index.html'), indexHtml, 'utf-8');
 
@@ -222,7 +227,7 @@ export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4Measu
         `${term.shortDef.slice(0, 140)} Full definition with real-world examples.`,
         buildTermPage(term, terms, resolvedNicheName, siteConfig),
         siteConfig,
-        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/` }
+        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/`, template }
       ),
       'utf-8'
     );
@@ -255,8 +260,8 @@ async function run() {
   }
 
   const sites = all
-    ? await sql`SELECT s.id, s.domain, s.ga4_measurement_id, n.slug AS niche_slug, n.name AS niche_name FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
-    : await sql`SELECT s.id, s.domain, s.ga4_measurement_id, n.slug AS niche_slug, n.name AS niche_name FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
+    ? await sql`SELECT s.id, s.domain, s.template, s.ga4_measurement_id, n.slug AS niche_slug, n.name AS niche_name FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
+    : await sql`SELECT s.id, s.domain, s.template, s.ga4_measurement_id, n.slug AS niche_slug, n.name AS niche_name FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
 
   if (!sites.length) { console.error('Nessun sito trovato'); process.exit(1); }
 
@@ -291,7 +296,7 @@ async function run() {
       `Complete glossary of ${nicheName.toLowerCase()} terms and definitions. ${terms.length} key concepts explained in plain English for homeowners, buyers, and consumers.`,
       indexContent,
       siteConfig,
-      { noindex: false, canonical: `${siteConfig.url}/glossary/` }
+      { noindex: false, canonical: `${siteConfig.url}/glossary/`, template: site.template || '' }
     );
     writeFileSync(join(glossaryRoot, 'index.html'), indexHtml, 'utf-8');
 
@@ -305,7 +310,7 @@ async function run() {
         `${term.shortDef.slice(0, 140)} Full definition with real-world examples.`,
         termContent,
         siteConfig,
-        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/` }
+        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/`, template: site.template || '' }
       );
       writeFileSync(join(termDir, 'index.html'), termHtml, 'utf-8');
     }

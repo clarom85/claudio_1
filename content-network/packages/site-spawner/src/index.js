@@ -136,6 +136,7 @@ async function run() {
         nicheSlug,
         nicheName: niche.name,
         ga4MeasurementId: siteConfig.ga4MeasurementId || '',
+        template,
       });
       if (termCount) console.log(`  ✅ Glossary: ${termCount} terms at /glossary/`);
     } catch (err) {
