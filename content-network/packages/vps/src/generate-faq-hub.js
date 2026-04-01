@@ -88,7 +88,7 @@ ${ga4Script}
     <a href="/tools/" style="color:rgba(255,255,255,.7);text-decoration:none">Calculator</a>
   </nav>
 </header>
-<main style="padding:20px 0;min-height:60vh">${content}</main>
+<main style="padding:0;min-height:60vh;background:#fff;color:#1a1a1a"><div style="max-width:900px;margin:0 auto;padding:28px 20px">${content}</div></main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
   <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
      <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;

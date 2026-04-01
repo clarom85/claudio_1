@@ -192,7 +192,7 @@ ${ga4Script}
     <a href="/cost-tracker/" style="color:#fff;text-decoration:none;font-weight:700">Cost Tracker</a>
   </nav>
 </header>
-<main style="max-width:760px;margin:0 auto;padding:28px 20px">
+<main style="max-width:760px;margin:16px auto;padding:28px 20px;background:#fff;color:#1a1a1a;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,.15)">
   <nav aria-label="Breadcrumb" style="font-size:13px;color:#888;margin-bottom:20px">
     <a href="/" style="color:#2980b9;text-decoration:none">${htmlEsc(siteConfig.name)}</a>
     <span style="margin:0 6px">›</span>

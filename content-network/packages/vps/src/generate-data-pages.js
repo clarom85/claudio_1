@@ -128,7 +128,7 @@ h2.data-section-title{font-size:20px;font-weight:700;margin:36px 0 16px;padding-
     <a href="/glossary/" style="color:rgba(255,255,255,.7);text-decoration:none">Glossary</a>
   </nav>
 </header>
-<main style="min-height:60vh">${content}</main>
+<main style="min-height:60vh;background:#fff;color:#1a1a1a">${content}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:24px 20px;font-size:13px">
   <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
      <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;
