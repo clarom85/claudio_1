@@ -169,16 +169,16 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       }
 
       // Post-generation review pass — second Claude call on lightweight metadata only
-      await reviewAndFixArticle(articleData, keyword, CY);
+      await reviewAndFixArticle(articleData, kwText, CY);
 
       // Build HTML
-      const slug = slugify(keyword);
+      const slug = slugify(kwText);
       const { html, schemas, metaDescription, wordCount } = buildArticleHTML(articleData, {
         author,
         siteName: site.domain.replace(/\..+$/, '').replace(/-/g, ' '),
         siteUrl: `https://${site.domain}`,
         slug,
-        keyword,
+        keyword: kwText,
         relatedArticles: existingArticles,
         toolSlug: site.toolSlug || '',
         template: site.template || ''
@@ -193,7 +193,7 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       // Fetch image from Pexels if a public directory is provided
       let image = null;
       if (sitePublicDir) {
-        image = await fetchArticleImage(keyword, slug, sitePublicDir, {
+        image = await fetchArticleImage(kwText, slug, sitePublicDir, {
           nicheSlug: niche.slug,
           title: articleData.title || '',
         });

@@ -455,7 +455,7 @@ async function triggerDailyGeneration() {
     try {
       execSync(
         `node packages/content-engine/src/index.js --site-id ${site.id} --count ${cappedLimit}`,
-        { cwd: ROOT, stdio: 'inherit', timeout: 600000 }
+        { cwd: ROOT, stdio: 'inherit', timeout: 1200000 }
       );
     } catch (e) {
       console.log(`  ⚠️  Content engine: ${e.message?.slice(0, 80)}`);

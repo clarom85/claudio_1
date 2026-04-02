@@ -27,10 +27,10 @@ const GAP_MAX = 180;
  * I siti maturi hanno deadDayProb più bassa perché pubblicano regolarmente.
  */
 const RAMP = [
-  { maxDays:  14, minPerDay:  3, maxPerDay:  5, deadDayProb: 0.00, label: 'Warm-up (week 1-2)' },
-  { maxDays:  30, minPerDay:  5, maxPerDay:  8, deadDayProb: 0.15, label: 'Early growth (month 1)' },
-  { maxDays:  60, minPerDay:  7, maxPerDay: 11, deadDayProb: 0.25, label: 'Growth (month 2)' },
-  { maxDays:  90, minPerDay:  9, maxPerDay: 13, deadDayProb: 0.20, label: 'Established (month 3)' },
+  { maxDays:  14, minPerDay:  5, maxPerDay:  8, deadDayProb: 0.00, label: 'Warm-up (week 1-2)' },
+  { maxDays:  30, minPerDay:  7, maxPerDay: 11, deadDayProb: 0.10, label: 'Early growth (month 1)' },
+  { maxDays:  60, minPerDay:  9, maxPerDay: 13, deadDayProb: 0.15, label: 'Growth (month 2)' },
+  { maxDays:  90, minPerDay: 11, maxPerDay: 15, deadDayProb: 0.15, label: 'Established (month 3)' },
   { maxDays: 180, minPerDay: 11, maxPerDay: 14, deadDayProb: 0.12, label: 'Authority (month 4-6)' },
   { maxDays: Infinity, minPerDay: 12, maxPerDay: 15, deadDayProb: 0.08, label: 'Mature (6m+)' },
 ];
