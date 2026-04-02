@@ -570,7 +570,7 @@ async function generateStaticPages(domain, siteConfig, template) {
     },
     'privacy/index.html': {
       title: 'Privacy Policy',
-      noindex: true,
+      noindex: false,
       description: `Privacy Policy for ${domain} — how we collect, use, and protect your personal information.`,
       body: `<div style="max-width:820px;margin:48px auto;padding:0 20px;color:#1a1a1a">
         <h1 style="font-size:34px;font-weight:700;margin-bottom:8px">Privacy Policy</h1>
