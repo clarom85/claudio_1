@@ -294,6 +294,30 @@ function checkKeywordCannibalization(keyword, existingSlugs, existingTitles, exi
     return { skip: true, reason: `keyword too similar to existing title: "${kwDup}"` };
   }
 
+  // Level 2.25: topic fingerprint of keyword vs fingerprints of existing TITLES.
+  // Catches cases where keyword and existing title address the same topic with different phrasing.
+  // E.g. "term vs whole life insurance for seniors" → same topic as "whole life insurance: true costs".
+  // Uses lower threshold (0.52) than Level 2.5 to catch title-level overlaps pre-generation.
+  // Only fires if existingTitles is populated (avoids false positives on brand-new sites).
+  if (existingTitles.length >= 3) {
+    const kwFpT = topicFingerprint(kw);
+    if (kwFpT.length > 0) {
+      const kwTokT = new Set(kwFpT.split(' ').filter(Boolean));
+      for (const title of existingTitles) {
+        const tFp = topicFingerprint(title);
+        if (!tFp) continue;
+        const tTok = new Set(tFp.split(' ').filter(Boolean));
+        if (tTok.size < 2) continue;
+        const inter = [...kwTokT].filter(t => tTok.has(t)).length;
+        const union = new Set([...kwTokT, ...tTok]).size;
+        if (union === 0) continue;
+        if (inter / union >= 0.52) {
+          return { skip: true, reason:  };
+        }
+      }
+    }
+  }
+
   // Level 2.5: topic fingerprint check against source keywords of published articles.
   // Confronta la keyword stripped (senza stop words, con sinonimi) contro le keyword sorgente
   // degli articoli già pubblicati. Cattura duplicati semantici che Jaccard non rileva.
