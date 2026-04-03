@@ -65,6 +65,23 @@ async function run() {
   // 1. Pubblica articoli in coda
   try { await publishDueArticles(stats); } catch (e) { console.error(`  ❌ publishDueArticles: ${e.message}`); }
 
+  // 1b. Keyword pool cleanup giornaliero (05:xx UTC) — prima della generazione
+  // Rimuove keyword near-duplicate rispetto ad articoli già pubblicati
+  if (now.getHours() === 5) {
+    try {
+      const liveSites = await withDbRetry(() => getSitesByStatus("live"));
+      for (const site of liveSites) {
+        const [niche] = await sql`SELECT slug FROM niches WHERE id = ${site.niche_id}`;
+        if (!niche) continue;
+        execSync(
+          `node packages/vps/src/cleanup-keyword-pool.js --niche ${niche.slug}`,
+          { cwd: ROOT, stdio: "pipe", timeout: 120000 }
+        );
+      }
+      console.log("  ✅ Daily keyword cleanup done");
+    } catch (e) { console.error(`  ❌ daily-keyword-cleanup: ${e.message}`); }
+  }
+
   // 2. Genera nuovi articoli (ogni giorno alle 06:xx UTC = 01:00 EST, pre-alba)
   // A quest'ora getPublishTime() schedula gli slot dalle 08:00 EST in poi — zero pubblicazioni notturne
   if (now.getHours() === 6) {
