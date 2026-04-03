@@ -227,6 +227,62 @@ async function _getAccountId() {
  * Setup completo Cloudflare per un nuovo dominio.
  * @returns {{ nameservers: string[], zoneId: string }} — nameservers da impostare sul registrar
  */
+/**
+ * Creates a "Cache Everything" ruleset on a Cloudflare zone with Edge TTL 1h.
+ * Uses CF_CACHE_RULES_TOKEN (zone-scoped Cache Rules token, separate from the main token).
+ * Idempotent: if a ruleset already exists, updates it in-place.
+ */
+export async function createCacheEverythingRule(zoneId) {
+  const token = process.env.CF_CACHE_RULES_TOKEN;
+  if (!token) {
+    console.log('  ℹ️  CF_CACHE_RULES_TOKEN not set — skipping cache rule creation');
+    return;
+  }
+  const ruleBody = {
+    rules: [{
+      expression: 'true',
+      action: 'set_cache_settings',
+      action_parameters: {
+        cache: true,
+        edge_ttl: { mode: 'override_origin', default: 3600 },
+        browser_ttl: { mode: 'override_origin', default: 1800 },
+        serve_stale: { disable_stale_while_updating: false }
+      },
+      description: 'Cache Everything — Edge TTL 1h',
+      enabled: true
+    }]
+  };
+
+  const cfHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const base = `${CF_API}/zones/${zoneId}/rulesets`;
+
+  // Check for existing Cache Rules phase ruleset
+  const listRes = await fetch(base, { headers: cfHeaders });
+  const listData = await listRes.json();
+  const existing = (listData.result || []).find(r => r.phase === 'http_request_cache_settings');
+
+  let res;
+  if (existing) {
+    res = await fetch(`${base}/${existing.id}`, {
+      method: 'PUT',
+      headers: cfHeaders,
+      body: JSON.stringify({ ...ruleBody, name: 'Cache Everything', phase: 'http_request_cache_settings' })
+    });
+  } else {
+    res = await fetch(base, {
+      method: 'POST',
+      headers: cfHeaders,
+      body: JSON.stringify({ ...ruleBody, name: 'Cache Everything', kind: 'zone', phase: 'http_request_cache_settings' })
+    });
+  }
+  const data = await res.json();
+  if (!data.success) {
+    const errs = data.errors?.map(e => e.message).join(', ') || 'Unknown error';
+    throw new Error(`CF Cache Rule: ${errs}`);
+  }
+  console.log(`  ✅ Cache Everything rule set (Edge TTL 1h)`);
+}
+
 export async function setupDomain(domain, serverIp) {
   console.log(`☁️  Setting up Cloudflare for ${domain}...`);
 
@@ -240,6 +296,13 @@ export async function setupDomain(domain, serverIp) {
     await setupEmailRouting(zone.id, forwardTo);
   } catch (err) {
     console.warn(`  ⚠️  Email routing setup failed (non-blocking): ${err.message}`);
+  }
+
+  // Cache Everything rule — improves performance + reduces origin load
+  try {
+    await createCacheEverythingRule(zone.id);
+  } catch (err) {
+    console.warn(`  ⚠️  Cache rule setup failed (non-blocking): ${err.message}`);
   }
 
   const nameservers = zone.name_servers || [];
