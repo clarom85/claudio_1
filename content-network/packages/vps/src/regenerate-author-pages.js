@@ -17,7 +17,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql } from '@content-network/db';
 import { purgeCache } from './cloudflare.js';
-import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
+import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -102,70 +102,9 @@ function buildAuthorContent(author, siteConfig) {
 </div>`;
 }
 
-async function regenerateAuthorPage(site) {
-  const { renderBase, renderHeader, renderFooter } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
-
-  const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+function writeAuthorPage(site, author, siteConfig, renderBase, renderHeader, renderFooter) {
   const siteUrl = `https://${site.domain}`;
-
-  let toolSlug = null, toolLabel = 'Free Calculator';
-  try {
-    const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
-    toolSlug = TOOL_CONFIGS[site.niche_slug]?.slug || null;
-    toolLabel = TOOL_CONFIGS[site.niche_slug]?.navLabel || 'Free Calculator';
-  } catch {}
-
-  const categories = getCategoriesForNiche(site.niche_slug).slice(0, 7);
-
-  const siteConfig = {
-    name: siteName, url: siteUrl, domain: site.domain, template: site.template,
-    categories, toolSlug, toolLabel, hasCostTracker: false,
-    adsenseId: process.env.ADSENSE_ID || '',
-    ga4MeasurementId: site.ga4_measurement_id || '',
-    mgidSiteId: site.mgid_site_id || '',
-    mgidInArticleId: '', mgidSmartId: '',
-    authorName: '', authorAvatar: '', authorTitle: '',
-    reviewer: null, trustSources: '', trustMethodology: '', ymyl: false,
-  };
-
-  // Try to load persisted longBio from api/author.json
-  let author = null;
-  const authorJsonPath = join(WWW_ROOT, site.domain, 'api', 'author.json');
-  if (existsSync(authorJsonPath)) {
-    try {
-      const saved = JSON.parse(readFileSync(authorJsonPath, 'utf-8'));
-      if (saved.longBio && saved.longBio.length > 200) {
-        author = {
-          avatar: saved.slug,
-          name: saved.name,
-          title: saved.title,
-          longBio: saved.longBio,
-          shortBio: saved.shortBio,
-          socialLinks: saved.socialLinks || {}
-        };
-        console.log(`  Loaded longBio from api/author.json (${saved.longBio.split(' ').length} words)`);
-      }
-    } catch (err) {
-      console.warn(`  [author] Could not read api/author.json: ${err.message}`);
-    }
-  }
-
-  // Fallback to AUTHOR_PERSONAS (shortBio only)
-  if (!author) {
-    const persona = AUTHOR_PERSONAS[site.niche_slug] || AUTHOR_PERSONAS['home-improvement-costs'];
-    author = {
-      avatar: persona.avatar,
-      name: persona.name,
-      title: persona.title,
-      longBio: null,
-      shortBio: persona.bio,
-      socialLinks: {
-        linkedin: `https://linkedin.com/in/${persona.avatar}`,
-        twitter: `https://twitter.com/${persona.avatar.replace(/-/g, '')}`
-      }
-    };
-    console.warn(`  ⚠️  api/author.json not found — using shortBio fallback`);
-  }
+  const siteName = siteConfig.name;
 
   const content = buildAuthorContent(author, siteConfig);
   const body = `${renderHeader(siteConfig)}<main class="site-main"><div class="wrap">${content}</div></main>${renderFooter(siteConfig)}`;
@@ -199,6 +138,88 @@ async function regenerateAuthorPage(site) {
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'index.html'), html, 'utf-8');
   console.log(`  ✅ /author/${author.avatar}/ — ${author.longBio ? author.longBio.split(' ').length : 0} words`);
+}
+
+async function regenerateAuthorPage(site) {
+  const { renderBase, renderHeader, renderFooter } = await import(`${TEMPLATES_DIR}/${site.template}/src/layout.js`);
+
+  const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const siteUrl = `https://${site.domain}`;
+
+  let toolSlug = null, toolLabel = 'Free Calculator';
+  try {
+    const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
+    toolSlug = TOOL_CONFIGS[site.niche_slug]?.slug || null;
+    toolLabel = TOOL_CONFIGS[site.niche_slug]?.navLabel || 'Free Calculator';
+  } catch {}
+
+  const categories = getCategoriesForNiche(site.niche_slug).slice(0, 7);
+
+  const siteConfig = {
+    name: siteName, url: siteUrl, domain: site.domain, template: site.template,
+    categories, toolSlug, toolLabel, hasCostTracker: false,
+    adsenseId: process.env.ADSENSE_ID || '',
+    ga4MeasurementId: site.ga4_measurement_id || '',
+    mgidSiteId: site.mgid_site_id || '',
+    mgidInArticleId: '', mgidSmartId: '',
+    authorName: '', authorAvatar: '', authorTitle: '',
+    reviewer: null, trustSources: '', trustMethodology: '', ymyl: false,
+  };
+
+  // --- Primary author: try to load longBio from api/author.json ---
+  let primaryAuthor = null;
+  const authorJsonPath = join(WWW_ROOT, site.domain, 'api', 'author.json');
+  if (existsSync(authorJsonPath)) {
+    try {
+      const saved = JSON.parse(readFileSync(authorJsonPath, 'utf-8'));
+      if (saved.longBio && saved.longBio.length > 200) {
+        primaryAuthor = {
+          avatar: saved.slug,
+          name: saved.name,
+          title: saved.title,
+          longBio: saved.longBio,
+          shortBio: saved.shortBio,
+          socialLinks: saved.socialLinks || {}
+        };
+        console.log(`  Loaded longBio from api/author.json (${saved.longBio.split(' ').length} words)`);
+      }
+    } catch (err) {
+      console.warn(`  [author] Could not read api/author.json: ${err.message}`);
+    }
+  }
+  if (!primaryAuthor) {
+    const persona = AUTHOR_PERSONAS[site.niche_slug] || AUTHOR_PERSONAS['home-improvement-costs'];
+    primaryAuthor = {
+      avatar: persona.avatar,
+      name: persona.name,
+      title: persona.title,
+      longBio: null,
+      shortBio: persona.bio,
+      socialLinks: {
+        linkedin: `https://linkedin.com/in/${persona.avatar}`,
+        twitter: `https://twitter.com/${persona.avatar.replace(/-/g, '')}`
+      }
+    };
+    console.warn(`  ⚠️  api/author.json not found — using shortBio fallback`);
+  }
+  writeAuthorPage(site, primaryAuthor, siteConfig, renderBase, renderHeader, renderFooter);
+
+  // --- Additional authors (shortBio from ADDITIONAL_AUTHORS) ---
+  const additionals = ADDITIONAL_AUTHORS[site.niche_slug] || [];
+  for (const persona of additionals) {
+    const author = {
+      avatar: persona.avatar,
+      name: persona.name,
+      title: persona.title,
+      longBio: null,
+      shortBio: persona.bio,
+      socialLinks: {
+        linkedin: `https://linkedin.com/in/${persona.avatar}`,
+        twitter: `https://twitter.com/${persona.avatar.replace(/-/g, '')}`
+      }
+    };
+    writeAuthorPage(site, author, siteConfig, renderBase, renderHeader, renderFooter);
+  }
 }
 
 async function run() {

@@ -197,7 +197,8 @@ async function run() {
     .filter(a => a.status === 'published')
     .map(a => {
       const cat = classifyArticle(site.niche_slug, a.keyword || '', a.title);
-      return { slug: a.slug, title: a.title, excerpt: (a.meta_description || '').slice(0, 120), tags: a.tags || [], category: cat.name, categorySlug: cat.slug, image: a.image || '' };
+      const authorInfo = detectArticleAuthor(a.content, site.niche_slug);
+      return { slug: a.slug, title: a.title, excerpt: (a.meta_description || '').slice(0, 120), tags: a.tags || [], category: cat.name, categorySlug: cat.slug, image: a.image || '', author: authorInfo.name, authorAvatar: authorInfo.avatar };
     });
   writeFileSync(join(apiDir, 'articles.json'),  JSON.stringify(lite),              'utf-8');
   writeFileSync(join(apiDir, 'trending.json'),  JSON.stringify(lite.slice(0, 8)), 'utf-8');

@@ -390,7 +390,7 @@ async function rebuildAffectedSites(stats) {
       // Sitemap + RSS feed + ping search engines
       const categoryUrls = buildCategoryUrls(articlesData);
       const tagUrls = buildTagUrls(articlesData);
-      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls], { siteName: siteConfig.name, authorSlugs: siteConfig.authorAvatar ? [siteConfig.authorAvatar] : [], toolSlug: siteConfig.toolSlug || null });
+      generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls], { siteName: siteConfig.name, authorSlugs: siteConfig.authorSlugs || [], toolSlug: siteConfig.toolSlug || null });
       generateRssFeed(site.domain, published, { siteName: siteConfig.name });
       await pingSitemap(site.domain);
 
@@ -766,7 +766,7 @@ function buildTagUrls(articles) {
 }
 
 async function buildSiteConfig(site, nicheSlug) {
-  const { AUTHOR_PERSONAS } = await import('@content-network/content-engine/src/prompts.js');
+  const { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } = await import('@content-network/content-engine/src/prompts.js');
   const author = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
   // Load categories from api/categories.json (written by updateApiFiles)
@@ -811,6 +811,9 @@ async function buildSiteConfig(site, nicheSlug) {
     toolSlug = TOOL_CONFIGS[nicheSlug]?.slug || null;
   } catch {}
 
+  const additionalAuthors = ADDITIONAL_AUTHORS[nicheSlug] || [];
+  const authorSlugs = [author.avatar, ...additionalAuthors.map(a => a.avatar)];
+
   return {
     id: site.id,
     domain: site.domain,
@@ -821,6 +824,7 @@ async function buildSiteConfig(site, nicheSlug) {
     authorTitle: author.title,
     authorBio: author.bio,
     authorAvatar: author.avatar,
+    authorSlugs,
     reviewer: author.reviewer || null,
     trustSources: author.trustSources || '',
     trustMethodology: author.trustMethodology || '',
