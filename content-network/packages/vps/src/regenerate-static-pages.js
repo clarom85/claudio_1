@@ -513,6 +513,164 @@ function buildAboutPage(siteName, domain, nicheSlug) {
   };
 }
 
+// ── Terms of Service builder ──────────────────────────────────────────────────
+function buildTermsPage(siteName, domain) {
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  return {
+    title: 'Terms of Service',
+    noindex: false,
+    description: `Terms of service for ${domain}`,
+    body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+      <h1 style="font-size:32px;margin-bottom:8px">Terms of Service</h1>
+      <p style="color:#999;margin-bottom:32px">Last updated: ${today}</p>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:24px">These Terms of Service ("Terms") govern your access to and use of ${domain} (the "Site"), operated by ${siteName}. By accessing or using the Site, you agree to be bound by these Terms. If you do not agree, please do not use the Site.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">1. Acceptance of Terms</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">By accessing ${domain}, you confirm that you are at least 13 years of age, have read and understood these Terms, and agree to be bound by them. We reserve the right to modify these Terms at any time. Continued use of the Site after changes constitutes acceptance of the updated Terms.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">2. Use of the Site</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">You may use the Site for lawful purposes only. You agree not to:</p>
+      <ul style="font-size:16px;line-height:1.8;margin-bottom:16px;padding-left:24px">
+        <li style="margin-bottom:8px">Use the Site in any way that violates applicable laws or regulations</li>
+        <li style="margin-bottom:8px">Scrape, crawl, or harvest content from the Site in bulk without written permission</li>
+        <li style="margin-bottom:8px">Reproduce, republish, or redistribute our content without attribution and a link back to the original</li>
+        <li style="margin-bottom:8px">Attempt to gain unauthorized access to any part of the Site or its servers</li>
+        <li style="margin-bottom:8px">Transmit malware, viruses, or any harmful code</li>
+      </ul>
+      <h2 style="font-size:22px;margin:32px 0 12px">3. Intellectual Property</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">All content on ${domain}, including text, images, graphics, logos, and editorial content, is the property of ${siteName} and is protected by applicable copyright, trademark, and intellectual property laws.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">4. Disclaimer of Warranties</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The content on ${domain} is provided for general informational purposes only. <strong>Nothing on this Site constitutes professional advice</strong> — including legal, financial, medical, or construction advice. Always consult a qualified professional before making decisions based on information found on this Site.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">5. Limitation of Liability</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">To the fullest extent permitted by law, ${siteName} shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the Site or its content.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">6. Third-Party Links</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The Site may contain links to third-party websites. We have no control over the content of those sites and accept no responsibility for them or for any loss or damage that may arise from your use of them.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">7. Advertising and Affiliate Relationships</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The Site displays advertising served by Google AdSense and may participate in affiliate marketing programs. When you click on affiliate links, we may earn a commission at no additional cost to you. Advertising relationships do not influence our editorial content or recommendations.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">8. Privacy</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Your use of the Site is also governed by our <a href="/privacy/" style="color:#c0392b">Privacy Policy</a>, which is incorporated into these Terms by reference.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">9. Indemnification</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">You agree to indemnify and hold harmless ${siteName}, its editors, contributors, and affiliates from any claim, liability, damage, or expense arising from your use of the Site or violation of these Terms.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">10. Governing Law</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">These Terms shall be governed by and construed in accordance with applicable law.</p>
+      <h2 style="font-size:22px;margin:32px 0 12px">11. Contact Us</h2>
+      <p style="font-size:16px;line-height:1.8">Questions about these Terms? Contact us: 📧 <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
+    </div>`
+  };
+}
+
+// ── Disclaimer builder (YMYL-aware) ──────────────────────────────────────────
+function buildDisclaimerPage(siteName, domain, nicheSlug) {
+  const isInsurance = nicheSlug === 'insurance-guide';
+  const isLegal     = nicheSlug === 'legal-advice';
+  const isMedical   = ['health-symptoms', 'mental-health-wellness', 'senior-care-medicare'].includes(nicheSlug);
+  const isFinancial = ['credit-cards-banking', 'real-estate-investing', 'personal-finance'].includes(nicheSlug);
+  const isYmyl = isInsurance || isLegal || isMedical || isFinancial;
+  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  if (!isYmyl) {
+    return {
+      title: 'Disclaimer',
+      noindex: false,
+      description: `Disclaimer for ${domain}`,
+      body: `<div style="max-width:800px;margin:40px auto;padding:0 20px">
+        <h1 style="font-size:32px;margin-bottom:16px">Disclaimer</h1>
+        <p style="color:#999;margin-bottom:28px">Last updated: ${today}</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">The information provided on ${siteName} is for general informational purposes only. While we strive to keep information accurate and up-to-date, we make no representations or warranties of any kind about the completeness, accuracy, reliability, or suitability of the information on this site for any purpose.</p>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Any reliance you place on such information is strictly at your own risk. In no event will we be liable for any loss or damage including without limitation, indirect or consequential loss or damage, arising from use of this site.</p>
+        <h2 style="font-size:22px;margin:32px 0 12px">Cost and Price Estimates</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Any cost estimates, price ranges, or average figures are based on publicly available data and industry research. Actual costs vary significantly by location, contractor, materials, and market conditions. Always obtain multiple quotes from licensed professionals before proceeding.</p>
+        <h2 style="font-size:22px;margin:32px 0 12px">Affiliate and Advertising Disclosure</h2>
+        <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteName} may earn commissions from affiliate links. This does not affect our editorial independence or the integrity of our content. Contact: <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
+      </div>`
+    };
+  }
+
+  // YMYL version
+  const alertText = isInsurance
+    ? 'Insurance Information Disclosure — The content on this site is for educational purposes only and does not constitute insurance advice. Always consult a licensed insurance professional before making coverage decisions.'
+    : isLegal
+    ? 'Legal Information Disclosure — The content on this site is for general informational purposes only and does not constitute legal advice. Always consult a licensed attorney for advice specific to your situation.'
+    : isMedical
+    ? 'Health Information Disclosure — The content on this site is for general informational purposes only and does not constitute medical advice. Always consult a licensed healthcare professional for advice specific to your health condition.'
+    : 'Financial Information Disclosure — The content on this site is for general informational purposes only and does not constitute financial or investment advice. Always consult a licensed financial advisor before making financial decisions.';
+
+  const s1title = isInsurance ? '1. Not Insurance Advice' : isLegal ? '1. Not Legal Advice' : isMedical ? '1. Not Medical Advice' : '1. Not Financial Advice';
+  const s1body = isInsurance
+    ? `The content published on ${siteName} is provided for <strong>general educational purposes only</strong>. Nothing on this site constitutes insurance advice, and nothing creates an insurance advisor-client relationship.`
+    : isLegal
+    ? `The content published on ${siteName} is provided for <strong>general informational purposes only</strong>. Nothing on this site constitutes legal advice, and nothing creates an attorney-client relationship.`
+    : isMedical
+    ? `The content published on ${siteName} is provided for <strong>general educational purposes only</strong>. Nothing on this site constitutes medical advice, and nothing creates a doctor-patient relationship.`
+    : `The content published on ${siteName} is provided for <strong>general educational purposes only</strong>. Nothing on this site constitutes financial or investment advice, and nothing creates an advisor-client relationship.`;
+
+  const s2title = isInsurance ? '2. No Licensed Professional Relationship' : isLegal ? '2. No Attorney-Client Relationship' : isMedical ? '2. No Doctor-Patient Relationship' : '2. No Advisor-Client Relationship';
+  const s2body = isInsurance
+    ? `${siteName} is not a licensed insurance company, agency, or brokerage. Our editors and contributors are not licensed insurance agents or brokers.`
+    : isLegal
+    ? `${siteName} is not a law firm and does not provide legal representation. Do not rely on this site as a substitute for professional legal counsel.`
+    : isMedical
+    ? `${siteName} is not a medical provider and does not provide diagnoses or treatment recommendations. If you are experiencing a medical emergency, call 911 immediately.`
+    : `${siteName} is not a registered investment advisor, broker-dealer, or financial planner.`;
+
+  const s3title = isInsurance ? '3. Premium and Price Estimates' : isFinancial ? '3. Rate and Return Estimates' : '3. Cost and Price Estimates';
+  const s3body = isInsurance
+    ? `Any insurance premium estimates or price ranges presented on this site are based on publicly available data and industry surveys. Actual premiums vary significantly based on your age, health status, claims history, coverage amount, deductible, and state of residence. Estimates should not be treated as quotes.`
+    : isFinancial
+    ? `Any rate estimates, return projections, or cost figures are based on publicly available data and industry averages. Actual rates and returns vary based on market conditions and individual factors.`
+    : `Any cost estimates or average figures are based on publicly available data and industry research. Actual costs vary significantly based on your location, circumstances, and market conditions.`;
+
+  const professionalLink = isInsurance
+    ? `<a href="https://www.naic.org/consumer_home.htm" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">NAIC Consumer Insurance Resources</a>`
+    : isLegal
+    ? `<a href="https://www.americanbar.org/groups/legal_services/flh-home/" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">ABA Legal Help Resources</a>`
+    : isMedical
+    ? `<a href="https://www.nih.gov/health-information" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">NIH Health Information</a>`
+    : `<a href="https://www.finra.org/investors" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b;font-weight:600">FINRA Investor Resources</a>`;
+
+  const professionalCallout = isInsurance
+    ? `Before purchasing, canceling, or changing any insurance policy, consult a licensed insurance agent or broker in your state. You can find licensed professionals through your state's Department of Insurance or the ${professionalLink}.`
+    : isLegal
+    ? `Before taking any legal action or signing any legal document, consult a licensed attorney in your jurisdiction. You can find legal aid and licensed attorneys through the ${professionalLink}.`
+    : isMedical
+    ? `Before making any health decisions, consult a licensed healthcare professional. For authoritative health information, visit the ${professionalLink}.`
+    : `Before making investment, credit, or financial planning decisions, consult a licensed financial advisor. You can verify advisor credentials through the ${professionalLink}.`;
+
+  return {
+    title: 'Disclaimer',
+    noindex: false,
+    description: `Legal disclaimer for ${siteName} — not professional advice, affiliate disclosure, limitation of liability.`,
+    body: `<div style="max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a;font-family:Arial,sans-serif">
+      <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Disclaimer</h1>
+      <p style="color:#666;font-size:13px;margin-bottom:28px">Last updated: ${today}</p>
+      <div style="background:#fff8e1;border-left:4px solid #f39c12;padding:16px 20px;border-radius:4px;margin-bottom:32px">
+        <p style="margin:0;font-size:15px;line-height:1.7;color:#7d4e00"><strong>&#9888; Important Notice:</strong> ${alertText}</p>
+      </div>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">${s1title}</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${s1body}</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">${s2title}</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${s2body}</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">${s3title}</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${s3body}</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">4. State-by-State Variation</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Laws, regulations, costs, and professional requirements vary significantly by state. Content on ${siteName} is written for a general US audience and may not reflect the specific rules or resources available in your state.</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">5. Accuracy and Currency</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">We make every effort to ensure accuracy and timeliness. However, regulatory landscapes and market conditions change frequently. We cannot guarantee that all content is current, complete, or accurate at the time you read it.</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">6. Affiliate and Advertising Disclosure</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${siteName} may earn a commission when you click links to third-party products or services. This affiliate relationship does not influence our editorial decisions, content, or rankings. This disclosure is made in accordance with the <a href="https://www.ftc.gov/business-guidance/resources/disclosures-how-make-effective-disclosures-digital-advertising" rel="nofollow noopener noreferrer" target="_blank" style="color:#c0392b">FTC guidelines on endorsements</a>.</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">7. Calculator and Tool Disclaimer</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">Interactive calculators and tools on this site are provided for illustrative purposes only. Outputs are estimates and should not be used as the sole basis for any professional decision.</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">8. Limitation of Liability</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">To the fullest extent permitted by applicable law, ${siteName}, its editors, contributors, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from your use of, or reliance on, any content on this site.</p>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">9. Consult a Licensed Professional</h2>
+      <p style="font-size:16px;line-height:1.8;margin-bottom:16px">${professionalCallout}</p>
+      <div style="background:#e8f4fd;border-left:4px solid #3498db;padding:14px 18px;border-radius:4px;margin-bottom:24px">
+        <p style="margin:0;font-size:14px;line-height:1.7;color:#1a4f72"><strong>Need help finding a professional?</strong> Use the link above to find a licensed professional in your area. Never make major decisions based solely on information found online.</p>
+      </div>
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 12px">10. Contact</h2>
+      <p style="font-size:16px;line-height:1.8">Questions about this Disclaimer? Contact our editorial team: 📧 <a href="mailto:legal@${domain}" style="color:#c0392b">legal@${domain}</a></p>
+    </div>`
+  };
+}
+
 async function regenerateStaticPages(site) {
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const siteUrl = `https://${site.domain}`;
@@ -531,6 +689,11 @@ async function regenerateStaticPages(site) {
 
   // About page — lists all contributors, indexed for E-E-A-T
   pages['about/index.html'] = buildAboutPage(siteName, site.domain, nicheSlug);
+
+  // Terms and Disclaimer — always regenerate to prevent stale/IP-leaked content
+  pages['terms/index.html'] = buildTermsPage(siteName, site.domain);
+  pages['disclaimer/index.html'] = buildDisclaimerPage(siteName, site.domain, nicheSlug);
+
   const methMeta = NICHE_METHODOLOGY[nicheSlug] || DEFAULT_METHODOLOGY;
   pages['methodology/index.html'] = {
     title: methMeta.title,

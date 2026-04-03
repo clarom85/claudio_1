@@ -258,11 +258,11 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     }
   });
 
-  const faqHTML = faq.map(item => `
+  const faqHTML = faq.filter(item => item.question && item.answer).map(item => `
     <div class="faq-item">
       <h3 class="faq-question">${escapeHtml(item.question)}</h3>
       <div class="faq-answer">
-        <p>${item.answer}</p>
+        <p>${escapeHtml(item.answer)}</p>
       </div>
     </div>`).join('');
 
