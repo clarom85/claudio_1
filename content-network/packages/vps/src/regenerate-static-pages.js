@@ -65,7 +65,7 @@ ${ga4Script}
 </header>
 <main style="padding:20px 0;min-height:60vh">${wrappedContent}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
-  <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot; <a href="/disclaimer/" style="color:rgba(255,255,255,.5)">Disclaimer</a> &middot; <a href="/contact/" style="color:rgba(255,255,255,.5)">Contact</a></p>
+  <p>&copy; ${new Date().getFullYear()} ${site.name} &middot; <a href="/about/" style="color:rgba(255,255,255,.5)">Contributors</a> &middot; <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot; <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot; <a href="/disclaimer/" style="color:rgba(255,255,255,.5)">Disclaimer</a> &middot; <a href="/contact/" style="color:rgba(255,255,255,.5)">Contact</a></p>
 </footer>
 </body></html>`;
 }
@@ -450,21 +450,36 @@ function buildPrivacyPage(siteName, domain) {
   };
 }
 
+function authorSlug(name) {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
 function buildAboutPage(siteName, domain, nicheSlug) {
   const lead = AUTHOR_PERSONAS[nicheSlug];
   const additionals = ADDITIONAL_AUTHORS[nicheSlug] || [];
   const allAuthors = [];
-  if (lead) allAuthors.push({ name: lead.name, title: lead.title, bio: lead.bio });
-  additionals.forEach(a => allAuthors.push({ name: a.name, title: a.title, bio: a.bio }));
+  if (lead) allAuthors.push({ name: lead.name, title: lead.title, bio: lead.bio, avatar: lead.avatar || authorSlug(lead.name) });
+  additionals.forEach(a => allAuthors.push({ name: a.name, title: a.title, bio: a.bio, avatar: a.avatar || authorSlug(a.name) }));
 
-  const authorCards = allAuthors.map(a => `
-    <div style="display:flex;gap:20px;padding:20px 0;border-bottom:1px solid #f0f0f0">
+  const authorCards = allAuthors.map(a => {
+    const slug = a.avatar || authorSlug(a.name);
+    return `
+    <div style="display:flex;gap:20px;padding:20px 0;border-bottom:1px solid #f0f0f0;align-items:flex-start">
+      <a href="/author/${slug}/" style="flex-shrink:0;display:block">
+        <img src="/images/author-${slug}.jpg" alt="${htmlEsc(a.name)}" width="64" height="64"
+          style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #e8e8e8"
+          onerror="this.style.display='none'"/>
+      </a>
       <div style="flex:1">
-        <p style="font-size:17px;font-weight:700;margin:0 0 4px;color:#1a1a1a">${htmlEsc(a.name)}</p>
+        <p style="font-size:17px;font-weight:700;margin:0 0 2px;color:#1a1a1a">
+          <a href="/author/${slug}/" style="color:#1a1a1a;text-decoration:none">${htmlEsc(a.name)}</a>
+        </p>
         <p style="font-size:13px;font-weight:600;color:#c0392b;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em">${htmlEsc(a.title)}</p>
-        <p style="font-size:15px;line-height:1.75;color:#444;margin:0">${htmlEsc(a.bio)}</p>
+        <p style="font-size:15px;line-height:1.75;color:#444;margin:0 0 8px">${htmlEsc(a.bio)}</p>
+        <a href="/author/${slug}/" style="font-size:13px;color:#c0392b;text-decoration:none;font-weight:600">View all articles →</a>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   return {
     title: 'About Us',
@@ -509,6 +524,48 @@ function buildAboutPage(siteName, domain, nicheSlug) {
         <a href="/editorial-process/" style="color:#c0392b">Review Process</a> &middot;
         <a href="/disclaimer/" style="color:#c0392b">Disclaimer</a>
       </div>
+    </div>`
+  };
+}
+
+function buildAuthorPage(author, siteName, siteUrl, domain) {
+  const slug = author.avatar || authorSlug(author.name);
+  return {
+    slug,
+    title: `${author.name} — ${author.title}`,
+    description: `${author.name} is a contributor at ${siteName}. ${author.bio?.slice(0, 100)}...`,
+    body: `<div style="max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a">
+      <div style="display:flex;gap:24px;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap">
+        <img src="/images/author-${slug}.jpg" alt="${htmlEsc(author.name)}"
+          width="120" height="120"
+          style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #e8e8e8;flex-shrink:0"
+          onerror="this.style.display='none'"/>
+        <div style="flex:1;min-width:200px">
+          <h1 style="font-size:28px;font-weight:700;margin:0 0 6px;color:#1a1a1a">${htmlEsc(author.name)}</h1>
+          <p style="font-size:14px;font-weight:600;color:#c0392b;margin:0 0 16px;text-transform:uppercase;letter-spacing:.04em">${htmlEsc(author.title)}</p>
+          <p style="font-size:16px;line-height:1.8;color:#444;margin:0">${htmlEsc(author.bio)}</p>
+        </div>
+      </div>
+      <div style="background:#f8f9fa;border-radius:6px;padding:16px 20px;margin-bottom:32px">
+        <p style="font-size:14px;color:#555;margin:0">
+          Contributor at <a href="/" style="color:#c0392b;font-weight:600">${htmlEsc(siteName)}</a> &middot;
+          <a href="/about/" style="color:#c0392b">Meet all contributors</a> &middot;
+          <a href="/editorial-process/" style="color:#c0392b">Editorial standards</a>
+        </p>
+      </div>
+      <div id="author-articles">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 20px;padding-bottom:10px;border-bottom:2px solid #e8e8e8">Articles by ${htmlEsc(author.name)}</h2>
+        <div id="author-article-list"><p style="color:#999;font-size:14px">Loading articles...</p></div>
+      </div>
+      <script>
+        fetch('/api/articles.json').then(r=>r.json()).then(articles=>{
+          const name=${JSON.stringify(author.name)};
+          const mine=articles.filter(a=>a.author===name||a.authorName===name).slice(0,24);
+          const el=document.getElementById('author-article-list');
+          if(!mine.length){el.innerHTML='<p style="color:#999;font-size:14px">No articles yet.</p>';return;}
+          el.innerHTML=mine.map(a=>\`<div style="padding:14px 0;border-bottom:1px solid #f0f0f0"><a href="/\${a.slug}/" style="font-size:16px;font-weight:600;color:#1a1a1a;text-decoration:none">\${a.title||a.slug}</a><p style="font-size:13px;color:#999;margin:4px 0 0">\${a.date||''}</p></div>\`).join('');
+        }).catch(()=>{document.getElementById('author-article-list').innerHTML='';});
+      </script>
     </div>`
   };
 }
@@ -710,10 +767,22 @@ async function regenerateStaticPages(site) {
     writeFileSync(join(WWW_ROOT, site.domain, path), html, 'utf-8');
   }
 
+  // Author pages — generate for ALL 3 authors per niche (primary + 2 additional)
+  const primaryAuthor = AUTHOR_PERSONAS[nicheSlug];
+  const additionalAuthors = ADDITIONAL_AUTHORS[nicheSlug] || [];
+  const allNicheAuthors = [...(primaryAuthor ? [primaryAuthor] : []), ...additionalAuthors];
+  for (const auth of allNicheAuthors) {
+    const ap = buildAuthorPage(auth, siteName, siteUrl, site.domain);
+    const apDir = join(WWW_ROOT, site.domain, 'author', ap.slug);
+    mkdirSync(apDir, { recursive: true });
+    const canonical = `${siteUrl}/author/${ap.slug}/`;
+    const html = simplePageWrapper(ap.title, ap.description, ap.body, siteConfig, { noindex: false, canonical, template: site.template || '' });
+    writeFileSync(join(apDir, 'index.html'), html, 'utf-8');
+  }
+
   // Reviewer page — only for YMYL niches that have a reviewer
-  const author = AUTHOR_PERSONAS[nicheSlug];
-  if (author?.reviewer && author?.ymyl) {
-    const rev = buildReviewerPage(author.reviewer, author, siteName, siteUrl, site.domain);
+  if (primaryAuthor?.reviewer && primaryAuthor?.ymyl) {
+    const rev = buildReviewerPage(primaryAuthor.reviewer, primaryAuthor, siteName, siteUrl, site.domain);
     const revDir = join(WWW_ROOT, site.domain, 'author', rev.slug);
     mkdirSync(revDir, { recursive: true });
     const canonical = `${siteUrl}/author/${rev.slug}/`;

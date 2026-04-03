@@ -80,12 +80,33 @@ async function run() {
       const mainContent = generateToolBody(toolConfig, toolSite);
       const body = renderHeader(toolSite) + mainContent + renderFooter(toolSite);
 
+      const toolSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: toolConfig.title,
+        description: toolConfig.seoDescription || toolConfig.description,
+        url: `https://${site.domain}/tools/${toolConfig.slug}/`,
+        applicationCategory: 'UtilitiesApplication',
+        operatingSystem: 'Web',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        provider: { '@type': 'Organization', name: siteName, url: `https://${site.domain}` }
+      };
+      const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `https://${site.domain}/` },
+          { '@type': 'ListItem', position: 2, name: toolConfig.title, item: `https://${site.domain}/tools/${toolConfig.slug}/` }
+        ]
+      };
+
       const html = renderBase({
         title:            `${toolConfig.title} | ${siteName}`,
         description:      toolConfig.seoDescription || toolConfig.description,
         slug:             `tools/${toolConfig.slug}`,
         siteName:         siteName,
         siteUrl:          `https://${site.domain}`,
+        schemas:          [toolSchema, breadcrumbSchema],
         body,
         adsenseId:        process.env.ADSENSE_ID || '',
         ga4MeasurementId: site.ga4_measurement_id || '',

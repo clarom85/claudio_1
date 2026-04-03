@@ -594,8 +594,9 @@ ${renderFooter(site)}`;
     description: `Browse ${articles.length} expert articles about ${tag.name} on ${site.name}.`,
     slug: `tag/${tag.slug}`,
     siteName: site.name, siteUrl: site.url,
-    schemas: [itemListSchema], body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
-    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : ''
+    schemas: articles.length >= 3 ? [itemListSchema] : [], body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
+    ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : '',
+    noindex: articles.length < 3
   });
 }
 
