@@ -55,7 +55,7 @@ export function buildArticleSchema({ title, description, slug, author, siteName,
     },
     speakable: {
       '@type': 'SpeakableSpecification',
-      cssSelector: ['.article-intro', '.key-takeaways']
+      cssSelector: ['.quick-answer-box', '.article-intro', '.key-takeaways']
     }
   };
 
@@ -173,7 +173,7 @@ export function patchArticleSchemas(schemas, { template, rating }) {
     if (!patched.speakable) {
       patched.speakable = {
         '@type': 'SpeakableSpecification',
-        cssSelector: ['.article-intro', '.key-takeaways']
+        cssSelector: ['.quick-answer-box', '.article-intro', '.key-takeaways']
       };
     }
 

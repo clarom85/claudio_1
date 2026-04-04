@@ -85,6 +85,7 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .faq-item:last-child{border-bottom:none;margin:0;padding:0}
 .faq-q{font-weight:700;font-size:15px;margin-bottom:6px;color:var(--white)}
 .faq-a{font-size:14px;line-height:1.7;color:var(--muted)}
+.faq-answer{display:none;overflow:hidden}.faq-item.faq-open .faq-answer{display:block}.faq-question{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:8px}.faq-question::after{content:'+';font-size:20px;font-weight:300;flex-shrink:0;color:var(--teal)}.faq-item.faq-open .faq-question::after{content:'−'}
 .conclusion h2{font-family:var(--ff-head);font-size:22px;letter-spacing:2px;margin-bottom:12px;color:var(--teal)}
 .conclusion p{font-size:16px;line-height:1.8;margin-bottom:12px;color:#c8d8e8}
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
@@ -249,6 +250,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
   const updatedBadgeHtml=showUpdated?`<span style="background:rgba(13,148,136,.2);color:var(--teal);font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;margin-left:8px;">↻ Updated ${updatedStr}</span>`:'';
   const reviewer=site.reviewer||null;
   const factCheckHtml=(site.ymyl&&reviewer?.name)?`<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:4px;padding:5px 12px;margin-top:10px;font-size:13px;color:var(--teal);"><span>✓</span><span>Fact-checked by <strong>${esc(reviewer.name)}</strong>${reviewer.title?', '+esc(reviewer.title):''}</span></div>`:'';
+  const starsHtml=(()=>{if(!article.rating)return '';const tot=(article.rating.thumbsUp||0)+(article.rating.thumbsDown||0);if(tot<5)return '';const rv=parseFloat(((article.rating.thumbsUp/tot)*4+1).toFixed(1));const full=Math.floor(rv);const stars='★'.repeat(full)+'☆'.repeat(5-full);return `<span style="color:var(--teal);font-size:14px;letter-spacing:1px;margin-left:10px;">${stars}</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">${rv}/5 (${tot})</span>`;})();
   const slugifyTag=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   const tagsHtml=(article.tags||[]).length?`<div class="article-tags"><span class="tags-label">Topics:</span>${(article.tags||[]).map(t=>`<a href="/tag/${slugifyTag(t)}" class="tag">${t}</a>`).join('')}</div>`:'';
   const trustBlockHtml=buildTrustBlock(article,site);
@@ -259,7 +261,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <h1 class="art-title-plain">${esc(article.title)}</h1>
       <div class="art-meta">
         <div class="author-badge"><img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><div><span class="author-name">${esc(site.authorName)}</span><br/><span class="author-title">${esc(site.authorTitle)}</span></div></div>
-        <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
+        <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>${starsHtml}
       </div>
       ${factCheckHtml?`<div style="margin:8px 0 0">${factCheckHtml}</div>`:''}
       ${adUnit('leaderboard')}
@@ -276,7 +278,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       </aside>
     </div>
   ${adUnit('leaderboard')}${getMgidSmartWidget(site.mgidSmartId)}
-  </div></main>${renderFooter(site)}`;
+  </div></main><script>(function(){document.querySelectorAll('.faq-item').forEach(function(item,i){if(i===0)item.classList.add('faq-open');var q=item.querySelector('.faq-question');if(!q)return;q.addEventListener('click',function(){item.classList.toggle('faq-open');});});})();</script>${renderFooter(site)}`;
   const pubIso=article.date?new Date(article.date).toISOString():'';
   const modIso=article.updatedAt?new Date(article.updatedAt).toISOString():pubIso;
   return renderBase({title:article.title,description:article.metaDescription,slug:article.slug,siteName:site.name,siteUrl:site.url,schemas:article.schemas||[],body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',mgidSiteId:site.mgidSiteId||'',ogImage:article.image?`${site.url}${article.image}`:`${site.url}/images/${article.slug}.jpg`,datePublished:pubIso,dateModified:modIso,authorUrl:`${site.url}/author/${site.authorAvatar||''}/`,lcpImage:article.image?`${site.url}${article.image}`:`${site.url}/images/${article.slug}.jpg`});

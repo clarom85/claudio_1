@@ -428,6 +428,7 @@ Allow: /
 Disallow: /api/
 
 Sitemap: https://${domain}/sitemap.xml
+Sitemap: https://${domain}/news-sitemap.xml
 `);
 }
 

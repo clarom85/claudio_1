@@ -93,6 +93,7 @@ a{color:inherit}
 .faq-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
 .faq-q{font-weight:700;font-size:15px;margin-bottom:6px;color:var(--white)}
 .faq-a{font-size:14px;line-height:1.7;color:var(--muted)}
+.faq-answer{display:none;overflow:hidden}.faq-item.faq-open .faq-answer{display:block}.faq-question{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:8px}.faq-question::after{content:'+';font-size:20px;font-weight:300;flex-shrink:0;color:var(--cyan)}.faq-item.faq-open .faq-question::after{content:'−'}
 .conclusion h2{font-size:20px;font-weight:700;margin-bottom:12px;color:var(--purple)}
 .conclusion p{font-size:16px;line-height:1.75;margin-bottom:12px;color:#d0d0e8}
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
@@ -263,6 +264,7 @@ export function renderFooter(site){return`
 
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
+  const starsHtml=(()=>{if(!article.rating)return '';const tot=(article.rating.thumbsUp||0)+(article.rating.thumbsDown||0);if(tot<5)return '';const rv=parseFloat(((article.rating.thumbsUp/tot)*4+1).toFixed(1));const full=Math.floor(rv);const stars='★'.repeat(full)+'☆'.repeat(5-full);return `<span style="color:var(--cyan);font-size:14px;letter-spacing:1px;margin-left:10px;">${stars}</span><span style="font-size:12px;color:var(--muted);margin-left:4px;">${rv}/5 (${tot})</span>`;})();
   const updatedDate=article.updatedAt?new Date(article.updatedAt):null;
   const showUpdated=updatedDate&&(updatedDate-date)>7*86400000;
   const updatedStr=showUpdated?updatedDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
@@ -279,7 +281,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <h1 class="art-title">${esc(article.title)}</h1>
       <div class="art-meta">
         <div class="author-chip"><img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><div><span class="author-name">${esc(site.authorName)}</span><br/><span class="author-title">${esc(site.authorTitle)}</span></div></div>
-        <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
+        <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>${starsHtml}
       </div>
       ${factCheckHtml?`<div style="margin:8px 0 0">${factCheckHtml}</div>`:''}
       ${adUnit('leaderboard')}
@@ -296,7 +298,7 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       </aside>
     </div>
   ${adUnit('leaderboard')}${getMgidSmartWidget(site.mgidSmartId)}
-  </div></main>${renderFooter(site)}`;
+  </div></main><script>(function(){document.querySelectorAll('.faq-item').forEach(function(item,i){if(i===0)item.classList.add('faq-open');var q=item.querySelector('.faq-question');if(!q)return;q.addEventListener('click',function(){item.classList.toggle('faq-open');});});})();</script>${renderFooter(site)}`;
   const pubIso=article.date?new Date(article.date).toISOString():'';
   const modIso=article.updatedAt?new Date(article.updatedAt).toISOString():pubIso;
   return renderBase({title:article.title,description:article.metaDescription,slug:article.slug,siteName:site.name,siteUrl:site.url,schemas:article.schemas||[],body,adsenseId:site.adsenseId,ga4MeasurementId:site.ga4MeasurementId||'',mgidSiteId:site.mgidSiteId||'',ogImage:article.image?`${site.url}${article.image}`:`${site.url}/images/${article.slug}.jpg`,datePublished:pubIso,dateModified:modIso,authorUrl:`${site.url}/author/${site.authorAvatar||''}/`,lcpImage:article.image?`${site.url}${article.image}`:`${site.url}/images/${article.slug}.jpg`});

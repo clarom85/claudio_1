@@ -367,7 +367,8 @@ async function rebuildAffectedSites(stats) {
           author: siteConfig.authorName,
           date: a.published_at || a.created_at,
           tags: a.tags || [],
-          image: a.image || null
+          image: a.image || null,
+          isPillar: a.is_pillar || false
         };
       });
 
@@ -392,6 +393,11 @@ async function rebuildAffectedSites(stats) {
       const tagUrls = buildTagUrls(articlesData);
       generateSitemap(site.domain, [...published, ...categoryUrls, ...tagUrls], { siteName: siteConfig.name, authorSlugs: siteConfig.authorSlugs || [], toolSlug: siteConfig.toolSlug || null });
       generateRssFeed(site.domain, published, { siteName: siteConfig.name });
+      // Google News sitemap — only articles from last 2 days
+      generateNewsSitemap(site.domain, published.filter(a => {
+        const pub = new Date(a.published_at || a.created_at);
+        return (Date.now() - pub.getTime()) < 2 * 86400000;
+      }), siteConfig.name);
       await pingSitemap(site.domain);
 
       stats.rebuilt++;
@@ -400,6 +406,17 @@ async function rebuildAffectedSites(stats) {
       console.log(`  ❌ Rebuild failed ${site.domain}: ${err.message}`);
     }
   }
+}
+
+function generateNewsSitemap(domain, articles, siteName) {
+  function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  const entries = articles.map(a => {
+    const pubDate = new Date(a.published_at || a.created_at).toISOString();
+    const imgUrl = a.image ? (a.image.startsWith('http') ? a.image : `https://${domain}${a.image}`) : `https://${domain}/images/${a.slug}.jpg`;
+    return `  <url>\n    <loc>https://${domain}/${escXml(a.slug)}/</loc>\n    <news:news><news:publication><news:name>${escXml(siteName)}</news:name><news:language>en</news:language></news:publication><news:publication_date>${pubDate}</news:publication_date><news:title>${escXml(a.title)}</news:title></news:news>\n    <image:image><image:loc>${escXml(imgUrl)}</image:loc><image:title>${escXml(a.title)}</image:title></image:image>\n  </url>`;
+  }).join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"\n        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${entries}\n</urlset>`;
+  writeFileSync(join(WWW_ROOT, domain, 'news-sitemap.xml'), xml, 'utf-8');
 }
 
 async function triggerDailyGeneration() {
@@ -714,6 +731,12 @@ async function generateCategoryPages(domain, articles, siteConfig, template) {
   let pageCount = 0;
   for (const cat of Object.values(catMap)) {
     if (!cat.articles.length) continue;
+    // Pin pillar articles at top of page 1; secondary sort by date desc
+    cat.articles.sort((a, b) => {
+      if (a.isPillar && !b.isPillar) return -1;
+      if (!a.isPillar && b.isPillar) return 1;
+      return new Date(b.date) - new Date(a.date);
+    });
     const totalPages = Math.ceil(cat.articles.length / ARTICLES_PER_CAT_PAGE);
 
     for (let page = 1; page <= totalPages; page++) {

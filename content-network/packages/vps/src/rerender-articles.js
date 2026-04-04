@@ -167,7 +167,9 @@ async function run() {
         tags: a.tags || [],
         date: a.published_at || a.created_at,
         updatedAt: a.updated_at,
-        image: a.image || null
+        image: a.image || null,
+        rating: feedbackMap.get(a.slug) || null,
+        wordCount: a.word_count || null
       };
 
       const siteConfig = {

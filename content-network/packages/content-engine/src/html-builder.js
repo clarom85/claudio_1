@@ -392,7 +392,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
           ${citations.map(c => `
           <li style="font-size:13px;color:#555;line-height:1.6;margin-bottom:8px;">
             ${escapeHtml(c.claim)} —
-            <a href="${escapeHtml(c.url)}" target="_blank" rel="nofollow noopener noreferrer"
+            <a href="${escapeHtml(c.url)}" target="_blank" rel="${/\.(gov|edu)(\/|$)/.test(c.url)?'noopener noreferrer':'nofollow noopener noreferrer'}"
                style="color:#c0392b;text-decoration:none;font-weight:600;">${escapeHtml(c.source)}</a>
           </li>`).join('')}
         </ol>

@@ -76,6 +76,7 @@ img{max-width:100%;height:auto;display:block}
 /* Article content */
 .art-body{background:#fff;padding:24px;border-radius:var(--r);box-shadow:var(--shadow)}
 .art-body .article-header{display:none}.art-body .article-hero-image{display:none}.art-body .article-sidebar{display:none}
+.faq-answer{display:none;overflow:hidden}.faq-item.faq-open .faq-answer{display:block}.faq-question{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:8px}.faq-question::after{content:'+';font-size:20px;font-weight:300;flex-shrink:0;color:var(--red)}.faq-item.faq-open .faq-question::after{content:'−'}
 .quick-answer-box{background:#fff5f5!important;border-left-color:var(--red)!important}
 .quick-answer-box .qa-label{color:var(--red)!important;font-family:var(--ff-head)}
 .quick-answer-box .qa-text{color:var(--navy)!important;font-size:17px!important}
@@ -277,6 +278,7 @@ export function renderArticlePage(article, site, relatedArticles = []) {
   const date = new Date(article.date || Date.now());
   const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const dateIso = date.toISOString();
+  const starsHtml=(()=>{if(!article.rating)return '';const tot=(article.rating.thumbsUp||0)+(article.rating.thumbsDown||0);if(tot<5)return '';const rv=parseFloat(((article.rating.thumbsUp/tot)*4+1).toFixed(1));const full=Math.floor(rv);const stars='★'.repeat(full)+'☆'.repeat(5-full);return `<span style="color:#e67e22;font-size:14px;letter-spacing:1px;margin-left:10px;">${stars}</span><span style="font-size:12px;color:#888;margin-left:4px;">${rv}/5 (${tot})</span>`;})();
   const updatedDate=article.updatedAt?new Date(article.updatedAt):null;
   const showUpdated=updatedDate&&(updatedDate-date)>7*86400000;
   const updatedStr=showUpdated?updatedDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';
@@ -310,7 +312,7 @@ ${renderHeader(site)}
             <span class="author-title">${esc(site.authorTitle)}</span>
           </div>
         </div>
-        <time class="art-date" datetime="${dateIso}">${dateStr}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
+        <time class="art-date" datetime="${dateIso}">${dateStr}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>${starsHtml}
       </div>
       ${factCheckHtml?`<div style="margin:8px 0 0">${factCheckHtml}</div>`:''}
       ${adUnit('leaderboard')}
@@ -364,7 +366,8 @@ ${renderHeader(site)}
 ${getMgidSmartWidget(site.mgidSmartId)}
   </div>
 </main>
-${renderFooter(site)}`;
+${renderFooter(site)}
+<script>(function(){document.querySelectorAll('.faq-item').forEach(function(item,i){if(i===0)item.classList.add('faq-open');var q=item.querySelector('.faq-question');if(!q)return;q.addEventListener('click',function(){item.classList.toggle('faq-open');});});})();</script>`;
 
   const pubIso = article.date ? new Date(article.date).toISOString() : '';
   const modIso = article.updatedAt ? new Date(article.updatedAt).toISOString() : pubIso;
