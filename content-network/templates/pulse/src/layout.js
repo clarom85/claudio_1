@@ -40,7 +40,7 @@ img{max-width:100%;height:auto;display:block}
 .logo-the{display:block;font-family:var(--ff-head);font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
 .logo-name{display:block;font-family:var(--ff-head);font-size:42px;font-weight:900;color:var(--red);line-height:.9}
 .hdr-ad{flex:1;max-width:728px;min-height:90px;background:#f9f9f9;border:1px solid #eee;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb}
-.hdr-nav{background:var(--navy);position:sticky;top:36px;z-index:90;display:flex;align-items:center;justify-content:center}
+.hdr-nav{background:var(--navy);position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:center}
 .hdr-nav ul{flex:1;list-style:none;display:flex;justify-content:center;flex-wrap:wrap}
 .hdr-nav a{display:block;color:rgba(255,255,255,.85);text-decoration:none;padding:10px 16px;font-size:15px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;transition:background .2s}
 .hdr-nav a:hover,.hdr-nav a.active{background:var(--red);color:#fff}
@@ -256,9 +256,13 @@ document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelecto
 (function(){var c=function(el){el.style.cssText='min-height:0!important;margin:0!important;padding:0!important;border:none!important;background:none!important;overflow:hidden';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},4000);})();
 // Trending ticker
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{
-  const el=document.getElementById('ticker-inner');
-  if(!el||!arts.length)return;
+  var el=document.getElementById('ticker-inner');
+  var wrap=document.getElementById('ticker-wrap');
+  if(!el||!wrap||!arts.length)return;
   el.innerHTML=arts.slice(0,8).map(a=>'<a href="/'+a.slug+'/">'+a.title+'</a>').join('<span style="opacity:.5;margin:0 6px">•</span>');
+  wrap.style.display='flex';
+  var nav=document.querySelector('.hdr-nav');
+  if(nav)nav.style.top='36px';
 }).catch(()=>{});
 </script>
 </body>
@@ -603,9 +607,9 @@ ${renderFooter(site)}`;
 // ── Shared partials ──────────────────────────────────────────
 export function renderHeader(site) {
   return `
-<div class="ticker">
+<div class="ticker" id="ticker-wrap" style="display:none">
   <span class="ticker-lbl">TRENDING</span>
-  <div class="ticker-track"><div class="ticker-inner" id="ticker-inner">Loading...</div></div>
+  <div class="ticker-track"><div class="ticker-inner" id="ticker-inner"></div></div>
 </div>
 <header>
   <div class="hdr-top">
@@ -620,7 +624,7 @@ export function renderHeader(site) {
         <span class="logo-the">The</span>
         <span class="logo-name">${esc(site.name.replace('The ',''))}</span>
       </a>
-      <div class="hdr-ad ad">728×90 Advertisement</div>
+      <div class="hdr-ad ad"></div>
     </div>
   </div>
   <nav class="hdr-nav">

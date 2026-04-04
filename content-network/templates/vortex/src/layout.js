@@ -151,6 +151,14 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .trust-box-body{font-size:13px;color:#3a3530;line-height:1.65;margin-bottom:10px}
 .trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);border-top:1px solid #f5c8a0;padding-top:8px;margin-top:4px}
 .trust-box-reviewer{color:var(--orange);font-weight:600}
+/* Mobile: table overflow + reduce section gaps */
+.art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+@media(max-width:640px){
+  .art-section h2,.article-section h2{margin-top:22px;font-size:22px}
+  .art-section,.article-section{margin:16px 0}
+  .art-body{padding:16px}
+  .art-layout{margin-top:16px}
+}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function buildTrustBlock(article,site){
@@ -207,7 +215,8 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
 ${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
-document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});</script></body></html>`}
+document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
+(function(){var c=function(el){el.style.cssText='min-height:0!important;margin:0!important;padding:0!important;border:none!important;background:none!important;overflow:hidden';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},2000);})();</script></body></html>`}
 
 export function renderHeader(site){return`
 <header>
@@ -222,7 +231,7 @@ export function renderHeader(site){return`
 export function renderFooter(site){return`
 <footer class="site-footer">${adUnit('footer')}<div class="wrap">
   <div class="footer-grid">
-    <div><div class="footer-logo">${esc(site.name)}</div><p style="font-size:13px;color:#6b7280;line-height:1.7">Discover the world through expert guides and insider knowledge.</p></div>
+    <div><div class="footer-logo">${esc(site.name)}</div><p style="font-size:13px;color:#9ca3af;line-height:1.7">${esc(site.tagline||'Expert legal guides written by experienced professionals.')}</p></div>
     <div class="footer-col"><h4>Explore</h4><ul><li><a href="/about/">About</a></li><li><a href="/contact/">Contact</a></li><li><a href="/advertise/">Advertise</a></li><li><a href="/glossary/">Glossary</a></li><li><a href="/data/">Data</a></li></ul></div>
     <div class="footer-col"><h4>Legal</h4><ul><li><a href="/privacy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></div>
   </div>

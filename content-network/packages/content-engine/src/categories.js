@@ -60,9 +60,9 @@ const RULES = {
     { slug: 'car-insurance', name: 'Car Insurance', re: /car.?insur|auto.?insur|vehicle.?insur/ },
     { slug: 'health-insurance', name: 'Health Insurance', re: /health.?insur|medical.?insur|hmo|ppo|deductible/ },
     { slug: 'life-insurance', name: 'Life Insurance', re: /life.?insur|term.?life|whole.?life|death.?benefit/ },
-    { slug: 'home-insurance', name: 'Home Insurance', re: /home.?insur|homeowner|dwelling/ },
-    { slug: 'renters-insurance', name: "Renters Insurance", re: /rent(er|ing).?insur/ },
-    { slug: 'other-insurance', name: 'Other Insurance', re: /travel.?insur|pet.?insur|disability|umbrella|liability/ },
+    { slug: 'home-insurance', name: 'Home Insurance', re: /home.?insur|homeowner|dwelling|household.{0,3}insur/ },
+    { slug: 'renters-insurance', name: 'Renters Insurance', re: /rent(?:er|ers|ing).{0,3}insur/ },
+    { slug: 'other-insurance', name: 'Other Insurance', re: /travel.?insur|pet.?insur|disability|umbrella|liability|\binsur/ },
   ],
   'legal-advice': [
     { slug: 'wills-trusts', name: 'Wills & Trusts', re: /will\b|trust\b|estate.?plan|beneficiary|probate/ },

@@ -168,6 +168,16 @@ a{color:inherit}
 .trust-box-body{font-size:13px;color:#3a3a5a;line-height:1.65;margin-bottom:10px}
 .trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#5a5a7a;border-top:1px solid #c5b8e8;padding-top:8px;margin-top:4px}
 .trust-box-reviewer{color:var(--purple);font-weight:600}
+/* Mobile: table overflow + reduce section gaps */
+.art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+/* Category page: brighter excerpt text */
+.card-excerpt{color:#b8b8d0!important}
+@media(max-width:640px){
+  .art-section h2,.article-section h2{margin-top:22px;font-size:18px}
+  .art-section,.article-section{margin:16px 0}
+  .art-body{padding:14px}
+  .art-layout{margin-top:16px}
+}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 function buildTrustBlock(article,site){
@@ -224,7 +234,8 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
 ${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
-document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});</script></body></html>`}
+document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
+(function(){var c=function(el){el.style.cssText='min-height:0!important;margin:0!important;padding:0!important;border:none!important;background:none!important;overflow:hidden';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},2000);})();</script></body></html>`}
 
 export function renderHeader(site){return`
 <div class="hdr-bar"></div>
