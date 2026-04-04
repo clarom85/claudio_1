@@ -101,7 +101,7 @@ async function run() {
       };
 
       const html = renderBase({
-        title:            `${toolConfig.title} | ${siteName}`,
+        title:            toolConfig.title,
         description:      toolConfig.seoDescription || toolConfig.description,
         slug:             `tools/${toolConfig.slug}`,
         siteName:         siteName,

@@ -1235,7 +1235,7 @@ async function generateToolFile(domain, toolConfig, siteConfig) {
   const body = renderHeader(toolSite) + mainContent + renderFooter(toolSite);
 
   const html = renderBase({
-    title:            `${toolConfig.title} | ${siteConfig.name}`,
+    title:            toolConfig.title,
     description:      toolConfig.seoDescription || toolConfig.description,
     slug:             `tools/${toolConfig.slug}`,
     siteName:         siteConfig.name,
