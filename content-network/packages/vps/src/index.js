@@ -176,7 +176,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         add_header Cache-Control "no-store";
     }
-
+${customBlock}
     location / {
         try_files $uri $uri/ $uri/index.html =404;
         add_header Cache-Control "public, max-age=3600, stale-while-revalidate=86400";
