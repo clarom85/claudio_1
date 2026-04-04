@@ -312,7 +312,7 @@ function checkKeywordCannibalization(keyword, existingSlugs, existingTitles, exi
         const union = new Set([...kwTokT, ...tTok]).size;
         if (union === 0) continue;
         if (inter / union >= 0.52) {
-          return { skip: true, reason:  };
+          return { skip: true, reason: `title fingerprint overlap: "${title.slice(0, 60)}"` };
         }
       }
     }
