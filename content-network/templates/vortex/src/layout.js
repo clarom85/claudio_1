@@ -67,6 +67,9 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .art-body .related-card{background:rgba(255,255,255,.07)!important;border-color:var(--border)!important}
 .art-body .related-card p{color:var(--muted)!important}
 .art-body .related-card p:first-of-type{color:var(--light)!important}
+.art-body .quick-answer-box{background:rgba(13,148,136,.08)!important;border-left-color:var(--teal)!important}
+.art-body .quick-answer-box .qa-label{color:var(--teal)!important;font-family:var(--ff-head);letter-spacing:.12em}
+.art-body .quick-answer-box .qa-text{color:#e0e8f0!important;font-size:17px!important}
 .intro{font-size:18px;line-height:1.8;color:#e0e8f0;font-weight:600;border-left:4px solid var(--orange);padding-left:16px;margin-bottom:24px}
 .art-section{margin:28px 0}
 .art-section h2{font-family:var(--ff-head);font-size:26px;letter-spacing:2px;color:var(--orange);margin-top:36px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}

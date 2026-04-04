@@ -76,6 +76,9 @@ a{color:inherit}
 .art-body .related-card{background:var(--surface2)!important;border-color:var(--border)!important}
 .art-body .related-card p{color:var(--muted)!important}
 .art-body .related-card p:first-of-type{color:var(--white)!important}
+.art-body .quick-answer-box{background:rgba(6,182,212,.07)!important;border-left-color:var(--cyan)!important}
+.art-body .quick-answer-box .qa-label{color:var(--cyan)!important;font-family:var(--ff-mono)}
+.art-body .quick-answer-box .qa-text{color:var(--white)!important;font-size:17px!important}
 .intro{font-size:18px;line-height:1.75;color:var(--white);font-weight:500;border-left:3px solid var(--cyan);padding-left:16px;margin-bottom:24px}
 .art-section{margin:28px 0}
 .art-section h2{font-size:20px;font-weight:700;margin-top:36px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--cyan)}

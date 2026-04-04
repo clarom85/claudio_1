@@ -76,6 +76,9 @@ img{max-width:100%;height:auto;display:block}
 /* Article content */
 .art-body{background:#fff;padding:24px;border-radius:var(--r);box-shadow:var(--shadow)}
 .art-body .article-header{display:none}.art-body .article-hero-image{display:none}.art-body .article-sidebar{display:none}
+.quick-answer-box{background:#fff5f5!important;border-left-color:var(--red)!important}
+.quick-answer-box .qa-label{color:var(--red)!important;font-family:var(--ff-head)}
+.quick-answer-box .qa-text{color:var(--navy)!important;font-size:17px!important}
 .intro{font-size:18px;line-height:1.7;color:var(--navy);font-weight:500;border-left:4px solid var(--red);padding-left:16px;margin:16px 0 24px}
 .art-section{margin:28px 0}
 .art-section h2{font-family:var(--ff-head);font-size:22px;font-weight:700;color:var(--navy);margin-top:36px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--red)}

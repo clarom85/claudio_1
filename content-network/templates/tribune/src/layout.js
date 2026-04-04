@@ -58,6 +58,9 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 /* Content */
 .art-body{background:var(--white);padding:28px;border-radius:2px;box-shadow:var(--shadow)}
 .art-body .article-header{display:none}.art-body .article-hero-image{display:none}.art-body .article-sidebar{display:none}
+.quick-answer-box{background:#faf8f2!important;border-left-color:var(--green)!important}
+.quick-answer-box .qa-label{color:var(--green)!important;font-family:var(--ff-head)}
+.quick-answer-box .qa-text{color:var(--dark)!important;font-size:17px!important}
 .intro{font-size:19px;line-height:1.75;color:var(--dark);font-weight:600;margin-bottom:24px}
 .intro::first-letter{font-size:64px;line-height:.8;float:left;margin:4px 8px 0 0;font-family:var(--ff-head);color:var(--green)}
 .art-section{margin:28px 0}

@@ -309,6 +309,13 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
   <div class="article-layout">
     <div class="article-content" itemprop="articleBody">
 
+      <!-- Quick Answer — immediate value above the fold -->
+      ${articleData.quickAnswer ? `
+      <div class="quick-answer-box" style="margin:0 0 28px;padding:18px 22px 18px 26px;border-left:4px solid #1a5c3a;background:#f0f9f4;border-radius:0 6px 6px 0;">
+        <p class="qa-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#1a5c3a;margin:0 0 8px;">Quick Answer</p>
+        <p class="qa-text" style="font-size:17px;line-height:1.65;color:#1a1a1a;margin:0;font-weight:500;">${escapeHtml(articleData.quickAnswer)}</p>
+      </div>` : ''}
+
       <!-- Key Takeaways — featured snippet bait -->
       ${articleData.keyTakeaways?.length ? `
       <div class="key-takeaways" style="background:#f0faf0;border:1px solid #c3e6c3;border-left:4px solid #27ae60;border-radius:4px;padding:20px 24px;margin-bottom:24px;">

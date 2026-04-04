@@ -402,6 +402,7 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
 {
   "title": "compelling H1 title (50-65 chars, includes keyword naturally)",
   "metaDescription": "150-160 chars — ${metaDescStyle}",
+  "quickAnswer": "1-2 sentence direct answer to the article's main question — lead with the specific number, range, or fact the reader is looking for. If cost: give the dollar range. If legal/insurance: give the direct answer + key caveat. No preamble, no 'In this article'.",
   "intro": "2-3 sentence intro that immediately delivers value — no preamble, no throat-clearing",
   "sections": [
     {
