@@ -194,6 +194,15 @@ async function run() {
     } catch (e) { console.error(`  ❌ generate-data-pages: ${e.message}`); }
   }
 
+  // Tool pages refresh — ogni domenica alle 15:xx UTC (auto-applica modifiche a tool-configs.js)
+  if (now.getHours() === 15 && now.getDay() === 0) {
+    try {
+      console.log('  🔧 Refreshing tool pages...');
+      execSync('node packages/vps/src/regenerate-tools.js --all', { cwd: ROOT, stdio: 'pipe', timeout: 120000 });
+      console.log('  ✅ Tool pages refreshed');
+    } catch (e) { console.error(`  ❌ regenerate-tools: ${e.message}`); }
+  }
+
   // 12. HARO weekly digest — ogni domenica alle 13:xx UTC
   if (now.getHours() === 13 && now.getDay() === 0) {
     try {
