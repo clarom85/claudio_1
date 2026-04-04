@@ -250,6 +250,12 @@ setTimeout(function(){document.querySelectorAll('[data-type="_mgwidget"]').forEa
 
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
+  const updatedDate=article.updatedAt?new Date(article.updatedAt):null;
+  const showUpdated=updatedDate&&(updatedDate-date)>7*86400000;
+  const updatedStr=showUpdated?updatedDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';
+  const updatedBadgeHtml=showUpdated?`<span style="background:#e8f4ed;color:#1a5c3a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;margin-left:8px;">↻ Updated ${updatedStr}</span>`:'';
+  const reviewer=site.reviewer||null;
+  const factCheckHtml=(site.ymyl&&reviewer?.name)?`<div style="display:inline-flex;align-items:center;gap:6px;background:#e8f4ed;border:1px solid #c3e6d0;border-radius:4px;padding:5px 12px;margin-top:10px;font-size:13px;color:#1a5c3a;"><span>✓</span><span>Fact-checked by <strong>${esc(reviewer.name)}</strong>${reviewer.title?', '+esc(reviewer.title):''}</span></div>`:'';
   const relatedHtml=relatedArticles.slice(0,4).map(r=>`<div class="related-item"><img class="related-img" src="${r.image||`/images/${r.slug}.jpg`}" alt="${esc(r.title)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><a class="related-title" href="/${r.slug}/">${esc(r.title)}</a></div>`).join('');
   const slugifyTag=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   const tagsHtml=(article.tags||[]).length?`<div class="article-tags"><span class="tags-label">Topics:</span>${(article.tags||[]).map(t=>`<a href="/tag/${slugifyTag(t)}" class="tag">${t}</a>`).join('')}</div>`:'';
@@ -262,8 +268,9 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <div class="art-deck">${esc(article.metaDescription)}</div>
       <div class="art-author-row">
         <img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="44" height="44" onerror="this.style.display='none'"/>
-        <div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</div>
+        <div class="art-byline">By <strong>${esc(site.authorName)}</strong> · ${esc(site.authorTitle)} · <time datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time>${updatedBadgeHtml} · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</div>
       </div>
+      ${factCheckHtml?`<div style="margin:8px 0 0">${factCheckHtml}</div>`:''}
       ${adUnit('leaderboard')}
     </header>
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:''}

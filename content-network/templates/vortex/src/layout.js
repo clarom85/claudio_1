@@ -243,6 +243,12 @@ export function renderFooter(site){return`
 
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());
+  const updatedDate=article.updatedAt?new Date(article.updatedAt):null;
+  const showUpdated=updatedDate&&(updatedDate-date)>7*86400000;
+  const updatedStr=showUpdated?updatedDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';
+  const updatedBadgeHtml=showUpdated?`<span style="background:rgba(13,148,136,.2);color:var(--teal);font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;margin-left:8px;">↻ Updated ${updatedStr}</span>`:'';
+  const reviewer=site.reviewer||null;
+  const factCheckHtml=(site.ymyl&&reviewer?.name)?`<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:4px;padding:5px 12px;margin-top:10px;font-size:13px;color:var(--teal);"><span>✓</span><span>Fact-checked by <strong>${esc(reviewer.name)}</strong>${reviewer.title?', '+esc(reviewer.title):''}</span></div>`:'';
   const slugifyTag=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   const tagsHtml=(article.tags||[]).length?`<div class="article-tags"><span class="tags-label">Topics:</span>${(article.tags||[]).map(t=>`<a href="/tag/${slugifyTag(t)}" class="tag">${t}</a>`).join('')}</div>`:'';
   const trustBlockHtml=buildTrustBlock(article,site);
@@ -253,8 +259,9 @@ export function renderArticlePage(article,site,relatedArticles=[]){
       <h1 class="art-title-plain">${esc(article.title)}</h1>
       <div class="art-meta">
         <div class="author-badge"><img class="art-author-avatar" src="/images/author-${esc(site.authorAvatar||'default')}.jpg" alt="${esc(site.authorName)}" loading="lazy" decoding="async" width="400" height="225" onerror="this.style.display='none'"/><div><span class="author-name">${esc(site.authorName)}</span><br/><span class="author-title">${esc(site.authorTitle)}</span></div></div>
-        <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time><span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
+        <time class="art-date" datetime="${date.toISOString()}">${date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
       </div>
+      ${factCheckHtml?`<div style="margin:8px 0 0">${factCheckHtml}</div>`:''}
       ${adUnit('leaderboard')}
     </header>
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(article.title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:''}

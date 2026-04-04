@@ -277,6 +277,12 @@ export function renderArticlePage(article, site, relatedArticles = []) {
   const date = new Date(article.date || Date.now());
   const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const dateIso = date.toISOString();
+  const updatedDate=article.updatedAt?new Date(article.updatedAt):null;
+  const showUpdated=updatedDate&&(updatedDate-date)>7*86400000;
+  const updatedStr=showUpdated?updatedDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';
+  const updatedBadgeHtml=showUpdated?`<span style="background:#fff0f0;color:var(--red);font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;margin-left:8px;">↻ Updated ${updatedStr}</span>`:'';
+  const reviewer=site.reviewer||null;
+  const factCheckHtml=(site.ymyl&&reviewer?.name)?`<div style="display:inline-flex;align-items:center;gap:6px;background:#fff0f0;border:1px solid #f5c6cb;border-radius:4px;padding:5px 12px;margin-top:10px;font-size:13px;color:var(--red);"><span>✓</span><span>Fact-checked by <strong>${esc(reviewer.name)}</strong>${reviewer.title?', '+esc(reviewer.title):''}</span></div>`:'';
 
   const relatedHtml = relatedArticles.slice(0, 5).map(r => `
     <div class="related-item">
@@ -304,8 +310,9 @@ ${renderHeader(site)}
             <span class="author-title">${esc(site.authorTitle)}</span>
           </div>
         </div>
-        <time class="art-date" datetime="${dateIso}">${dateStr}</time><span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
+        <time class="art-date" datetime="${dateIso}">${dateStr}</time>${updatedBadgeHtml}<span class="art-readtime"> · ${Math.max(1,Math.ceil((article.wordCount||article.content.replace(/<[^>]+>/g,'').split(/\s+/).length)/200))} min read</span>
       </div>
+      ${factCheckHtml?`<div style="margin:8px 0 0">${factCheckHtml}</div>`:''}
       ${adUnit('leaderboard')}
     </header>
     ${article.image?`<img class="art-hero" src="${article.image}" alt="${esc(title)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="480"/>`:``}

@@ -485,6 +485,8 @@ ABSOLUTE RULES:
   • Do NOT start consecutive sentences with "This", "These", "The" or "It". Break the pattern every time.
   • Transitions: use the natural ones ("Here's the thing", "Worth knowing:", "Quick note:") not the formal ones. Or skip transition words entirely — just move to the next point.
   • At least one section per article must have a paragraph that's a single short sentence standing alone for emphasis.
+  • H2 VARIATION — CRITICAL: never write 3 or more consecutive H2s that begin with the same word or follow the same grammatical pattern (e.g. three H2s starting with "How" or "What" in a row is a fingerprint). Mix: question H2s with noun-phrase H2s with imperative H2s with number-led H2s ("5 Reasons...", "The Real Cost of...", "When to Hire vs DIY", "What Drives the Price").
+  • INLINE OUTBOUND LINKS — CRITICAL: include 1-2 natural hyperlinks in the article body pointing to authoritative external sources (.gov, .edu, or major institutions like CDC, IRS, OSHA, DOE, Consumer Financial Protection Bureau). Format as HTML anchor tags directly in the section content: <a href="https://www.energy.gov/..." target="_blank" rel="noopener noreferrer">the anchor text</a>. These must feel organic — link a specific claim to its source mid-sentence, not as a footnote. This is a core E-E-A-T trust signal.
 - Use keyword naturally — max 3-4 times total; it MUST appear within the first 100 words (intro or opening of first section)
 - FAQ: 4-6 questions people genuinely search, with direct answers
 - Citations: 1-2 REAL sources only — government agencies, major institutions, established industry bodies. Real URLs. Never invent a source.
