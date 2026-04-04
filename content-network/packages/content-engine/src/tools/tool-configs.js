@@ -2465,7 +2465,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
       const usAvgNet         = 14000;
 
       let insight = '';
-      if (parseFloat(breakEvenYears) <= 7) insight = 'Excellent break-even — solar systems typically last 25-30 years, so you\'re looking at 15-20+ years of pure savings after payback.';
+      if (parseFloat(breakEvenYears) <= 7) insight = 'Excellent break-even — solar systems typically last 25-30 years, giving you 15-20+ years of pure savings after payback.';
       else if (parseFloat(breakEvenYears) <= 12) insight = 'Solid investment. Add any state/utility incentives (dsireusa.org) — they can cut another $1,000-5,000 off your net cost.';
       else insight = 'Longer payback — worth revisiting if your roof needs replacement or if local electricity rates rise significantly.';
 
