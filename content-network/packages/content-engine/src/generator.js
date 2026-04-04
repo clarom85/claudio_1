@@ -29,6 +29,17 @@ function computeVariant(keyword) {
 }
 
 /**
+ * Deterministic format variant — varies independently from style variant.
+ * Distribution: 70% standard (0), 20% listicle (1), 10% opinion (2).
+ * Uses Math.floor(id/3) % 10 so format and style never share the same modulus.
+ */
+const FORMAT_ROTATION = [0, 0, 0, 1, 0, 0, 0, 1, 0, 2];
+function computeFormatVariant(keyword) {
+  const id = keyword.id || 0;
+  return FORMAT_ROTATION[Math.floor(id / 3) % FORMAT_ROTATION.length];
+}
+
+/**
  * Returns the author object for this niche + variant.
  * Variant 0  → primary author (AUTHOR_PERSONAS[slug])
  * Variant 1/2 → ADDITIONAL_AUTHORS[slug][0/1] if defined, else primary
@@ -77,17 +88,20 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
     console.log(`  [data] Injecting ${liveDataPoints.length} live data points for ${niche.slug}`);
   }
 
-  const nichePersona = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
-  const variantIdx   = computeVariant(kwObj);
-  const author       = selectAuthor(niche.slug, variantIdx);
-  const model        = selectModel(kwObj, nichePersona);
-  const prompt       = buildArticlePrompt(kwText, niche, {
+  const nichePersona   = AUTHOR_PERSONAS[niche.slug] || AUTHOR_PERSONAS['home-improvement-costs'];
+  const variantIdx     = computeVariant(kwObj);
+  const formatVariant  = computeFormatVariant(kwObj);
+  const author         = selectAuthor(niche.slug, variantIdx);
+  const model          = selectModel(kwObj, nichePersona);
+  const prompt         = buildArticlePrompt(kwText, niche, {
     liveDataBlock,
     styleVariant: variantIdx,
+    formatVariant,
     authorPersona: variantIdx > 0 ? author.promptPersona : null,
   });
 
-  console.log(`  [variant] author=${author.name} style=${variantIdx} model=${model.includes('sonnet') ? 'sonnet' : 'haiku'}`);
+  const formatNames = { 0: 'standard', 1: 'listicle', 2: 'opinion' };
+  console.log(`  [variant] author=${author.name} style=${variantIdx} format=${formatNames[formatVariant]} model=${model.includes('sonnet') ? 'sonnet' : 'haiku'}`);
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {

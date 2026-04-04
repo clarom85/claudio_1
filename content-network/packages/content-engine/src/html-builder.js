@@ -154,11 +154,13 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
     </ol>
   </nav>` : '';
 
-  // Determine article layout type from schema hint + keyword patterns
-  const isHowTo = articleData.schemaType === 'HowTo'
-    || /\bhow[ -]to\b|\bstep[- ]by[- ]step\b|\bguide to\b|\binstall(ation)?\b/i.test(keyword);
-  const isCost = !isHowTo && /\bcost(s)?\b|\bprice(s)?\b|\b vs \b|\bcompar|\bhow much\b|\baverage\b|\bexpensive\b|\bcheap/i.test(keyword);
-  const layoutType = isHowTo ? 'howto' : isCost ? 'cost' : 'standard';
+  // Determine article layout type from schema hint + keyword patterns + format type
+  const isListicle = articleData.formatType === 'listicle';
+  const isOpinion  = articleData.formatType === 'opinion';
+  const isHowTo = !isListicle && (articleData.schemaType === 'HowTo'
+    || /\bhow[ -]to\b|\bstep[- ]by[- ]step\b|\bguide to\b|\binstall(ation)?\b/i.test(keyword));
+  const isCost = !isHowTo && !isListicle && /\bcost(s)?\b|\bprice(s)?\b|\b vs \b|\bcompar|\bhow much\b|\baverage\b|\bexpensive\b|\bcheap/i.test(keyword);
+  const layoutType = (isListicle || isHowTo) ? 'howto' : isCost ? 'cost' : 'standard';
 
   // ── Featured comparison table (shown prominently after TOC) ────────────────
   const comparisonTableHTML = (comparisonTable?.headers?.length && comparisonTable?.rows?.length)
@@ -202,14 +204,28 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       <a href="/tools/${toolSlug}/" style="display:inline-block;background:#fff;color:#1a5c3a;padding:12px 32px;border-radius:6px;font-weight:700;font-size:15px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.15)">Start Free Calculator →</a>
     </div>` : '';
 
-  // ── HowTo layout: progress header ───────────────────────────────────────────
-  const howtoHeaderHTML = layoutType === 'howto'
+  // ── HowTo / Listicle layout: progress header ────────────────────────────────
+  const howtoHeaderHTML = (layoutType === 'howto' && !isListicle)
     ? `<div style="display:flex;align-items:center;gap:12px;background:#f0f4ff;border:1px solid #d0d9ff;border-radius:6px;padding:14px 18px;margin:0 0 24px;">
       <span style="font-size:24px">📋</span>
       <div>
         <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#3b5bdb;margin:0 0 2px">Step-by-Step Guide</p>
         <p style="font-size:14px;color:#444;margin:0">${sections.length} steps · Est. ${Math.max(5, sections.length * 3)}–${Math.max(10, sections.length * 7)} minutes</p>
       </div>
+    </div>` : '';
+
+  // ── Listicle header ──────────────────────────────────────────────────────────
+  const listicleHeaderHTML = isListicle
+    ? `<div style="display:flex;align-items:center;gap:10px;margin:0 0 24px;padding-bottom:14px;border-bottom:2px solid #e0e0e0;">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#1a1a2e;color:#fff;font-weight:800;font-size:18px;flex-shrink:0;">${sections.length}</span>
+      <p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;margin:0;">Things to know · ${readingTime} min read</p>
+    </div>` : '';
+
+  // ── Opinion editorial kicker ─────────────────────────────────────────────────
+  const opinionHeaderHTML = isOpinion
+    ? `<div style="display:inline-flex;align-items:center;gap:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:7px 14px;margin:0 0 20px;">
+      <span style="font-size:14px;">✍️</span>
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#856404;margin:0;">Editorial — Expert Opinion</p>
     </div>` : '';
 
   let sectionsHTML = '';
@@ -331,6 +347,8 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         <p class="intro-text">${intro}</p>
       </div>
 
+      ${opinionHeaderHTML}
+      ${listicleHeaderHTML}
       ${howtoHeaderHTML}
       ${costSummaryHTML}
       ${tocHTML}

@@ -339,6 +339,29 @@ CLOSING: End with an honest tradeoff summary. What should you spend more on, and
 
 };
 
+// ── Format variants — varied article formats in rotation ─────────────────────
+// 0 = standard informational (default), 1 = listicle, 2 = opinion/editorial
+export const FORMAT_VARIANT_CONFIGS = {
+  0: {
+    name: 'standard',
+    promptBlock: '', // no override — default structure from cfg.structure
+  },
+  1: {
+    name: 'listicle',
+    promptBlock: `FORMAT: NUMBERED LIST ARTICLE
+Title must follow pattern "[N] [Action/Problem] [Specific Outcome]" — e.g. "9 HVAC Mistakes That Cost Homeowners $2,000+ Per Year" / "7 Things That Drive Up Roof Replacement Costs" / "11 Home Improvement Projects With the Best ROI in 2026". The number should be 7, 9, or 11.
+Structure: exactly that many sections. The H2 of each section MUST start with the item number (e.g. "1. Always Get Three Quotes Before Committing"). Each item: hook sentence → 1-2 specific data points or examples → one-line takeaway. No long preamble between items — each stands alone.
+Set formatType: "listicle" in the JSON output.`,
+  },
+  2: {
+    name: 'opinion',
+    promptBlock: `FORMAT: EDITORIAL / OPINION PIECE
+Title must take a clear, defensible position — e.g. "Why Solar Quotes Vary by $15,000 (And Who Is Overcharging You)" / "The Home Insurance Advice Your Agent Won't Give You" / "I've Reviewed 200 Contractor Quotes. Here Is What Most Homeowners Get Wrong."
+Structure: 4-6 sections. Opening section: state the take plainly and explain why conventional wisdom is wrong. Middle sections: evidence, real examples, data, one genuine counterargument. Final section: concrete verdict — what the reader should actually do. First-person throughout. Author's experience is the authority, not hedged disclaimers.
+Set formatType: "opinion" in the JSON output.`,
+  },
+};
+
 // ── Per-variant structural parameters ────────────────────────────────────────
 
 // Word count offset from cfg.wordCount base:
@@ -369,6 +392,7 @@ const VARIANT_AUTHOR_NOTE_STYLE = {
 export function buildArticlePrompt(keyword, niche, options = {}) {
   const cfg = NICHE_PROMPT_CONFIGS[niche.slug] || DEFAULT_NICHE_CONFIG;
   const styleVariant = options.styleVariant ?? 0;
+  const formatVariant = options.formatVariant ?? 0;
   const baseWc = cfg.wordCount;
   const wordCount = options.targetWordCount || Math.max(800, baseWc + (VARIANT_WC_OFFSETS[styleVariant] ?? 0));
   const liveDataBlock = options.liveDataBlock || '';
@@ -377,6 +401,7 @@ export function buildArticlePrompt(keyword, niche, options = {}) {
   const metaDescStyle = VARIANT_META_DESC_STYLE[styleVariant] || VARIANT_META_DESC_STYLE[0];
   const schemaHint = VARIANT_SCHEMA_HINT[styleVariant] || cfg.schemaHint;
   const authorNoteStyle = VARIANT_AUTHOR_NOTE_STYLE[styleVariant] || VARIANT_AUTHOR_NOTE_STYLE[0];
+  const formatBlock = FORMAT_VARIANT_CONFIGS[formatVariant]?.promptBlock || '';
   const CURRENT_YEAR = new Date().getFullYear();
   const CURRENT_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -395,7 +420,7 @@ ${cfg.requiredElements}
 
 WHAT TO AVOID:
 ${cfg.avoidances}
-${styleBlock}${liveDataBlock}
+${styleBlock}${liveDataBlock}${formatBlock ? `\n${formatBlock}\n` : ''}
 WORD COUNT: ${wordCount}–${wordCount + 300} words
 
 OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
@@ -427,6 +452,7 @@ OUTPUT FORMAT (return valid JSON only, no markdown wrapper):
       ["Row 2 Col 1", "Row 2 Col 2", "Row 2 Col 3"]
     ]
   },
+  "formatType": "standard, listicle, or opinion — set as instructed above (default: standard)",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "category": "best-fit category for this article (options: ${cfg.categoryHint})",
   "schemaType": "Article, HowTo, or FAQPage — choose the best fit (guidance: ${schemaHint})",
