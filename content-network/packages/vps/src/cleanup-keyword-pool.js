@@ -117,8 +117,23 @@ async function cleanNiche(niche) {
   // Intra-pool dedup: tracks fingerprints of unused keywords we decided to KEEP
   const keptPoolFingerprints = new Set();
 
+  const NON_ENGLISH = [
+    /\bvergleich\b/i, /\bkosten\b/i, /\bversicherung\b/i, /\bpreis\b/i, /\banbieter\b/i, /\bbillig\b/i, /\brechner\b/i,
+    /\bassurance\b/i, /\bdevis\b/i, /\bmutuelle\b/i, /\bcomparatif\b/i, /\bmeilleur\b/i,
+    /\bseguro(s)?\b/i, /\bprecio(s)?\b/i, /\bcobertura\b/i, /\bcotizacion\b/i,
+    /[^\x00-\x7F]/,  // non-ASCII
+    /^\w and \w /i,  // single-letter brand pattern (e.g. "k and k")
+  ];
+
   for (const kw of unused) {
     const kwLower = kw.keyword.toLowerCase();
+
+    // Check 0: non-English / foreign language / brand pattern
+    if (NON_ENGLISH.some(p => p.test(kwLower))) {
+      toMark.push(kw.id);
+      reasons[kw.id] = 'non-English keyword';
+      continue;
+    }
 
     // Check 1: slug conflict vs qualsiasi articolo
     const predictedSlug = predictSlug(kwLower);

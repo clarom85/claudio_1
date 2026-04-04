@@ -187,6 +187,34 @@ const OFF_TOPIC_PATTERNS = [
   /\bchevy\b/i,
   // Non-ASCII / non-English characters
   /[^\x00-\x7F]/,
+  // German words
+  /\bvergleich\b/i,
+  /\bkosten\b/i,
+  /\bversicherung\b/i,
+  /\bversicherungen\b/i,
+  /\bkrankenversicherung\b/i,
+  /\bpreis\b/i,
+  /\banbieter\b/i,
+  /\bbillig\b/i,
+  /\bkaufen\b/i,
+  /\brechner\b/i,
+  // French words
+  /\bassurance\b/i,
+  /\bdevis\b/i,
+  /\bmutuelle\b/i,
+  /\bcomparatif\b/i,
+  /\bmeilleur\b/i,
+  /\bprix\b/i,
+  /\bpas cher\b/i,
+  // Spanish words
+  /\bseguro(s)?\b/i,
+  /\bprecio(s)?\b/i,
+  /\bcomparar\b/i,
+  /\bbarato\b/i,
+  /\bcobertura\b/i,
+  /\bcotizacion\b/i,
+  // Single-letter brand pattern (e.g. "k and k insurance")
+  /^\w and \w /i,
 ];
 
 export function filterKeywords(keywords) {
