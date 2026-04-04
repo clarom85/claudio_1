@@ -492,7 +492,14 @@ async function triggerDailyGeneration() {
         { cwd: ROOT, stdio: 'inherit', timeout: 1200000 }
       );
     } catch (e) {
-      console.log(`  ⚠️  Content engine: ${e.message?.slice(0, 80)}`);
+      const msg = e.message?.slice(0, 120) || 'unknown error';
+      console.error(`  ❌ Content engine FAILED for ${site.domain}: ${msg}`);
+      // Alert se fallisce — SyntaxError o crash completo blocca generazione silenziosamente
+      try {
+        await alertCritical(`Content engine crash — ${site.domain}`,
+          `node packages/content-engine/src/index.js --site-id ${site.id} --count ${cappedLimit}\n\nError: ${msg}\n\nVerifica logs VPS con: pm2 logs content-scheduler --lines 50`
+        );
+      } catch (_) {}
     }
 
     // Re-linking pass cross-batch — aggiorna link interni su tutto il sito
