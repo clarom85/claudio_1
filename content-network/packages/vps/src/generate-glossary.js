@@ -227,7 +227,7 @@ export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4Measu
         `${term.shortDef.slice(0, 140)} Full definition with real-world examples.`,
         buildTermPage(term, terms, resolvedNicheName, siteConfig),
         siteConfig,
-        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/`, template }
+        { noindex: true, canonical: `${siteConfig.url}/glossary/`, template }
       ),
       'utf-8'
     );
@@ -310,7 +310,7 @@ async function run() {
         `${term.shortDef.slice(0, 140)} Full definition with real-world examples.`,
         termContent,
         siteConfig,
-        { noindex: false, canonical: `${siteConfig.url}/glossary/${term.slug}/`, template: site.template || '' }
+        { noindex: true, canonical: `${siteConfig.url}/glossary/`, template: site.template || '' }
       );
       writeFileSync(join(termDir, 'index.html'), termHtml, 'utf-8');
     }
