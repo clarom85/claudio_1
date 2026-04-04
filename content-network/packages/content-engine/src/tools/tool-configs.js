@@ -2475,7 +2475,7 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
         itcCredit, netCost, annualSavings,
         breakEvenYears: parseFloat(breakEvenYears) || 0,
         twentyYearSavings: Math.round(twentyYearSavings),
-        comparison: { yours: '$' + netCost.toLocaleString() + ' net cost', average: '$' + usAvgNet.toLocaleString() + ' US avg' },
+        comparison: { yours: '$' + netCost.toLocaleString(), average: '$' + usAvgNet.toLocaleString() },
         insight,
       };
     `,

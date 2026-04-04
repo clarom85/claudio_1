@@ -1033,7 +1033,7 @@ async function generateStaticPages(domain, siteConfig, template) {
   </p>
   <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:40px;">
     <a href="/" style="display:inline-block;background:#c0392b;color:white;padding:11px 22px;border-radius:5px;text-decoration:none;font-size:15px;font-weight:700;">← Back to Home</a>
-    <a href="/tools/" style="display:inline-block;background:#1a1a2e;color:white;padding:11px 22px;border-radius:5px;text-decoration:none;font-size:15px;font-weight:700;">Free Calculator</a>
+    <a href="/tools/${siteConfig.toolSlug ? siteConfig.toolSlug + '/' : ''}" style="display:inline-block;background:#1a1a2e;color:white;padding:11px 22px;border-radius:5px;text-decoration:none;font-size:15px;font-weight:700;">Free Calculator</a>
   </div>
   <div style="border-top:1px solid #eee;padding-top:28px;">
     <p style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">Browse by Category</p>
@@ -1175,7 +1175,7 @@ function generateCategoryPage(domain, category, introData, siteConfig) {
   <div style="background:#fef5f4;border:1px solid #f5c6c0;border-left:4px solid #c0392b;border-radius:6px;padding:20px 24px;margin-top:32px;">
     <p style="font-size:15px;font-weight:600;color:#1a1a2e;margin-bottom:6px;">Free Planning Tool</p>
     <p style="font-size:14px;color:#555;margin-bottom:12px;">Use our interactive calculator to get an instant, personalized estimate for your project.</p>
-    <a href="/tools/" style="display:inline-block;background:#c0392b;color:white;padding:9px 20px;border-radius:5px;text-decoration:none;font-size:14px;font-weight:700;">Try the Calculator →</a>
+    <a href="/tools/${siteConfig.toolSlug ? siteConfig.toolSlug + '/' : ''}" style="display:inline-block;background:#c0392b;color:white;padding:9px 20px;border-radius:5px;text-decoration:none;font-size:14px;font-weight:700;">Try the Calculator →</a>
   </div>
 </div>
 
