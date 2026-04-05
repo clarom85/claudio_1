@@ -60,8 +60,12 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${ga4Script}
 </head><body>
-<header style="background:#1a1a2e;padding:14px 20px">
+<header style="background:#1a1a2e;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
   <a href="/" style="color:#fff;text-decoration:none;font-size:22px;font-weight:800">${site.name}</a>
+  <nav style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+    ${(site.categories||[]).slice(0,4).map(c=>`<a href="/category/${c.slug}/" style="color:rgba(255,255,255,.7);text-decoration:none;font-size:13px">${c.name}</a>`).join('')}
+    ${site.toolSlug ? `<a href="/tools/${site.toolSlug}/" style="color:#f5a623;text-decoration:none;font-size:13px;font-weight:700">${site.toolLabel||'Free Calculator'}</a>` : ''}
+  </nav>
 </header>
 <main style="padding:20px 0;min-height:60vh">${wrappedContent}</main>
 <footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
@@ -731,7 +735,18 @@ function buildDisclaimerPage(siteName, domain, nicheSlug) {
 async function regenerateStaticPages(site) {
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const siteUrl = `https://${site.domain}`;
-  const siteConfig = { name: siteName, url: siteUrl, domain: site.domain };
+
+  let toolSlug = null, toolLabel = 'Free Calculator';
+  try {
+    const { TOOL_CONFIGS } = await import('@content-network/content-engine/src/tools/tool-configs.js');
+    toolSlug = TOOL_CONFIGS[site.niche_slug]?.slug || null;
+    toolLabel = TOOL_CONFIGS[site.niche_slug]?.navLabel || 'Free Calculator';
+  } catch {}
+
+  const { getCategoriesForNiche } = await import('@content-network/content-engine/src/categories.js');
+  const categories = getCategoriesForNiche(site.niche_slug || '').slice(0, 7);
+
+  const siteConfig = { name: siteName, url: siteUrl, domain: site.domain, nicheSlug: site.niche_slug, categories, toolSlug, toolLabel };
 
   const pages = buildPages(siteName, site.domain, siteUrl);
 

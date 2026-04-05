@@ -2576,12 +2576,12 @@ Always obtain quotes from multiple licensed carriers and consult a licensed insu
 
       return {
         totalAnnual, partBannual, partDAnnual, oop, medigapAnnual, partBMonthly,
-        comparison: { yours: '$' + totalAnnual.toLocaleString() + '/yr', average: '$' + usAvg.toLocaleString() + '/yr avg' },
+        comparison: { yours: '$' + totalAnnual.toLocaleString() + '/yr', average: '$' + usAvg.toLocaleString() + '/yr' },
         insight,
       };
     `,
     outputs: [
-      { id: 'totalAnnual',   label: 'Estimated Annual Medicare Cost', type: 'currency-hero' },
+      { id: 'totalAnnual',   label: 'Estimated Annual Medicare Cost', type: 'currency-hero', unit: 'per year' },
       { id: 'partBannual',   label: 'Part B Premiums',                type: 'currency', percent: true },
       { id: 'partDAnnual',   label: 'Part D Premiums',                type: 'currency', percent: true },
       { id: 'oop',           label: 'Out-of-Pocket Costs',            type: 'currency', percent: true },
