@@ -50,10 +50,10 @@ export async function addZone(domain) {
     return existing[0];
   }
 
-  const zone = await cfFetch('/zones', 'POST', {
-    name: domain,
-    jump_start: false, // non importare DNS esistente — lo gestiamo noi
-  });
+  const body = { name: domain, jump_start: false };
+  // Include account ID if set — required for tokens with account-scoped permissions
+  if (process.env.CF_ACCOUNT_ID) body.account = { id: process.env.CF_ACCOUNT_ID };
+  const zone = await cfFetch('/zones', 'POST', body);
 
   console.log(`  ✅ Zone created: ${domain}`);
   return zone;
