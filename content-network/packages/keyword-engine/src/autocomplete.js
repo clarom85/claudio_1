@@ -68,15 +68,23 @@ export async function expandKeyword(seed, { lang = 'en', country = 'us', delay =
 }
 
 /**
- * Espande un array di seed keywords in parallelo controllato
+ * Espande un array di seed keywords con concorrenza controllata (5 parallele).
+ * Riduce il tempo da ~6 min a ~1.5 min mantenendo rate-limiting per seed.
  */
 export async function expandAllSeeds(seeds, options = {}) {
   const allKeywords = new Set();
-  for (const seed of seeds) {
-    console.log(`  Expanding: "${seed}"`);
-    const expanded = await expandKeyword(seed, options);
-    expanded.forEach(k => allKeywords.add(k));
-    await sleep(500);
+  const CONCURRENCY = 5;
+
+  for (let i = 0; i < seeds.length; i += CONCURRENCY) {
+    const batch = seeds.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async seed => {
+        console.log(`  Expanding: "${seed}"`);
+        return expandKeyword(seed, options);
+      })
+    );
+    results.forEach(expanded => expanded.forEach(k => allKeywords.add(k)));
+    if (i + CONCURRENCY < seeds.length) await sleep(500);
   }
   return [...allKeywords];
 }

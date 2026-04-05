@@ -477,7 +477,7 @@ async function triggerDailyGeneration() {
         try {
           execSync(
             `node packages/keyword-engine/src/index.js --niche ${niche.slug} ${expandFlag}`.trim(),
-            { cwd: ROOT, stdio: 'pipe', timeout: 300000 }
+            { cwd: ROOT, stdio: 'pipe', timeout: 600000 }
           );
         } catch (e) {
           console.log(`  ⚠️  Keyword engine: ${e.message?.slice(0, 80)}`);

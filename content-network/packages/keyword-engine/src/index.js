@@ -15,6 +15,7 @@ import { getRelatedSearches } from './related-searches.js';
 import { expandWithLocations } from './locations.js';
 import { expandWithEntities } from './entities.js';
 import { scrapeCompetitorHeadings } from './competitor-scraper.js';
+import { getDataForSEOSuggestions } from './dataforseo-seeds.js';
 import { filterKeywords, deduplicateAcrossSites } from './filter.js';
 import { clusterKeywords, logClusterStats } from './cluster.js';
 import { getNicheBySlug, bulkInsertKeywords, bulkUpdateKeywordVolumes, getExpansionSeeds, sql } from '@content-network/db';
@@ -125,6 +126,16 @@ async function run() {
   const competitorHeadings = await scrapeCompetitorHeadings(seeds);
   console.log(`   → ${competitorHeadings.length} competitor headings`);
   allRaw.push(...competitorHeadings);
+
+  // 11. DataForSEO Labs keyword suggestions (database lookup, non live scraping)
+  console.log('🗄️  DataForSEO Labs suggestions...');
+  const dfsSeeds = await getDataForSEOSuggestions(seeds, {
+    language: niche.language,
+    country: niche.country.toLowerCase(),
+    limitPerSeed: 50,
+  });
+  console.log(`   → ${dfsSeeds.length} DataForSEO suggestions`);
+  allRaw.push(...dfsSeeds);
 
   // Filter + classify
   console.log('\n🧹 Filtering and classifying...');

@@ -228,22 +228,8 @@ function normalizeTitleTokens(title) {
 }
 
 /**
- * Jaccard similarity tra due titoli di articoli.
- * Usa normalizzazione semantica (strip sottotitolo, noise words, stop words, stem).
- * Ritorna valore 0–1. Usato per dedup titoli.
- */
-function jaccardSimilarity(a, b) {
-  const setA = normalizeTitleTokens(a);
-  const setB = normalizeTitleTokens(b);
-  if (setA.size === 0 || setB.size === 0) return 0;
-  const intersection = [...setA].filter(w => setB.has(w)).length;
-  const union = new Set([...setA, ...setB]).size;
-  return union === 0 ? 0 : intersection / union;
-}
-
-/**
- * Token geografici US — usati per rilevare e limitare geo-varianti della stessa keyword.
- * Permettiamo max 2 geo-varianti per stesso core topic.
+ * Token geografici US — usati per rilevare geo-varianti della stessa keyword.
+ * Permette articoli state-by-state senza flaggarli come duplicati.
  */
 const US_GEO_TOKENS = new Set([
   'alabama','alaska','arizona','arkansas','california','colorado','connecticut',
@@ -268,6 +254,40 @@ function stripGeoFromKeyword(kw) {
   const tokens = kw.toLowerCase().split(/\s+/);
   const stripped = tokens.filter(t => !US_GEO_TOKENS.has(t)).join(' ').trim();
   return stripped || kw;
+}
+
+/**
+ * Trova il primo token geo US in un titolo (controlla prima multi-word).
+ * Ritorna il token geo trovato o null.
+ */
+function findGeoToken(title) {
+  const lower = title.toLowerCase();
+  // Controlla prima i token più lunghi (es. "north carolina" prima di "carolina")
+  const sorted = [...US_GEO_TOKENS].sort((a, b) => b.length - a.length);
+  for (const geo of sorted) {
+    if (lower.includes(geo)) return geo;
+  }
+  return null;
+}
+
+/**
+ * Jaccard similarity tra due titoli di articoli.
+ * Usa normalizzazione semantica (strip sottotitolo, noise words, stop words, stem).
+ * Geo-aware: titoli che targetizzano stati/città US diversi non sono mai duplicati.
+ * Ritorna valore 0–1. Usato per dedup titoli.
+ */
+function jaccardSimilarity(a, b) {
+  // Geo-aware: articoli su stati/città US diversi non sono duplicati
+  const geoA = findGeoToken(a);
+  const geoB = findGeoToken(b);
+  if (geoA && geoB && geoA !== geoB) return 0;
+
+  const setA = normalizeTitleTokens(a);
+  const setB = normalizeTitleTokens(b);
+  if (setA.size === 0 || setB.size === 0) return 0;
+  const intersection = [...setA].filter(w => setB.has(w)).length;
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 0 : intersection / union;
 }
 
 /**
