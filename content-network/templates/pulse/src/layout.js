@@ -12,7 +12,7 @@ export const CSS = `
   --ff-head:'Merriweather',Georgia,serif;--ff-body:'Open Sans',system-ui,sans-serif;
   --max:1200px;--shadow:0 2px 8px rgba(0,0,0,.1);--r:4px
 }
-html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable}
+html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable;overflow-x:hidden}
 body{font-family:var(--ff-body);background:var(--bg);color:#1a1a1a;line-height:1.6}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 16px}
 a{color:inherit}
@@ -74,7 +74,7 @@ img{max-width:100%;height:auto;display:block}
 .ad-footer{width:100%;text-align:center;padding:16px;background:rgba(0,0,0,.2)}
 
 /* Article content */
-.art-body{background:#fff;padding:24px;border-radius:var(--r);box-shadow:var(--shadow)}
+.art-body{background:#fff;padding:24px;border-radius:var(--r);box-shadow:var(--shadow);overflow-x:hidden;overflow-wrap:break-word;word-break:break-word}
 .art-body .article-header{display:none}.art-body .article-hero-image{display:none}.art-body .article-sidebar{display:none}
 .faq-answer{display:none;overflow:hidden}.faq-item.faq-open .faq-answer{display:block}.faq-question{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:8px}.faq-question::after{content:'+';font-size:20px;font-weight:300;flex-shrink:0;color:var(--red)}.faq-item.faq-open .faq-question::after{content:'−'}
 .quick-answer-box{background:#fff5f5!important;border-left-color:var(--red)!important}
@@ -114,7 +114,7 @@ img{max-width:100%;height:auto;display:block}
 .sidebar-newsletter{background:var(--navy);color:#fff;border-radius:var(--r);padding:20px}
 .sidebar-newsletter h3{font-size:16px;margin-bottom:12px}
 .nl-form{display:flex;flex-direction:column;gap:8px}
-.nl-form input{padding:10px 12px;border:none;border-radius:var(--r);font-size:14px;width:100%}
+.nl-form input{padding:10px 12px;border:none;border-radius:var(--r);font-size:16px;width:100%}
 .nl-form button{background:var(--red);color:#fff;border:none;padding:10px;border-radius:var(--r);cursor:pointer;font-weight:600;font-size:14px}
 .nl-form button:hover{background:#a93226}
 
@@ -169,6 +169,10 @@ img{max-width:100%;height:auto;display:block}
   .art-section h2,.article-section h2{margin-top:16px}
   .faq-wrap,.article-faq{margin-top:24px;padding-top:16px}
   .key-takeaways{padding:14px 16px}
+  .site-main{padding:20px 0 48px}
+  .faq-wrap>h2{margin-top:12px}
+  .ad-inline{margin:16px 0}
+  .ad-leader{margin:8px 0}
 }
 /* Article hero + cost table */
 .art-hero{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;display:block;margin:20px 0;border-radius:var(--r)}
@@ -193,6 +197,29 @@ img{max-width:100%;height:auto;display:block}
 .trust-box-body{font-size:13px;color:#3a4a3a;line-height:1.65;margin-bottom:10px}
 .trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);border-top:1px solid #c5ddd0;padding-top:8px;margin-top:4px}
 .trust-box-reviewer{color:var(--navy);font-weight:600}
+/* Mobile: table overflow */
+.art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.art-body img{max-width:100%;height:auto}
+@media(max-width:480px){
+  .wrap{padding:0 10px}
+  .art-body{padding:12px}
+  .art-hdr{padding:12px 0;margin-bottom:12px}
+  .art-section h2,.article-section h2{margin-top:12px;font-size:19px}
+  .art-section,.article-section{margin:8px 0}
+  .art-section p,.article-section p,.art-body p{margin-bottom:12px;font-size:15px;line-height:1.7}
+  .intro{padding-left:10px;margin-bottom:14px;font-size:16px}
+  .faq-wrap{padding:14px;margin:12px 0}
+  .highlight-box{padding:12px;margin:12px 0}
+  .tags{margin-top:16px;padding-top:12px}
+  .art-meta{gap:8px;padding:8px 0}
+  .author-badge{padding:6px 10px}
+  .site-footer{margin-top:32px}
+  .art-hero{margin:10px 0}
+}
+@media(max-width:375px){
+  .wrap{padding:0 8px}
+  .art-body{padding:10px}
+}
 ${COOKIE_BANNER_CSS}${NATIVE_ADS_CSS}`;
 
 export function renderBase({ title, description, slug, siteName, siteUrl, schemas = [], body, adsenseId = '', ogImage = '', noindex = false, datePublished = '', dateModified = '', authorUrl = '', prevUrl = '', nextUrl = '', lcpImage = '', ga4MeasurementId = '', mgidSiteId = '' }) {
@@ -212,7 +239,7 @@ export function renderBase({ title, description, slug, siteName, siteUrl, schema
 <html lang="en" data-adsense="${adsenseId}">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="robots" content="${robots}"/>
 <meta name="theme-color" content="#c0392b"/>
 <meta property="og:locale" content="en_US"/>
