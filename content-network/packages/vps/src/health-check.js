@@ -202,8 +202,14 @@ async function run() {
         } else if (res.status === 301 || res.status === 302) {
           ok(`HTTP ${res.status} redirect (normal for www→non-www)`);
         } else {
-          fail(`HTTP ${res.status} — unexpected response`);
-          issues.push(`http-${res.status}`);
+          // If site has 0 published articles, DNS likely not yet pointed to our VPS
+          if (dbCount === 0) {
+            warn(`HTTP ${res.status} — DNS not yet pointing to VPS (site pending)`);
+            warnings.push(`http-${res.status}-pending`);
+          } else {
+            fail(`HTTP ${res.status} — unexpected response`);
+            issues.push(`http-${res.status}`);
+          }
         }
       } catch (e) {
         const isNetworkError = /ECONNREFUSED|ENOTFOUND|ERR_NAME_NOT_RESOLVED|ECONNRESET/.test(String(e.message));
