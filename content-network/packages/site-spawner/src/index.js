@@ -252,8 +252,8 @@ async function run() {
 
     // 11. Sitemap completa
     const primarySlug = siteConfig.authorData ? siteConfig.authorData.avatar : (author.avatar || null);
-    const extraAuthors = ADDITIONAL_AUTHORS[nicheSlug] || [];
-    const authorSlugs = [...(primarySlug ? [primarySlug] : []), ...extraAuthors.map(a => a.avatar)];
+    const sitemapExtraAuthors = ADDITIONAL_AUTHORS[nicheSlug] || [];
+    const authorSlugs = [...(primarySlug ? [primarySlug] : []), ...sitemapExtraAuthors.map(a => a.avatar)];
     generateSitemap(domain, [], {
       categories,
       authorSlugs,
