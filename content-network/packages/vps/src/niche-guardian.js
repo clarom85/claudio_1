@@ -16,6 +16,7 @@ import { sql } from '@content-network/db';
 import { alertWarning, alertReport } from '@content-network/vps/src/alert.js';
 import { generateSitemap, generateRssFeed } from '@content-network/vps';
 import { getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
+import { NICHE_TAGLINES } from '@content-network/content-engine/src/niche-taglines.js';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -1173,7 +1174,7 @@ async function autoTriggerRegen(site) {
         authorName: '', authorTitle: '', authorBio: '', authorAvatar: '',
         adsenseId: process.env.ADSENSE_ID || '', ga4MeasurementId: site.ga4_measurement_id || '',
         mgidSiteId: site.mgid_site_id || '', mgidInArticleId: site.mgid_in_article_id || '',
-        mgidSmartId: site.mgid_smart_id || '', tagline: '', toolSlug: null,
+        mgidSmartId: site.mgid_smart_id || '', tagline: NICHE_TAGLINES[site.niche_slug] || '', toolSlug: null,
       };
 
       const TEMPLATES_DIR = join(ROOT, 'templates');
