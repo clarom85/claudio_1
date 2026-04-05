@@ -9,6 +9,7 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { GLOSSARY_TERMS } from '@content-network/content-engine/src/glossary-terms.js';
+import { buildPageHeader, buildPageFooter } from './page-header.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
@@ -50,21 +51,9 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 ${ga4Script}
 </head><body>
-<header style="background:#1a1a2e;padding:14px 20px;display:flex;align-items:center;gap:16px">
-  <a href="/" style="color:#fff;text-decoration:none;font-size:20px;font-weight:800">${htmlEsc(siteConfig.name)}</a>
-  <nav style="margin-left:auto;font-size:13px;display:flex;gap:16px">
-    <a href="/glossary/" style="color:rgba(255,255,255,.7);text-decoration:none">Glossary</a>
-    <a href="/tools/" style="color:rgba(255,255,255,.7);text-decoration:none">Calculator</a>
-  </nav>
-</header>
+${buildPageHeader(siteConfig)}
 <main style="padding:20px 0;min-height:60vh">${wrappedContent}</main>
-<footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
-  <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
-     <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;
-     <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot;
-     <a href="/glossary/" style="color:rgba(255,255,255,.5)">Glossary</a>
-  </p>
-</footer>
+${buildPageFooter(siteConfig)}
 </body></html>`;
 }
 

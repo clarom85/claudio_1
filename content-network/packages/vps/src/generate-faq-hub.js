@@ -8,6 +8,7 @@ import 'dotenv/config';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
+import { buildPageHeader, buildPageFooter } from './page-header.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
@@ -81,21 +82,9 @@ ${ga4Script}
   .topic-nav a{display:inline-block;padding:6px 14px;background:#f0f0f0;border-radius:4px;text-decoration:none;color:#1a1a1a;font-size:13px;font-weight:600}
 </style>
 </head><body>
-<header style="background:#1a1a2e;padding:14px 20px;display:flex;align-items:center;gap:16px">
-  <a href="/" style="color:#fff;text-decoration:none;font-size:20px;font-weight:800">${htmlEsc(siteConfig.name)}</a>
-  <nav style="margin-left:auto;font-size:13px;display:flex;gap:16px">
-    <a href="/glossary/" style="color:rgba(255,255,255,.7);text-decoration:none">Glossary</a>
-    <a href="/tools/" style="color:rgba(255,255,255,.7);text-decoration:none">Calculator</a>
-  </nav>
-</header>
+${buildPageHeader(siteConfig)}
 <main style="padding:0;min-height:60vh;background:#fff;color:#1a1a1a"><div style="max-width:900px;margin:0 auto;padding:28px 20px">${content}</div></main>
-<footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px">
-  <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
-     <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;
-     <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot;
-     <a href="/faq/" style="color:rgba(255,255,255,.5)">FAQ</a>
-  </p>
-</footer>
+${buildPageFooter(siteConfig)}
 </body></html>`;
 }
 

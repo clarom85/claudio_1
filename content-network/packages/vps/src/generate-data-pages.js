@@ -25,6 +25,7 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync, statSync } from 'fs
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { DATA_PAGE_CONFIGS, US_STATES, DATA_SERIES } from '@content-network/content-engine/src/data-page-configs.js';
+import { buildPageHeader, buildPageFooter } from './page-header.js';
 
 const WWW_ROOT  = process.env.WWW_ROOT || '/var/www';
 const CACHE_DIR = process.env.TMPDIR || '/tmp';
@@ -121,22 +122,9 @@ h2.data-section-title{font-size:20px;font-weight:700;margin:36px 0 16px;padding-
 </style>
 </head>
 <body>
-<header style="background:#1a1a2e;padding:14px 20px;display:flex;align-items:center;gap:16px">
-  <a href="/" style="color:#fff;text-decoration:none;font-size:20px;font-weight:800">${htmlEsc(siteConfig.name)}</a>
-  <nav style="margin-left:auto;font-size:13px;display:flex;gap:16px;flex-wrap:wrap">
-    <a href="/data/" style="color:rgba(255,255,255,.85);text-decoration:none;font-weight:600">Data</a>
-    <a href="/glossary/" style="color:rgba(255,255,255,.7);text-decoration:none">Glossary</a>
-  </nav>
-</header>
+${buildPageHeader(siteConfig)}
 <main style="min-height:60vh;background:#fff;color:#1a1a1a">${content}</main>
-<footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:24px 20px;font-size:13px">
-  <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
-     <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;
-     <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot;
-     <a href="/glossary/" style="color:rgba(255,255,255,.5)">Glossary</a> &middot;
-     <a href="/data/" style="color:rgba(255,255,255,.5)">Data</a>
-  </p>
-</footer>
+${buildPageFooter(siteConfig)}
 </body>
 </html>`;
 }

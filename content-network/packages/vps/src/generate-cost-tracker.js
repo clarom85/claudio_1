@@ -14,6 +14,7 @@ import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { NICHE_METRICS } from './price-snapshot.js';
+import { buildPageHeader, buildPageFooter } from './page-header.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
@@ -184,14 +185,7 @@ ${gscKeys.map(k => `<meta name="google-site-verification" content="${k}"/>`).joi
 <script type="application/ld+json">${schemaJson}</script>
 ${ga4Script}
 </head><body>
-<header style="background:#1a1a2e;padding:14px 20px;display:flex;align-items:center;gap:16px">
-  <a href="/" style="color:#fff;text-decoration:none;font-size:20px;font-weight:800">${htmlEsc(siteConfig.name)}</a>
-  <nav style="margin-left:auto;font-size:13px;display:flex;gap:16px">
-    <a href="/glossary/" style="color:rgba(255,255,255,.7);text-decoration:none">Glossary</a>
-    <a href="/tools/" style="color:rgba(255,255,255,.7);text-decoration:none">Calculator</a>
-    <a href="/cost-tracker/" style="color:#fff;text-decoration:none;font-weight:700">Cost Tracker</a>
-  </nav>
-</header>
+${buildPageHeader(siteConfig)}
 <main style="max-width:760px;margin:16px auto;padding:28px 20px;background:#fff;color:#1a1a1a;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,.15)">
   <nav aria-label="Breadcrumb" style="font-size:13px;color:#888;margin-bottom:20px">
     <a href="/" style="color:#2980b9;text-decoration:none">${htmlEsc(siteConfig.name)}</a>
@@ -219,13 +213,7 @@ ${ga4Script}
     Charts show up to 18 months of monthly observations. Index values use the BLS base period (1982-84=100 unless noted).
   </div>
 </main>
-<footer style="background:#1a1a2e;color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:13px;margin-top:40px">
-  <p>&copy; ${new Date().getFullYear()} ${htmlEsc(siteConfig.name)} &middot;
-     <a href="/privacy/" style="color:rgba(255,255,255,.5)">Privacy</a> &middot;
-     <a href="/terms/" style="color:rgba(255,255,255,.5)">Terms</a> &middot;
-     <a href="/glossary/" style="color:rgba(255,255,255,.5)">Glossary</a>
-  </p>
-</footer>
+${buildPageFooter(siteConfig)}
 </body></html>`;
 }
 
