@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { sql } from '@content-network/db';
 import { purgeCache } from './cloudflare.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
+import { detectArticleAuthor } from '@content-network/content-engine/src/author-utils.js';
 import { generateRssFeed } from './index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -123,6 +124,7 @@ async function regenerateHomepage(site) {
 
   const articlesData = articles.map(a => {
     const cat = classifyArticle(nicheSlug, a.slug || '', a.title);
+    const articleAuthor = detectArticleAuthor(a.content, nicheSlug);
     return {
       slug: a.slug,
       title: a.title,
@@ -132,7 +134,8 @@ async function regenerateHomepage(site) {
       schemas: a.schema_markup || [],
       category: cat.name,
       categorySlug: cat.slug,
-      author: siteConfig.authorName,
+      author: articleAuthor.name,
+      authorAvatar: articleAuthor.avatar,
       date: a.published_at || a.created_at,
       tags: a.tags || [],
       image: a.image || null,

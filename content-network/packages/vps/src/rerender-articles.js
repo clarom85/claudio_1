@@ -9,32 +9,9 @@ import { join } from 'path';
 import { sql } from '@content-network/db';
 import { purgeCache } from './cloudflare.js';
 import { classifyArticle } from '@content-network/content-engine/src/categories.js';
-import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
+import { detectArticleAuthor } from '@content-network/content-engine/src/author-utils.js';
+import { AUTHOR_PERSONAS } from '@content-network/content-engine/src/prompts.js';
 import { NICHE_TAGLINES, NICHE_HOMEPAGE_SUBLINE, NICHE_HEADER_BADGE } from '@content-network/content-engine/src/niche-taglines.js';
-
-/**
- * Detects the article author from the baked-in content HTML.
- * Falls back to primary AUTHOR_PERSONAS if not detectable.
- * Keeps reviewer/trustSources/ymyl from the site-level primary author.
- */
-function detectArticleAuthor(content, nicheSlug) {
-  const primary = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
-  if (!content) return primary;
-  const extras = ADDITIONAL_AUTHORS[nicheSlug] || [];
-  // Try avatar image URL (new-format articles: /images/author-{slug}.jpg)
-  const match = content.match(/author-([a-z][a-z0-9-]+)\.jpg/);
-  if (match) {
-    const avatarSlug = match[1];
-    if (primary.avatar === avatarSlug) return primary;
-    const found = extras.find(a => a.avatar === avatarSlug);
-    if (found) return found;
-  }
-  // Fallback: detect by author name in content (old articles with pravatar.cc URLs)
-  for (const extra of extras) {
-    if (content.includes(extra.name)) return extra;
-  }
-  return primary;
-}
 import { patchArticleSchemas } from '@content-network/content-engine/src/schema.js';
 
 const WWW_ROOT = process.env.WWW_ROOT || '/var/www';

@@ -23,6 +23,7 @@ import { runLinkGraphAnalysis } from '@content-network/vps/src/link-graph.js';
 import { alertCritical, alertWarning, alertReport } from '@content-network/vps/src/alert.js';
 import { runBackup } from '@content-network/vps/src/backup.js';
 import { classifyArticle, getCategoriesForNiche } from '@content-network/content-engine/src/categories.js';
+import { detectArticleAuthor } from '@content-network/content-engine/src/author-utils.js';
 import { getDailyArticleLimit, logScheduleInfo, isDeadDay, isWithinPublishingWindow } from '@content-network/content-engine/src/publishing-schedule.js';
 import { injectInternalLinks, injectPillarSatelliteLinks, injectGlossaryLinks } from '@content-network/content-engine/src/link-injector.js';
 import { GLOSSARY_TERMS } from '@content-network/content-engine/src/glossary-terms.js';
@@ -364,6 +365,7 @@ async function rebuildAffectedSites(stats) {
       // Articoli per il frontend
       const articlesData = published.map(a => {
         const cat = classifyArticle(site.niche_slug, a.keyword || '', a.title);
+        const articleAuthor = detectArticleAuthor(a.content, site.niche_slug);
         return {
           slug: a.slug,
           title: a.title,
@@ -373,7 +375,8 @@ async function rebuildAffectedSites(stats) {
           schemas: a.schema_markup || [],
           category: cat.name,
           categorySlug: cat.slug,
-          author: siteConfig.authorName,
+          author: articleAuthor.name,
+          authorAvatar: articleAuthor.avatar,
           date: a.published_at || a.created_at,
           tags: a.tags || [],
           image: a.image || null,
