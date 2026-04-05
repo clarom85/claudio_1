@@ -10,6 +10,7 @@ import { sql } from '@content-network/db';
 import { purgeCache } from './cloudflare.js';
 import { classifyArticle } from '@content-network/content-engine/src/categories.js';
 import { AUTHOR_PERSONAS, ADDITIONAL_AUTHORS } from '@content-network/content-engine/src/prompts.js';
+import { NICHE_TAGLINES, NICHE_HOMEPAGE_SUBLINE, NICHE_HEADER_BADGE } from '@content-network/content-engine/src/niche-taglines.js';
 
 /**
  * Detects the article author from the baked-in content HTML.
@@ -80,29 +81,6 @@ async function run() {
     categories = JSON.parse(readFileSync(catsFile, 'utf-8')).slice(0, 7);
   } catch {}
 
-  const NICHE_TAGLINES = {
-    'home-improvement-costs': 'Expert cost guides for home improvement, renovation & repair projects',
-    'personal-finance': 'Practical personal finance advice, budgeting tips & money strategies',
-    'insurance-guide': 'Clear, unbiased insurance guides to help you choose the right coverage',
-    'legal-advice': 'Plain-language legal guides written by experienced professionals',
-    'real-estate-investing': 'Real estate investing strategies, market analysis & property guides',
-    'health-symptoms': 'Trusted health symptom guides reviewed by medical professionals',
-    'credit-cards-banking': 'Credit card reviews, banking tips & strategies to maximize rewards',
-    'weight-loss-fitness': 'Evidence-based weight loss & fitness guides from certified experts',
-    'automotive-guide': 'Car buying, maintenance & repair guides from automotive professionals',
-    'online-education': 'Online education reviews, learning strategies & course comparisons',
-    'cybersecurity-privacy': 'Cybersecurity & privacy guides to keep you safe in the digital world',
-    'mental-health-wellness': 'Mental health & wellness resources from licensed professionals',
-    'home-security-systems': 'Home security system reviews, installation guides & safety tips',
-    'solar-energy': 'Solar energy guides, cost breakdowns & installation advice',
-    'senior-care-medicare': 'Senior care guides, Medicare explained & resources for families',
-    'business-startup': 'Business startup guides, funding strategies & entrepreneurship advice',
-    'pet-care-by-breed': 'Breed-specific pet care guides from experienced veterinarians',
-    'software-error-fixes': 'Step-by-step software error fixes and technical troubleshooting guides',
-    'diet-specific-recipes': 'Diet-specific recipes, meal plans & nutrition guides by dietitians',
-    'small-town-tourism': 'Hidden gem travel guides for small towns, local attractions & road trips',
-  };
-
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   let toolSlug = null;
   let toolLabel = 'Free Calculator';
@@ -124,7 +102,9 @@ async function run() {
     mgidInArticleId: site.mgid_in_article_id || '',
     mgidSmartId: site.mgid_smart_id || '',
     nicheSlug: site.niche_slug,
-    tagline: NICHE_TAGLINES[site.niche_slug] || `Expert guides on ${siteName}`,
+    tagline: NICHE_TAGLINES[site.niche_slug] || `${siteName}: expert guides and real data.`,
+    homepageSubline: NICHE_HOMEPAGE_SUBLINE[site.niche_slug] || '',
+    headerBadge: NICHE_HEADER_BADGE[site.niche_slug] || '',
     categories,
     toolSlug,
     toolLabel,

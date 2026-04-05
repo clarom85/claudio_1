@@ -19,6 +19,7 @@ const WWW_ROOT = process.env.WWW_ROOT || '/var/www';
 
 async function buildSiteConfig(site, nicheSlug) {
   const { AUTHOR_PERSONAS } = await import('@content-network/content-engine/src/prompts.js');
+  const { NICHE_TAGLINES, NICHE_HOMEPAGE_SUBLINE, NICHE_HEADER_BADGE } = await import('@content-network/content-engine/src/niche-taglines.js');
   const author = AUTHOR_PERSONAS[nicheSlug] || AUTHOR_PERSONAS['home-improvement-costs'];
 
   let categories = [];
@@ -31,29 +32,7 @@ async function buildSiteConfig(site, nicheSlug) {
 
   const siteName = site.domain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-  const NICHE_TAGLINES = {
-    'home-improvement-costs':    'Expert cost guides for home improvement, renovation & repair projects',
-    'personal-finance':          'Practical personal finance advice, budgeting tips & money strategies',
-    'insurance-guide':           'Clear, unbiased insurance guides to help you choose the right coverage',
-    'legal-advice':              'Plain-language legal guides written by experienced professionals',
-    'real-estate-investing':     'Real estate investing strategies, market analysis & property guides',
-    'health-symptoms':           'Trusted health symptom guides reviewed by medical professionals',
-    'credit-cards-banking':      'Credit card reviews, banking tips & strategies to maximize rewards',
-    'weight-loss-fitness':       'Evidence-based weight loss & fitness guides from certified experts',
-    'automotive-guide':          'Car buying, maintenance & repair guides from automotive professionals',
-    'online-education':          'Online education reviews, learning strategies & course comparisons',
-    'cybersecurity-privacy':     'Cybersecurity & privacy guides to keep you safe in the digital world',
-    'mental-health-wellness':    'Mental health & wellness resources from licensed professionals',
-    'home-security-systems':     'Home security system reviews, installation guides & safety tips',
-    'solar-energy':              'Solar energy guides, cost breakdowns & installation advice',
-    'senior-care-medicare':      'Senior care guides, Medicare explained & resources for families',
-    'business-startup':          'Business startup guides, funding strategies & entrepreneurship advice',
-    'pet-care-by-breed':         'Breed-specific pet care guides from experienced veterinarians',
-    'software-error-fixes':      'Step-by-step software error fixes and technical troubleshooting guides',
-    'diet-specific-recipes':     'Diet-specific recipes, meal plans & nutrition guides by dietitians',
-    'small-town-tourism':        'Hidden gem travel guides for small towns, local attractions & road trips',
-  };
-  const tagline = NICHE_TAGLINES[nicheSlug] || `Expert guides and in-depth articles on ${siteName}`;
+  const tagline = NICHE_TAGLINES[nicheSlug] || `${siteName}: expert guides and real data.`;
 
   let toolSlug = null;
   let toolLabel = 'Free Calculator';
@@ -118,6 +97,8 @@ async function buildSiteConfig(site, nicheSlug) {
     mgidInArticleId:  site.mgid_in_article_id || '',
     mgidSmartId:      site.mgid_smart_id || '',
     tagline,
+    homepageSubline: NICHE_HOMEPAGE_SUBLINE[nicheSlug] || '',
+    headerBadge: NICHE_HEADER_BADGE[nicheSlug] || '',
     toolSlug,
     toolLabel,
     hasCostTracker,
