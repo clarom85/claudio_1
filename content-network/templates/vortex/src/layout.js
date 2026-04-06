@@ -170,7 +170,12 @@ body{font-family:var(--ff-body);background:var(--dark);color:var(--light);line-h
 .art-body .key-takeaways h2{color:var(--teal)!important}
 .art-body .key-takeaways li{color:#e0e8f0!important}
 .art-body .key-takeaways li span{color:var(--teal)!important}
-/* HowTo step dark mode: del/s inside steps are on light bg — force dark text */
+/* HowTo step dark mode: light bg (#f9fafb) — force all text dark */
+.how-to-step{color:#1a1a2e}
+.how-to-step h2{color:#1a1a2e!important;border-bottom-color:#c7d2fe!important}
+.how-to-step p,.how-to-step .article-section p,.how-to-step .art-body p{color:#333!important}
+.how-to-step p strong,.how-to-step p b,.how-to-step strong,.how-to-step b{color:#1a1a2e!important}
+.how-to-step .art-list li{color:#1a1a2e!important}
 .art-body .how-to-step del,.art-body .how-to-step s{color:#444!important}
 /* TOC nav dark mode override */
 .art-body nav[style*="background"]{background:rgba(255,255,255,.04)!important;border-color:var(--border)!important}
