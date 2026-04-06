@@ -13,7 +13,7 @@ export const CSS = `
   --max:1160px;--shadow:0 1px 4px rgba(0,0,0,.12)
 }
 html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable;overflow-x:hidden}
-body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-height:1.7}
+body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-height:1.7;overflow-x:hidden}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 16px}
 
 /* Header newspaper style */
@@ -150,6 +150,11 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--dark);line-h
 /* Mobile: table overflow + reduce section gaps */
 .art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .art-body img{max-width:100%;height:auto}
+/* del/s: always inherit parent color — prevents invisible strikethrough text */
+.art-body del,.art-body s,.art-body strike{color:inherit!important}
+/* Inline-styled boxes from content engine: enforce containment */
+.art-body .quick-answer-box,.art-body .key-takeaways,.art-body nav,.art-body .how-to-step,.art-body .article-section{max-width:100%;box-sizing:border-box;overflow-x:hidden}
+.art-body .article-content{max-width:100%;overflow-x:hidden}
 @media(max-width:640px){
   .art-section h2,.article-section h2{margin-top:22px;font-size:22px}
   .art-section,.article-section{margin:16px 0}
@@ -282,7 +287,9 @@ ${getMgidLoader(mgidSiteId)}</head><body>${body}
 ${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
 document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
 // Hide MGID widget containers that remain empty after 3s (placeholder suppression)
-setTimeout(function(){document.querySelectorAll('[data-type="_mgwidget"]').forEach(function(w){if(!w.innerHTML.trim()||w.offsetHeight<10){w.style.display='none';w.style.margin='0';}});},3000);</script></body></html>`}
+setTimeout(function(){document.querySelectorAll('[data-type="_mgwidget"]').forEach(function(w){if(!w.innerHTML.trim()||w.offsetHeight<10){w.style.display='none';w.style.margin='0';}});},3000);
+// Collapse unfilled ad slots — works on all browsers (no !important in inline styles)
+(function(){var c=function(el){el.style.display='none';el.style.height='0';el.style.minHeight='0';el.style.margin='0';el.style.padding='0';el.style.overflow='hidden';el.style.border='none';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);else if(s==='filled'){ad.style.display='';ad.style.height='';ad.style.minHeight='';ad.style.margin='';ad.style.padding='';}}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},3000);})();</script></body></html>`}
 
 export function renderArticlePage(article,site,relatedArticles=[]){
   const date=new Date(article.date||Date.now());

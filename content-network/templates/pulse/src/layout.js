@@ -13,13 +13,13 @@ export const CSS = `
   --max:1200px;--shadow:0 2px 8px rgba(0,0,0,.1);--r:4px
 }
 html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable;overflow-x:hidden}
-body{font-family:var(--ff-body);background:var(--bg);color:#1a1a1a;line-height:1.6}
+body{font-family:var(--ff-body);background:var(--bg);color:#1a1a1a;line-height:1.6;overflow-x:hidden}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 16px}
 a{color:inherit}
 img{max-width:100%;height:auto;display:block}
 
 /* Ticker */
-.ticker{background:var(--red);color:#fff;display:flex;align-items:center;height:36px;overflow:hidden;position:sticky;top:0;z-index:100;font-size:13px}
+.ticker{background:var(--red);color:#fff;display:flex;align-items:center;height:36px;overflow:hidden;clip-path:inset(0);position:sticky;top:0;z-index:100;font-size:13px}
 .ticker-lbl{background:var(--navy);padding:0 14px;height:100%;display:flex;align-items:center;font-weight:700;letter-spacing:1.5px;font-size:11px;flex-shrink:0;white-space:nowrap}
 .ticker-track{flex:1;overflow:hidden;padding:0 12px}
 .ticker-inner{white-space:nowrap;display:inline-block;animation:tick 35s linear infinite}
@@ -200,6 +200,11 @@ img{max-width:100%;height:auto;display:block}
 /* Mobile: table overflow */
 .art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .art-body img{max-width:100%;height:auto}
+/* del/s: always inherit parent color — prevents invisible strikethrough on light-bg boxes */
+.art-body del,.art-body s,.art-body strike{color:inherit!important}
+/* Inline-styled boxes from content engine: prevent overflow, enforce containment */
+.art-body .quick-answer-box,.art-body .key-takeaways,.art-body nav,.art-body .how-to-step,.art-body .article-section{max-width:100%;box-sizing:border-box;overflow-x:hidden}
+.art-body .article-content{max-width:100%;overflow-x:hidden}
 @media(max-width:480px){
   .wrap{padding:0 10px}
   .art-body{padding:12px}
@@ -283,8 +288,8 @@ ${ezoicId ? '' : COOKIE_BANNER_JS}
 ${EMAIL_FORM_JS}
 ${NATIVE_ADS_JS}
 document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
-// Collapse unfilled ad slots — iOS Safari <16 doesn't support :has()
-(function(){var c=function(el){el.style.cssText='min-height:0!important;margin:0!important;padding:0!important;border:none!important;background:none!important;overflow:hidden';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},4000);})();
+// Collapse unfilled ad slots — works on all browsers (no !important in inline styles)
+(function(){var c=function(el){el.style.display='none';el.style.height='0';el.style.minHeight='0';el.style.margin='0';el.style.padding='0';el.style.overflow='hidden';el.style.border='none';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);else if(s==='filled'){ad.style.display='';ad.style.height='';ad.style.minHeight='';ad.style.margin='';ad.style.padding='';}}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},3000);})();
 // Trending ticker
 fetch('/api/trending.json').then(r=>r.json()).then(arts=>{
   var el=document.getElementById('ticker-inner');

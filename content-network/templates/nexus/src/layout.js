@@ -14,7 +14,7 @@ export const CSS=`
   --max:1180px;--r:8px
 }
 html{font-size:16px;scroll-behavior:smooth;overflow-y:scroll;scrollbar-gutter:stable;overflow-x:hidden}
-body{font-family:var(--ff-head);background:var(--bg);color:var(--white);line-height:1.6}
+body{font-family:var(--ff-head);background:var(--bg);color:var(--white);line-height:1.6;overflow-x:hidden}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 16px}
 a{color:inherit}
 
@@ -175,6 +175,22 @@ a{color:inherit}
 /* Mobile: table overflow + reduce section gaps */
 .art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .art-body img{max-width:100%;height:auto}
+/* del/s: always inherit parent color — prevents invisible prices on light-bg how-to steps */
+.art-body del,.art-body s,.art-body strike{color:inherit!important}
+/* Inline-styled boxes from content engine: enforce containment */
+.art-body .quick-answer-box,.art-body .key-takeaways,.art-body nav,.art-body .how-to-step,.art-body .article-section{max-width:100%;box-sizing:border-box;overflow-x:hidden}
+.art-body .article-content{max-width:100%;overflow-x:hidden}
+/* Dark mode overrides for html-builder light-bg boxes */
+.art-body .key-takeaways{background:rgba(6,182,212,.06)!important;border-color:var(--cyan)!important}
+.art-body .key-takeaways h2{color:var(--cyan)!important}
+.art-body .key-takeaways li{color:var(--white)!important}
+.art-body .key-takeaways li span{color:var(--cyan)!important}
+/* HowTo step dark mode: del/s inside steps are on light bg — force dark text */
+.art-body .how-to-step del,.art-body .how-to-step s{color:#444!important}
+/* TOC nav dark mode override */
+.art-body nav[style*="background"]{background:var(--surface2)!important;border-color:var(--border)!important}
+.art-body nav[style*="background"] a{color:var(--cyan)!important}
+.art-body nav[style*="background"] p{color:var(--muted)!important}
 /* Category page: brighter excerpt text */
 .card-excerpt{color:#b8b8d0!important}
 @media(max-width:640px){
@@ -266,7 +282,7 @@ ${lcpImage?`<link rel="preload" as="image" href="${lcpImage}" fetchpriority="hig
 ${getMgidLoader(mgidSiteId)}</head><body>${body}
 ${ezoicId?'':COOKIE_BANNER_HTML}<script>${ezoicId?'':COOKIE_BANNER_JS}${EMAIL_FORM_JS}${NATIVE_ADS_JS}
 document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelector('[data-type="_mgwidget"]');if(!i)return;new MutationObserver(function(m,o){if(i.children.length>0){w.style.margin='32px 0';o.disconnect();}}).observe(i,{childList:true,subtree:true});});
-(function(){var c=function(el){el.style.cssText='min-height:0!important;margin:0!important;padding:0!important;border:none!important;background:none!important;overflow:hidden';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},2000);})();</script></body></html>`}
+(function(){var c=function(el){el.style.display='none';el.style.height='0';el.style.minHeight='0';el.style.margin='0';el.style.padding='0';el.style.overflow='hidden';el.style.border='none';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);else if(s==='filled'){ad.style.display='';ad.style.height='';ad.style.minHeight='';ad.style.margin='';ad.style.padding='';}}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},3000);})();</script></body></html>`}
 
 export function renderHeader(site){return`
 <div class="hdr-bar"></div>
