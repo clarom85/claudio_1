@@ -103,6 +103,13 @@ function escapeRegexChars(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Wrap <table> elements in a scrollable div so they don't need display:block
+function wrapTables(html) {
+  return html
+    .replace(/<table\b/gi, '<div class="table-wrap"><table')
+    .replace(/<\/table>/gi, '</table></div>');
+}
+
 export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '', template = '', rating = null }) {
   const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations, comparisonTable } = articleData;
   // Enforce Google's 160-char limit — Claude occasionally overshoots
@@ -239,7 +246,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
       listHTML = `<ul class="art-list">${section.listItems.map(item => `<li>${item}</li>`).join('')}</ul>`;
     }
 
-    const sectionContent = linkInjector(section.content).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join('');
+    const sectionContent = wrapTables(linkInjector(section.content).split('\n\n').map(p => `<p style="margin-bottom:24px;line-height:1.9">${p}</p>`).join(''));
 
     if (layoutType === 'howto') {
       // HowTo layout: numbered step with badge

@@ -172,8 +172,9 @@ a{color:inherit}
 .trust-box-body{font-size:13px;color:#3a3a5a;line-height:1.65;margin-bottom:10px}
 .trust-box-footer{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#5a5a7a;border-top:1px solid #c5b8e8;padding-top:8px;margin-top:4px}
 .trust-box-reviewer{color:var(--purple);font-weight:600}
-/* Mobile: table overflow + prevent word-break compression in cells */
-.art-body table,.art-body .cost-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+/* Mobile: table scroll via wrapper div — keeps native display:table layout on desktop */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:16px 0}
+.art-body table{max-width:100%}
 .art-body th,.art-body td{word-break:normal!important;overflow-wrap:normal!important;min-width:70px}
 .art-body img{max-width:100%;height:auto}
 /* del/s: always inherit parent color — prevents invisible prices on light-bg how-to steps */
