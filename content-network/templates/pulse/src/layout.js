@@ -645,7 +645,7 @@ ${renderFooter(site)}`;
     siteName: site.name, siteUrl: site.url,
     schemas: articles.length >= 3 ? [itemListSchema] : [], body, adsenseId: site.adsenseId, ga4MeasurementId: site.ga4MeasurementId || '',
     ogImage: articles[0] ? `${site.url}/images/${articles[0].slug}.jpg` : '',
-    noindex: articles.length < 3
+    noindex: articles.length < 1
   });
 }
 
