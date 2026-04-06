@@ -172,7 +172,7 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         ).join('');
         return `<div style="margin:4px 0 32px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
     ${caption ? `<p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#555;margin:0 0 8px;">${escapeHtml(caption)}</p>` : ''}
-    <table class="cost-table" style="width:100%">
+    <table class="cost-table" style="min-width:500px;width:100%">
       <thead><tr>${ths}</tr></thead>
       <tbody>${trs}</tbody>
     </table>
