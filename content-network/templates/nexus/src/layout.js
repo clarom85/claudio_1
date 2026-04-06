@@ -163,6 +163,7 @@ a{color:inherit}
 .how-to-step{color:#1a1a2e}
 .how-to-step h2{color:#1a1a2e!important;border-bottom-color:#c7d2fe!important}
 .how-to-step p,.how-to-step .article-section p,.how-to-step .art-body p{color:#333!important}
+.how-to-step p strong,.how-to-step p b,.how-to-step strong,.how-to-step b{color:#1a1a2e!important}
 .how-to-step .art-list li{color:#1a1a2e!important;background:rgba(59,91,219,.06)!important;border-left-color:#3b5bdb!important}
 .how-to-step .art-list li::before{color:#3b5bdb!important}
 .trust-box{background:#f5f0ff;border:1px solid #c5b8e8;border-left:5px solid var(--purple);padding:18px 22px;margin:0 0 24px;border-radius:2px}
