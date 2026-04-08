@@ -169,11 +169,26 @@ const OFF_TOPIC_PATTERNS = [
   /\bbrazil(ian)?\b/i,
   /\bphilippines?\b/i,
   /\bsouth africa(n)?\b/i,
-  // Non-US market signals
-  /\buk prices?\b/i,
+  // Non-US geos (UK + Europe market signals)
+  /\b(uk|united kingdom)\b/i,
   /\bpound sterling\b/i,
   /\bgbp\b/i,
   /\beur(os?)?\b/i,
+  /\bbritish\b/i,
+  /\bengland\b/i,
+  /\bscotland\b/i,
+  /\bwales\b/i,
+  /\bireland\b/i,
+  // Famous non-residential landmarks (not relevant to home improvement)
+  /\bempire state building\b/i,
+  /\beiffel tower\b/i,
+  /\bburj khalifa\b/i,
+  /\bcolosseum\b/i,
+  /\bwhite house\b/i,
+  /\bpentagon\b/i,
+  /\bvatican\b/i,
+  /\bbig ben\b/i,
+  /\bbuckingham palace\b/i,
   // Car brands (irrelevant to home improvement / insurance niches)
   // Remove these patterns if an automotive niche is ever added
   /\bbmw\b/i,
