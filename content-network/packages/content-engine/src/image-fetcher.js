@@ -183,11 +183,17 @@ const POLLINATIONS_TOPICS = {
   ],
   'senior-care-medicare': [
     { re: /medicare|medicaid/i,
-      p: 'a senior patient and a friendly doctor reviewing Medicare insurance documents in a bright modern medical office, professional and reassuring atmosphere' },
+      p: 'Medicare insurance card and healthcare cost documents on a home desk, reading glasses, pen, practical everyday setting, no people' },
+    { re: /supplement|medigap|plan [a-z]/i,
+      p: 'healthcare insurance plan comparison documents spread on a kitchen table, calculator, notebook, natural home lighting, no people' },
     { re: /nursing|care.?home|assisted/i,
-      p: 'a bright modern assisted living facility common room with comfortable furniture, elderly residents engaged in activities, caring staff visible' },
+      p: 'a cheerful assisted living common room with natural light, comfortable chairs, bookshelves, plants — welcoming and homey, no clinical feel' },
+    { re: /home.?health|home.?care|home.?aide/i,
+      p: 'home care supplies — medication bottles, pill organizer, blood pressure cuff on a nightstand, practical household setting, no people' },
+    { re: /prescription|drug|medication/i,
+      p: 'prescription medication bottles and a pill organizer on a clean kitchen counter, natural light, no people' },
     { re: /elder|senior|aging/i,
-      p: 'a happy active senior couple walking in a sunny park, smiling and healthy, casual clothing, green trees in background, vitality and wellness' },
+      p: 'an active senior man gardening outdoors in a backyard on a sunny day, casual clothes, healthy and independent lifestyle' },
   ],
   'legal-advice': [
     { re: /lawyer|attorney/i,
@@ -405,9 +411,12 @@ const NICHE_TOPICS = {
     { re: /meditat|mindful/i,          q: 'meditation mindfulness peaceful person nature' },
   ],
   'senior-care-medicare': [
-    { re: /medicare|medicaid/i,        q: 'senior healthcare medicare elderly doctor' },
-    { re: /nursing|care.?home|assisted/i, q: 'nursing home assisted living senior care' },
-    { re: /elder|senior|aging/i,       q: 'senior elderly person happy active outdoor' },
+    { re: /medicare|medicaid/i,           q: 'medicare insurance card documents paperwork desk' },
+    { re: /supplement|medigap|plan [a-z]/i, q: 'health insurance plan document comparison paperwork' },
+    { re: /nursing|care.?home|assisted/i, q: 'assisted living home bright comfortable room interior' },
+    { re: /home.?health|home.?care|aide/i, q: 'home care medication pill organizer prescription bottle' },
+    { re: /prescription|drug|medication/i, q: 'prescription medication bottles pills pharmacy counter' },
+    { re: /elder|senior|aging/i,          q: 'active senior adult outdoor walking garden healthy lifestyle' },
   ],
 };
 
@@ -432,7 +441,7 @@ const NICHE_FALLBACKS = {
   'mental-health-wellness':    'mental health wellness peaceful nature',
   'legal-advice':              'legal advice lawyer document office',
   'business-startup':          'business startup entrepreneur office team',
-  'senior-care-medicare':      'senior elderly care healthy active',
+  'senior-care-medicare':      'healthcare documents paperwork insurance plan desk',
 };
 
 // ─── Query builder ────────────────────────────────────────────────────────────
@@ -552,8 +561,11 @@ function postProcessImage(filePath) {
   } catch { /* not installed */ }
 }
 
-async function searchPexels(query, usedIds, pages = 2) {
-  for (let page = 1; page <= pages; page++) {
+async function searchPexels(query, usedIds, pages = 5) {
+  // Start from a random page offset (1-3) to avoid always getting the same top results
+  const startPage = Math.floor(Math.random() * 3) + 1;
+  for (let i = 0; i < pages; i++) {
+    const page = ((startPage + i - 1) % pages) + 1;
     const res = await fetch(
       `${PEXELS_API}?query=${encodeURIComponent(query)}&per_page=15&page=${page}&orientation=landscape`,
       { headers: { Authorization: process.env.PEXELS_API_KEY } }
