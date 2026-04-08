@@ -27,7 +27,7 @@ function htmlEsc(str = '') {
 
 function simplePageWrapper(title, description, content, site, { noindex = false, canonical = '', ogImage = '', template = '' } = {}) {
   const effectiveOgImage = ogImage || `${site.url}/images/og-default.jpg`;
-  const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
+  const ga4Id = site.ga4MeasurementId || site.ga4_measurement_id || process.env.GA4_MEASUREMENT_ID || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
   const adsenseId = process.env.ADSENSE_ID || '';
   const ga4Script = ga4Id ? `
@@ -749,7 +749,7 @@ async function regenerateStaticPages(site) {
   const { getCategoriesForNiche } = await import('@content-network/content-engine/src/categories.js');
   const categories = getCategoriesForNiche(site.niche_slug || '').slice(0, 7);
 
-  const siteConfig = { name: siteName, url: siteUrl, domain: site.domain, nicheSlug: site.niche_slug, categories, toolSlug, toolLabel };
+  const siteConfig = { name: siteName, url: siteUrl, domain: site.domain, nicheSlug: site.niche_slug, categories, toolSlug, toolLabel, ga4MeasurementId: site.ga4_measurement_id || '', template: site.template || '' };
 
   const pages = buildPages(siteName, site.domain, siteUrl);
 
@@ -849,8 +849,8 @@ async function run() {
   }
 
   const sites = all
-    ? await sql`SELECT s.id, s.domain, s.template, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
-    : await sql`SELECT s.id, s.domain, s.template, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
+    ? await sql`SELECT s.id, s.domain, s.template, s.ga4_measurement_id, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.status != 'inactive' ORDER BY s.id`
+    : await sql`SELECT s.id, s.domain, s.template, s.ga4_measurement_id, n.slug as niche_slug FROM sites s JOIN niches n ON n.id = s.niche_id WHERE s.id = ${siteId}`;
 
   if (!sites.length) { console.error('Nessun sito trovato'); process.exit(1); }
 
