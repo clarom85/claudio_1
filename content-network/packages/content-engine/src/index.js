@@ -94,7 +94,7 @@ async function run() {
         continue;
       }
 
-      const article = await generateArticle(kw, niche, site, 3, sitePublicDir);
+      const article = await generateArticle(kw, niche, site, 5, sitePublicDir);
 
       // Dedup: salta se slug già esiste
       if (existingSlugs.has(article.slug)) {
@@ -121,11 +121,18 @@ async function run() {
       console.log(`✅ ${article.wordCount} words${article.image ? ' + image' : ''}`);
 
     } catch (err) {
-      failed++;
-      console.log(`❌ ${err.message}`);
+      if (err.message?.startsWith('BLOCKED:')) {
+        // Keyword off-topic/geo — mark used so it's never retried, but don't count as failure
+        await markKeywordUsed(kw.id);
+        skipped++;
+        console.log(`🚫 ${err.message}`);
+      } else {
+        failed++;
+        console.log(`❌ ${err.message}`);
+      }
     }
   }
-  if (skipped > 0) console.log(`\n  Skipped ${skipped} duplicate(s)`);
+  if (skipped > 0) console.log(`\n  Skipped ${skipped} (duplicates + blocked)`);
 
   // Second pass: inietta link interni tra tutti gli articoli generati
   console.log('\n🔗 Injecting internal links...');

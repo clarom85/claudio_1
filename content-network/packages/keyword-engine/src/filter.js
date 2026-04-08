@@ -137,7 +137,7 @@ export function topicFingerprint(keyword) {
 const CURRENT_YEAR = new Date().getFullYear();
 
 // Patterns that indicate off-topic, non-US, or non-real-world keywords
-const OFF_TOPIC_PATTERNS = [
+export const OFF_TOPIC_PATTERNS = [
   // Games
   /\bbloxburg\b/i,
   /\broblox\b/i,
@@ -189,6 +189,30 @@ const OFF_TOPIC_PATTERNS = [
   /\bvatican\b/i,
   /\bbig ben\b/i,
   /\bbuckingham palace\b/i,
+  /\bobservation deck\b/i,
+  // UK-specific materials / terms
+  /\bchipboard\b/i,
+  /\bscreed\b/i,
+  /\bskirting board\b/i,
+  /\bdouble glazing\b/i,
+  // Metric-only keywords (non-US pricing)
+  /per square metre\b/i,
+  /per m[²2]\b/i,
+  /\bsquare metre(s)?\b/i,
+  // Automotive (car body, not home)
+  /\bcar roof\b/i,
+  /\broof rack\b/i,
+  /\bauto body\b/i,
+  /\bconvertible top\b/i,
+  /\bcar hood\b/i,
+  /\bwindshield\b/i,
+  // Travel / tourism (not home improvement)
+  /\bhotel\b/i,
+  /\bflight(s)?\b/i,
+  /\bairport\b/i,
+  /\btourist\b/i,
+  /\bvacation package\b/i,
+  /\btheme park\b/i,
   // Car brands (irrelevant to home improvement / insurance niches)
   // Remove these patterns if an automotive niche is ever added
   /\bbmw\b/i,

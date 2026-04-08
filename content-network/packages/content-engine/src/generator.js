@@ -7,6 +7,7 @@ import { buildArticleHTML } from './html-builder.js';
 import { fetchArticleImage } from './image-fetcher.js';
 import { fetchLiveData, formatLiveDataBlock } from './data-fetcher.js';
 import { sanitizeCitations } from './citation-sources.js';
+import { OFF_TOPIC_PATTERNS } from '../../keyword-engine/src/filter.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -80,6 +81,11 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
   // keyword can be a string (legacy callers) or a full keyword object {keyword, id, cluster_slug, ...}
   const kwText = typeof keyword === 'string' ? keyword : keyword.keyword;
   const kwObj  = typeof keyword === 'string' ? { keyword } : keyword;
+
+  // Pre-flight: block keywords that slipped through the ingestion filter
+  if (OFF_TOPIC_PATTERNS.some(p => p.test(kwText))) {
+    throw new Error(`BLOCKED: keyword "${kwText}" matches off-topic/geo filter — skipping generation`);
+  }
 
   // Fetch live data for this niche (cached 24h, fails silently if no API key)
   const liveDataPoints = await fetchLiveData(niche.slug);
@@ -232,9 +238,14 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
       };
 
     } catch (err) {
-      console.warn(`  Generation attempt ${attempt} failed:`, err.message);
+      const is529 = /529|overloaded/i.test(err.message || '');
+      console.warn(`  Generation attempt ${attempt} failed${is529 ? ' [overloaded]' : ''}:`, err.message?.slice(0, 120));
       if (attempt === retries) throw err;
-      await new Promise(r => setTimeout(r, 2000 * attempt));
+      // Exponential backoff: 529 overloaded needs much longer waits
+      const baseMs = is529 ? 45_000 : 2_000;
+      const waitMs = Math.min(baseMs * Math.pow(2, attempt - 1), 300_000); // cap 5min
+      console.warn(`  Waiting ${Math.round(waitMs / 1000)}s before retry...`);
+      await new Promise(r => setTimeout(r, waitMs));
     }
   }
 }
