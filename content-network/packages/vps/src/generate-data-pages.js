@@ -54,9 +54,11 @@ function simplePageWrapper(title, description, content, siteConfig, opts = {}) {
   const { canonical = '', noindex = false } = opts;
   const ga4Id    = siteConfig.ga4MeasurementId || '';
   const robots   = noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large';
+  const adsenseId = siteConfig.adsenseId || '';
   const ga4Block = ga4Id ? `
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+  const adsenseScript = adsenseId ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -76,6 +78,7 @@ ${canonical ? `<meta property="og:url" content="${htmlEsc(canonical)}"/>` : ''}
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
+${adsenseScript}
 ${ga4Block}
 <style>
 .data-wrap{max-width:900px;margin:40px auto;padding:0 20px;color:#1a1a1a;font-family:system-ui,sans-serif}
@@ -679,6 +682,7 @@ export async function generateDataPagesForSite({ domain, nicheSlug, nicheName, g
     name: siteName(domain),
     url: `https://${domain}`,
     ga4MeasurementId,
+    adsenseId: process.env.ADSENSE_ID || '',
   };
 
   const seriesDef = DATA_SERIES[config.seriesType];

@@ -44,9 +44,11 @@ function simplePageWrapper(title, description, content, siteConfig, opts = {}) {
   const effectiveOgImage = `${siteConfig.url}/images/og-default.jpg`;
   const ga4Id = siteConfig.ga4MeasurementId || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
+  const adsenseId = siteConfig.adsenseId || '';
   const ga4Script = ga4Id ? `
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+  const adsenseScript = adsenseId ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>` : '';
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
 
   return `<!DOCTYPE html><html lang="en"><head>
@@ -66,6 +68,7 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
+${adsenseScript}
 ${ga4Script}
 <style>
   .faq-topic{margin-bottom:40px}
@@ -130,6 +133,7 @@ async function run() {
       name: siteName,
       url: `https://${site.domain}`,
       ga4MeasurementId: site.ga4_measurement_id || '',
+      adsenseId: process.env.ADSENSE_ID || '',
     };
 
     // Extract Q&A pairs from each article

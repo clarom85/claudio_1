@@ -29,9 +29,11 @@ function simplePageWrapper(title, description, content, site, { noindex = false,
   const effectiveOgImage = ogImage || `${site.url}/images/og-default.jpg`;
   const ga4Id = process.env.GA4_MEASUREMENT_ID || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
+  const adsenseId = process.env.ADSENSE_ID || '';
   const ga4Script = ga4Id ? `
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+  const adsenseScript = adsenseId ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>` : '';
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
   // Wrap content in white card for dark templates so text is readable
   const isDark = DARK_TEMPLATES.has(template);
@@ -58,6 +60,7 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="dns-prefetch" href="https://www.google-analytics.com"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
+${adsenseScript}
 ${ga4Script}
 </head><body>
 <header style="background:#1a1a2e;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">

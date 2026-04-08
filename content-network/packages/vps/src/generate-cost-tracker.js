@@ -146,9 +146,11 @@ function buildCostTrackerPage(nicheSlug, nicheName, metricsData, siteConfig) {
   if (!metricCards.trim()) return null;
 
   const ga4Id  = siteConfig.ga4MeasurementId || '';
+  const adsenseId = siteConfig.adsenseId || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
   const ga4Script = ga4Id ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+  const adsenseScript = adsenseId ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>` : '';
 
   const title       = `${nicheName} Cost Tracker — Monthly Price Trends`;
   const description = `Track real monthly price trends for ${nicheName.toLowerCase()} costs. Data sourced from FRED, BLS, and US government agencies. Updated monthly.`;
@@ -183,6 +185,7 @@ ${gscKeys.map(k => `<meta name="google-site-verification" content="${k}"/>`).joi
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
 <script type="application/ld+json">${schemaJson}</script>
+${adsenseScript}
 ${ga4Script}
 </head><body>
 ${buildPageHeader(siteConfig)}
@@ -250,6 +253,7 @@ export async function generateCostTrackerForSite({ domain, nicheSlug, nicheName,
     name: domain.replace(/\.[^.]+$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
     url:  `https://${domain}`,
     ga4MeasurementId,
+    adsenseId: process.env.ADSENSE_ID || '',
   };
 
   // Fetch snapshots from DB

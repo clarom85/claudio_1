@@ -27,9 +27,11 @@ function simplePageWrapper(title, description, content, siteConfig, opts = {}) {
   const effectiveOgImage = `${siteConfig.url}/images/og-default.jpg`;
   const ga4Id = siteConfig.ga4MeasurementId || '';
   const gscKeys = (process.env.GOOGLE_SITE_VERIFICATION || '').split(',').map(s => s.trim()).filter(Boolean);
+  const adsenseId = siteConfig.adsenseId || '';
   const ga4Script = ga4Id ? `
   <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4Id}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}',{anonymize_ip:true});</script>` : '';
+  const adsenseScript = adsenseId ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}" crossorigin="anonymous"></script>` : '';
   const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
 
   return `<!DOCTYPE html><html lang="en"><head>
@@ -49,6 +51,7 @@ ${canonical ? `<meta property="og:url" content="${canonical}"/>` : ''}
 <link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="stylesheet" href="/assets/style.v2.css"/>
+${adsenseScript}
 ${ga4Script}
 </head><body>
 ${buildPageHeader(siteConfig)}
@@ -190,7 +193,7 @@ export function generateGlossaryForSite({ domain, nicheSlug, nicheName, ga4Measu
 
   const domainParts = domain.replace(/\.(com|net|org|io)$/, '').split(/[-.]/).filter(Boolean);
   const siteName = domainParts.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  const siteConfig = { name: siteName, url: `https://${domain}`, ga4MeasurementId };
+  const siteConfig = { name: siteName, url: `https://${domain}`, ga4MeasurementId, adsenseId: process.env.ADSENSE_ID || '' };
   const resolvedNicheName = nicheName || nicheSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const siteDir = join(WWW_ROOT, domain);
@@ -269,6 +272,7 @@ async function run() {
       name: siteName,
       url: `https://${site.domain}`,
       ga4MeasurementId: site.ga4_measurement_id || '',
+      adsenseId: process.env.ADSENSE_ID || '',
     };
 
     const nicheName = site.niche_name
