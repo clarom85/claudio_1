@@ -9,7 +9,7 @@
  *   node packages/vps/src/regenerate-tag-pages.js --all
  */
 import 'dotenv/config';
-import { readFileSync, mkdirSync, writeFileSync } from 'fs';
+import { readFileSync, mkdirSync, writeFileSync, existsSync, readdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { purgeCache } from './cloudflare.js';
@@ -61,6 +61,20 @@ async function regenerateTagPages(site) {
     const dir = join(WWW_ROOT, site.domain, 'tag', tag.slug);
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'index.html'), html, 'utf-8');
+  }
+
+  // Cleanup orphan tag directories (tags with 0 articles in DB)
+  const activeSlugs = new Set(tags.map(t => t.slug));
+  const tagBaseDir = join(WWW_ROOT, site.domain, 'tag');
+  if (existsSync(tagBaseDir)) {
+    let deleted = 0;
+    for (const entry of readdirSync(tagBaseDir, { withFileTypes: true })) {
+      if (entry.isDirectory() && !activeSlugs.has(entry.name)) {
+        rmSync(join(tagBaseDir, entry.name), { recursive: true, force: true });
+        deleted++;
+      }
+    }
+    if (deleted > 0) console.log(`    🗑  ${site.domain}: ${deleted} orphan tag dir(s) deleted`);
   }
 
   console.log(`  ✅ ${site.domain}: ${tags.length} tag pages (${articles.length} articles)`);

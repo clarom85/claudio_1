@@ -5,7 +5,7 @@
  *      node packages/vps/src/regenerate-tools.js --all
  */
 import 'dotenv/config';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { sql } from '@content-network/db';
 import { purgeCache } from './cloudflare.js';
@@ -116,6 +116,33 @@ async function run() {
       const toolDir = join(WWW_ROOT, site.domain, 'tools', toolConfig.slug);
       mkdirSync(toolDir, { recursive: true });
       writeFileSync(join(toolDir, 'index.html'), html, 'utf-8');
+
+      // Create tools/index.html to avoid 403 on /tools/ directory
+      const toolsBaseDir = join(WWW_ROOT, site.domain, 'tools');
+      const existingToolDirs = existsSync(toolsBaseDir)
+        ? readdirSync(toolsBaseDir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name)
+        : [toolConfig.slug];
+      const toolsListHtml = existingToolDirs.map(slug => {
+        const cfg = Object.values(TOOL_CONFIGS).find(c => c.slug === slug);
+        const label = cfg ? cfg.title : slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return `<li style="margin:0 0 14px"><a href="/tools/${slug}/" style="font-size:17px;font-weight:600">${label}</a></li>`;
+      }).join('');
+      const toolsBody = renderHeader(toolSite)
+        + `<main style="max-width:800px;margin:40px auto;padding:0 20px"><h1 style="margin-bottom:24px">Free Online Calculators &amp; Tools</h1><ul style="list-style:none;padding:0">${toolsListHtml}</ul></main>`
+        + renderFooter(toolSite);
+      const toolsIndexHtml = renderBase({
+        title: `Free Online Tools & Calculators — ${siteName}`,
+        description: `Free online calculators and estimators from ${siteName}. Get instant results.`,
+        slug: 'tools',
+        siteName,
+        siteUrl: `https://${site.domain}`,
+        schemas: [],
+        body: toolsBody,
+        noindex: true,
+        ga4MeasurementId: site.ga4_measurement_id || '',
+        mgidSiteId: toolSite.mgidSiteId,
+      });
+      writeFileSync(join(toolsBaseDir, 'index.html'), toolsIndexHtml, 'utf-8');
 
       console.log(`  OK  ${site.domain} → /tools/${toolConfig.slug}/`);
       ok++;
