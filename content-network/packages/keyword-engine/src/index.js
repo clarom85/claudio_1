@@ -127,15 +127,10 @@ async function run() {
   console.log(`   → ${competitorHeadings.length} competitor headings`);
   allRaw.push(...competitorHeadings);
 
-  // 11. DataForSEO Labs keyword suggestions (database lookup, non live scraping)
-  console.log('🗄️  DataForSEO Labs suggestions...');
-  const dfsSeeds = await getDataForSEOSuggestions(seeds, {
-    language: niche.language,
-    country: niche.country.toLowerCase(),
-    limitPerSeed: 50,
-  });
-  console.log(`   → ${dfsSeeds.length} DataForSEO suggestions`);
-  allRaw.push(...dfsSeeds);
+  // 11. DataForSEO Labs — DISABLED (Labs pricing ~$8-12/run × 5 niches = $40+/day)
+  // Keyword pool is sufficient with modifier matrix + PAA + related searches + entities
+  // const dfsSeeds = await getDataForSEOSuggestions(seeds, { ... });
+  console.log('🗄️  DataForSEO Labs: disabled (cost control)');
 
   // Filter + classify
   console.log('\n🧹 Filtering and classifying...');
