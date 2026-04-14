@@ -247,10 +247,24 @@ function buildPages(siteName, domain, siteUrl) {
         <p style="font-size:16px;line-height:1.85;margin-bottom:16px">When we make an error, we correct it promptly and transparently. Corrections are noted at the top of the affected article with the date and nature of the change.</p>
         <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Conflicts of Interest</h2>
         <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Contributors must disclose any financial interest, employment, or relationship that could reasonably influence their coverage. Articles with disclosed conflicts are reviewed by a second editor.</p>
+
+        <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Use of AI-Assisted Tools</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">${siteName} may use AI-assisted tools during the research and drafting process. However, all AI-generated content is reviewed, fact-checked, and edited by subject matter experts before publication. AI tools are never the sole author of any published content. Our editorial team verifies every factual claim, statistic, and recommendation against primary sources regardless of how the initial draft was produced.</p>
+
+        <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Contributor Credentials</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Every contributor to ${siteName} has documented professional experience in their subject area. We verify credentials before granting authorship privileges. Contributors' professional backgrounds are listed on their individual author pages. We do not assign topics to contributors outside their area of verified expertise.</p>
+
+        <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Affiliate Links &amp; Monetization</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">Some articles on ${siteName} contain affiliate links. When you click these links and make a purchase, we may earn a commission at no additional cost to you. Affiliate relationships never influence our editorial recommendations, product rankings, or cost estimates. We disclose affiliate relationships within articles where they appear. Our editorial and commercial operations are structurally independent.</p>
+
+        <h2 style="font-size:22px;font-weight:700;margin:36px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Content Removal &amp; Takedown Requests</h2>
+        <p style="font-size:16px;line-height:1.85;margin-bottom:16px">If you believe any content on ${siteName} is inaccurate, infringes on your rights, or should be removed for another legitimate reason, contact our editorial team. We investigate all removal requests within 5 business days and take appropriate action.</p>
+
         <p style="font-size:14px;color:#666;margin-top:40px">
           Questions about these guidelines? Contact <a href="mailto:editor@${domain}" style="color:#c0392b;">editor@${domain}</a> &middot;
           <a href="/about/" style="color:#c0392b;">About Us</a> &middot;
-          <a href="/editorial-process/" style="color:#c0392b;">Our Review Process</a>
+          <a href="/editorial-process/" style="color:#c0392b;">Our Review Process</a> &middot;
+          <a href="/methodology/" style="color:#c0392b;">Research Methodology</a>
         </p>
       </div>`
     }
@@ -622,6 +636,58 @@ function buildTermsPage(siteName, domain) {
 }
 
 // ── Disclaimer builder (YMYL-aware) ──────────────────────────────────────────
+function buildAdvertisePage(siteName, domain) {
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  return {
+    title: 'Advertise With Us',
+    noindex: true,
+    description: `Advertising and partnership opportunities on ${siteName}.`,
+    body: `<div style="max-width:700px;margin:48px auto;padding:0 20px;color:#1a1a1a">
+      <h1 style="font-size:32px;font-weight:700;margin-bottom:8px">Advertise With Us</h1>
+      <p style="color:#666;font-size:14px;margin-bottom:32px">Last updated: ${today}</p>
+
+      <p style="font-size:17px;line-height:1.85;margin-bottom:24px">
+        ${siteName} reaches a highly targeted audience of readers actively researching costs, comparisons, and professional services. Our content ranks in Google for high-intent informational queries, delivering qualified visitors who are ready to take action.
+      </p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Advertising Options</h2>
+      <div style="display:grid;gap:16px;margin-bottom:32px">
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+          <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;color:#1a1a1a">Display Advertising</h3>
+          <p style="font-size:15px;line-height:1.7;color:#555;margin:0">Banner and in-content display ad placements across all articles. We serve ads through Google AdSense and select premium partners.</p>
+        </div>
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+          <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;color:#1a1a1a">Sponsored Content</h3>
+          <p style="font-size:15px;line-height:1.7;color:#555;margin:0">Clearly labeled sponsored articles written to our editorial standards. All sponsored content is marked as "Sponsored" per FTC guidelines.</p>
+        </div>
+        <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:20px 24px">
+          <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;color:#1a1a1a">Affiliate Partnerships</h3>
+          <p style="font-size:15px;line-height:1.7;color:#555;margin:0">Performance-based partnerships for relevant products and services. We only partner with brands that align with our readers' interests.</p>
+        </div>
+      </div>
+
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Editorial Independence</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:24px">
+        Advertising revenue supports our editorial operation, but advertisers have no influence over editorial decisions, content, or recommendations. We maintain strict separation between editorial and commercial operations. We clearly label any sponsored content as "Sponsored" or "Advertisement."
+      </p>
+
+      <h2 style="font-size:22px;font-weight:700;margin:32px 0 14px;border-bottom:2px solid #e8e8e8;padding-bottom:10px">Contact</h2>
+      <p style="font-size:16px;line-height:1.85;margin-bottom:16px">
+        For advertising inquiries, media kits, and partnership proposals, contact our advertising team:
+      </p>
+      <p style="font-size:16px;margin-bottom:32px">
+        <a href="mailto:ads@${domain}" style="font-size:16px;font-weight:600;color:#c0392b">ads@${domain}</a>
+      </p>
+
+      <p style="font-size:14px;color:#666;border-top:1px solid #eee;padding-top:20px">
+        <a href="/about/" style="color:#c0392b">About Us</a> &middot;
+        <a href="/editorial-guidelines/" style="color:#c0392b">Editorial Guidelines</a> &middot;
+        <a href="/contact/" style="color:#c0392b">Contact</a>
+      </p>
+    </div>`
+  };
+}
+
 function buildDisclaimerPage(siteName, domain, nicheSlug) {
   const isInsurance = nicheSlug === 'insurance-guide';
   const isLegal     = nicheSlug === 'legal-advice';
@@ -768,6 +834,9 @@ async function regenerateStaticPages(site) {
   // Terms and Disclaimer — always regenerate to prevent stale/IP-leaked content
   pages['terms/index.html'] = buildTermsPage(siteName, site.domain);
   pages['disclaimer/index.html'] = buildDisclaimerPage(siteName, site.domain, nicheSlug);
+
+  // Advertise page — regenerate to fix stale siteName from spawn time
+  pages['advertise/index.html'] = buildAdvertisePage(siteName, site.domain);
 
   const methMeta = NICHE_METHODOLOGY[nicheSlug] || DEFAULT_METHODOLOGY;
   pages['methodology/index.html'] = {

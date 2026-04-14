@@ -2,7 +2,7 @@
  * Category page intro text — per nicchia/categoria
  * Testo pre-scritto (non serve Claude API, zero costo, istantaneo).
  * Sostituisce {{siteName}} al momento della generazione.
- * Target: 100-140 parole — abbastanza per evitare thin content, non troppo da oscurare gli articoli.
+ * Target: 80-100 parole — abbastanza per evitare thin content, non troppo da oscurare gli articoli.
  */
 
 const INTROS = {
