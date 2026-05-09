@@ -201,7 +201,8 @@ export async function generateArticle(keyword, niche, site, retries = 3, sitePub
         keyword: kwText,
         relatedArticles: existingArticles,
         toolSlug: site.toolSlug || '',
-        template: site.template || ''
+        template: site.template || '',
+        nicheSlug: niche.slug
       });
 
       // Reject suspiciously short articles (Claude API partial response / JSON truncation)

@@ -4,6 +4,7 @@
  */
 
 import { buildArticleSchema, buildFAQSchema, buildBreadcrumbSchema, buildHowToSchema } from './schema.js';
+import { buildLeadGenCtaHTML } from './leadgen-cta.js';
 
 const NEWS_TEMPLATES = new Set(['pulse', 'tribune']);
 
@@ -110,7 +111,7 @@ function wrapTables(html) {
     .replace(/<\/table>/gi, '</table></div>');
 }
 
-export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '', template = '', rating = null }) {
+export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug, keyword, relatedArticles = [], toolSlug = '', template = '', rating = null, nicheSlug = '' }) {
   const { title, intro, sections, faq, conclusion, authorNote, expertTip, tags, citations, comparisonTable } = articleData;
   // Enforce Google's 160-char limit — Claude occasionally overshoots
   const metaDescription = (articleData.metaDescription || '').slice(0, 160);
@@ -388,6 +389,8 @@ export function buildArticleHTML(articleData, { author, siteName, siteUrl, slug,
         <h2>The Bottom Line</h2>
         ${conclusion.split('\n\n').map(p => `<p>${p}</p>`).join('')}
       </section>
+
+      ${buildLeadGenCtaHTML(nicheSlug, { source: `article_${siteUrl.replace(/^https?:\/\//, '').split('.')[0]}` })}
 
       <!-- Content discovery widget (Taboola/MGID — injected by their script) -->
       <div id="taboola-below-article-thumbnails"></div>
