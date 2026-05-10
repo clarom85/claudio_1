@@ -20,8 +20,13 @@ export async function sendEmail({ from, to, subject, html, text, replyTo }) {
     return { ok: true, dev: true };
   }
 
+  // Default From: prefer the already-verified Resend domain configured for
+  // alerts; fall back to the brand From only when explicitly overridden.
+  const defaultFrom = process.env.ALERT_EMAIL_FROM
+    ? `ParentCare Finder <${process.env.ALERT_EMAIL_FROM}>`
+    : 'ParentCare Finder <onboarding@resend.dev>';
   const body = {
-    from: from || `ParentCare Finder <leads@vireonmedia.com>`,
+    from: from || defaultFrom,
     to: Array.isArray(to) ? to : [to],
     subject,
     html,

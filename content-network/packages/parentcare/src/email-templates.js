@@ -9,7 +9,9 @@
 import { labelFor } from './quiz-config.js';
 
 const FROM_NAME = 'ParentCare Finder';
-const FROM_EMAIL = 'leads@vireonmedia.com';
+// Use the already-verified Resend domain until vireonmedia.com is verified.
+// Override with ALERT_EMAIL_FROM env var when ready.
+const FROM_EMAIL = process.env.ALERT_EMAIL_FROM || 'onboarding@resend.dev';
 const REPLY_TO = 'romanazziclaudio@gmail.com';
 const TERRA = '#c4622d';
 const SAGE = '#5a7a5a';
