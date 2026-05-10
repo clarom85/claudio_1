@@ -262,7 +262,7 @@ async function run() {
         meta_description = ${META},
         content = ${CONTENT},
         word_count = 2400,
-        schema_markup = ${SCHEMA_MARKUP}::jsonb,
+        schema_markup = ${JSON.stringify(SCHEMA_MARKUP)}::jsonb,
         status = 'published',
         published_at = ${PUB_DATE},
         updated_at = NOW(),
@@ -278,7 +278,7 @@ async function run() {
         word_count, schema_markup, status, published_at, tags
       ) VALUES (
         ${SITE_ID}, ${keywordId}, ${SLUG}, ${TITLE}, ${META}, ${CONTENT},
-        2400, ${SCHEMA_MARKUP}::jsonb, 'published', ${PUB_DATE},
+        2400, ${JSON.stringify(SCHEMA_MARKUP)}::jsonb, 'published', ${PUB_DATE},
         ARRAY['post-hospital-discharge','aging-parents','home-care','medicare']
       ) RETURNING id
     `;
