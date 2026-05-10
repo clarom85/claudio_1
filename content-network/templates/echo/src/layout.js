@@ -21,9 +21,12 @@ body{font-family:var(--ff-body);background:var(--cream);color:var(--warm);line-h
 .hdr-top{background:var(--warm);color:rgba(255,255,255,.7);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:7px}
 .hdr-main{background:var(--cream);border-bottom:1px solid var(--border);padding:20px 0}
 .hdr-main .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px}
-.logo{text-decoration:none}
+.logo{text-decoration:none;display:inline-block}
 .logo-name{font-family:var(--ff-head);font-size:48px;font-weight:400;color:var(--warm);letter-spacing:4px;text-transform:uppercase;line-height:1}
 .logo-sub{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);display:block;text-align:center;margin-top:4px}
+.logo-brand img{height:64px;width:auto;max-width:280px;display:block}
+@media(max-width:640px){.logo-brand img{height:52px;max-width:220px}}
+@media(max-width:480px){.logo-brand img{height:44px;max-width:180px}}
 .hdr-ad{flex:1;max-width:650px;min-height:90px;background:var(--light);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
 .hdr-nav{border-top:1px solid var(--border);border-bottom:2px solid var(--terra);display:flex;align-items:center;justify-content:center}
 .hdr-nav ul{flex:1;list-style:none;display:flex;justify-content:center;gap:0;flex-wrap:wrap;max-width:var(--max);margin:0 auto;padding:0 16px}
@@ -214,7 +217,10 @@ export function renderBase({title,description,slug,siteName,siteUrl,schemas=[],b
   const ga4Id=ga4MeasurementId||process.env.GA4_MEASUREMENT_ID||'';
   const gscKeys=(process.env.GOOGLE_SITE_VERIFICATION||'').split(',').map(s=>s.trim()).filter(Boolean);
   const ezoicId=process.env.EZOIC_SITE_ID||'';
-  const effectiveOgImage=ogImage||(siteUrl?`${siteUrl}/images/og-default.jpg`:'');
+  // medicarepriceguide.com ships a brand-tailored 1200x630 OG image at /img/og-image.png.
+  const isMpg = (siteUrl || '').includes('medicarepriceguide.com');
+  const fallbackOg = siteUrl ? (isMpg ? `${siteUrl}/img/og-image.png` : `${siteUrl}/images/og-default.jpg`) : '';
+  const effectiveOgImage=ogImage||fallbackOg;
   const isArticle=slug&&!slug.startsWith('category/')&&!slug.startsWith('tag/')&&slug!=='about'&&slug!=='contact'&&slug!=='privacy'&&slug!=='terms'&&slug!=='disclaimer'&&slug!=='advertise'&&slug!=='editorial-process';
   return `<!DOCTYPE html><html lang="en" data-adsense="${adsenseId}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="robots" content="${robots}"/><meta name="theme-color" content="#c4622d"/>
@@ -243,16 +249,25 @@ document.querySelectorAll('.mgid-wrap').forEach(function(w){var i=w.querySelecto
 // Collapse unfilled ad slots — works on all browsers (no !important in inline styles)
 (function(){var c=function(el){el.style.display='none';el.style.height='0';el.style.minHeight='0';el.style.margin='0';el.style.padding='0';el.style.overflow='hidden';el.style.border='none';};if(window.MutationObserver){document.querySelectorAll('ins.adsbygoogle').forEach(function(ins){var ad=ins.closest&&ins.closest('.ad');if(!ad)return;new MutationObserver(function(){var s=ins.getAttribute('data-ad-status');if(s&&s!=='filled')c(ad);else if(s==='filled'){ad.style.display='';ad.style.height='';ad.style.minHeight='';ad.style.margin='';ad.style.padding='';}}).observe(ins,{attributes:true,attributeFilter:['data-ad-status']});});}setTimeout(function(){document.querySelectorAll('.ad').forEach(function(d){var ins=d.querySelector('ins.adsbygoogle');if(!ins||ins.getAttribute('data-ad-status')!=='filled')c(d);});},3000);})();</script></body></html>`}
 
-export function renderHeader(site){return`
+export function renderHeader(site){
+  // Use brand logo when available (medicarepriceguide.com); fall back to
+  // the wordmark for any other site that hasn't published a logo asset.
+  const useBrandLogo = (site.url || '').includes('medicarepriceguide.com');
+  const logoMarkup = useBrandLogo
+    ? `<a href="/" class="logo logo-brand" aria-label="${esc(site.name)}"><img src="/img/logo.png" srcset="/img/logo.png 1x, /img/logo@2x.png 2x" alt="${esc(site.name)}" width="240" height="64" style="display:block;height:auto;max-height:64px"/></a>`
+    : `<a href="/" class="logo"><span class="logo-name">${esc(site.name)}</span><span class="logo-sub">Living · Wellness · Inspiration</span></a>`;
+
+  return `
 <div class="hdr-top">${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
 <header>
   <div class="hdr-main"><div class="wrap">
-    <a href="/" class="logo"><span class="logo-name">${esc(site.name)}</span><span class="logo-sub">Living · Wellness · Inspiration</span></a>
+    ${logoMarkup}
     ${adUnit('leaderboard')}
   </div></div>
   <nav class="hdr-nav"><button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button><ul id="main-nav"><li><a href="/">Home</a></li>${(site.categories||[]).map(c=>`<li><a href="/category/${c.slug}/">${esc(c.name)}</a></li>`).join('')}${site.toolSlug?`<li><a href="/tools/${site.toolSlug}/" style="color:var(--terra);font-weight:700">${site.toolLabel||'Free Calculator'}</a></li>`:''}${site.hasCostTracker?`<li><a href="/cost-tracker/">Cost Tracker</a></li>`:''}</ul></nav>
 </header>
-<script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`}
+<script>document.getElementById('nav-toggle')?.addEventListener('click',function(){var u=document.getElementById('main-nav');var o=u.classList.toggle('nav-open');this.setAttribute('aria-expanded',String(o));this.innerHTML=o?'&#10005;':'&#9776;'});</script>`;
+}
 
 export function renderFooter(site){return`
 <footer class="site-footer">${adUnit('footer')}<div class="wrap">

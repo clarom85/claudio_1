@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Medicare Price Guide — icon-only (heart-tree). Transparent bg. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 130" width="110" height="130">
+  <!-- Foliage cluster (sage green) -->
+  <g fill="#5d7a3e">
+    <!-- Outer leaves -->
+    <ellipse cx="22" cy="38" rx="14" ry="20" transform="rotate(-22 22 38)"/>
+    <ellipse cx="88" cy="38" rx="14" ry="20" transform="rotate(22 88 38)"/>
+    <ellipse cx="55" cy="14" rx="18" ry="14"/>
+    <!-- Mid leaves -->
+    <circle cx="35" cy="22" r="13"/>
+    <circle cx="75" cy="22" r="13"/>
+    <ellipse cx="30" cy="50" rx="13" ry="14" transform="rotate(-12 30 50)"/>
+    <ellipse cx="80" cy="50" rx="13" ry="14" transform="rotate(12 80 50)"/>
+    <!-- Inner core -->
+    <circle cx="55" cy="32" r="22"/>
+    <circle cx="42" cy="42" r="14"/>
+    <circle cx="68" cy="42" r="14"/>
+    <circle cx="55" cy="50" r="16"/>
+    <!-- Highlights (slightly lighter for organic feel) -->
+  </g>
+  <g fill="#7a8e58" opacity="0.55">
+    <ellipse cx="42" cy="20" rx="6" ry="4" transform="rotate(-30 42 20)"/>
+    <ellipse cx="68" cy="20" rx="6" ry="4" transform="rotate(30 68 20)"/>
+    <ellipse cx="55" cy="38" rx="7" ry="5"/>
+    <ellipse cx="28" cy="40" rx="5" ry="3" transform="rotate(-30 28 40)"/>
+    <ellipse cx="82" cy="40" rx="5" ry="3" transform="rotate(30 82 40)"/>
+  </g>
+
+  <!-- Heart-shaped trunk (warm dark) -->
+  <path d="M55 110
+           L33 78
+           A11 11 0 1 1 55 70
+           A11 11 0 1 1 77 78
+           Z"
+        fill="#3d2b1f"/>
+
+  <!-- Roots / ground anchor -->
+  <g stroke="#3d2b1f" stroke-width="2.5" stroke-linecap="round" fill="none">
+    <line x1="48" y1="108" x2="42" y2="122"/>
+    <line x1="55" y1="110" x2="55" y2="125"/>
+    <line x1="62" y1="108" x2="68" y2="122"/>
+  </g>
+
+  <!-- Heart hollow center (subtle, only if zoomed in) -->
+  <path d="M55 84
+           L46 76
+           A4 4 0 1 1 55 73
+           A4 4 0 1 1 64 76
+           Z"
+        fill="#5d4a2e"/>
+</svg>

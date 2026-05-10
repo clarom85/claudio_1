@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#faf6f1"/>
+  <!-- Subtle border accent -->
+  <rect x="0" y="0" width="1200" height="8" fill="#c4622d"/>
+  <rect x="0" y="622" width="1200" height="8" fill="#5a7a5a"/>
+
+  <!-- Heart-tree icon (centered left) -->
+  <g transform="translate(120 160) scale(2.5)">
+    <g fill="#5d7a3e">
+      <ellipse cx="22" cy="38" rx="14" ry="20" transform="rotate(-22 22 38)"/>
+      <ellipse cx="88" cy="38" rx="14" ry="20" transform="rotate(22 88 38)"/>
+      <ellipse cx="55" cy="14" rx="18" ry="14"/>
+      <circle cx="35" cy="22" r="13"/>
+      <circle cx="75" cy="22" r="13"/>
+      <ellipse cx="30" cy="50" rx="13" ry="14" transform="rotate(-12 30 50)"/>
+      <ellipse cx="80" cy="50" rx="13" ry="14" transform="rotate(12 80 50)"/>
+      <circle cx="55" cy="32" r="22"/>
+      <circle cx="42" cy="42" r="14"/>
+      <circle cx="68" cy="42" r="14"/>
+      <circle cx="55" cy="50" r="16"/>
+    </g>
+    <path d="M55 110 L33 78 A11 11 0 1 1 55 70 A11 11 0 1 1 77 78 Z" fill="#3d2b1f"/>
+    <g stroke="#3d2b1f" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <line x1="48" y1="108" x2="42" y2="122"/>
+      <line x1="55" y1="110" x2="55" y2="125"/>
+      <line x1="62" y1="108" x2="68" y2="122"/>
+    </g>
+    <path d="M55 84 L46 76 A4 4 0 1 1 55 73 A4 4 0 1 1 64 76 Z" fill="#5d4a2e"/>
+  </g>
+
+  <!-- Right side: text -->
+  <g transform="translate(500 220)">
+    <text x="0" y="0" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="600" fill="#c4622d" letter-spacing="3">MEDICARE PRICE GUIDE</text>
+    <text x="0" y="80" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="700" fill="#3d2b1f">Worried about an</text>
+    <text x="0" y="155" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="700" fill="#3d2b1f">aging parent?</text>
+    <text x="0" y="220" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-style="italic" fill="#7a6a5a">Take our free 2-minute care assessment.</text>
+    <text x="0" y="255" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-style="italic" fill="#7a6a5a">Compare local options for mom or dad.</text>
+  </g>
+
+  <!-- Bottom tagline -->
+  <text x="120" y="580" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-style="italic" fill="#7a6a5a">Made for sons that care.  ·  medicarepriceguide.com/find-care</text>
+</svg>
