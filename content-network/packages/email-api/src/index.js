@@ -9,6 +9,7 @@ import cors from 'cors';
 import { sql } from '@content-network/db';
 import { processSubmission } from '@content-network/parentcare';
 import { labelFor } from '@content-network/parentcare/quiz-config';
+import { getZipLocations } from '@content-network/parentcare/zip-locator';
 
 const app = express();
 const PORT = process.env.EMAIL_API_PORT || 3001;
@@ -121,12 +122,85 @@ function adminEsc(s = '') {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// CSV escaping helper
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
 app.get('/admin/parentcare', async (req, res) => {
   if (!requireAdminToken(req, res)) return;
   try {
     const tier = req.query.tier || '';
     const status = req.query.status || '';
+    const format = (req.query.format || '').toLowerCase();
+    const exportType = (req.query.type || 'leads').toLowerCase();
     const limit = Math.min(parseInt(req.query.limit) || 200, 500);
+
+    // CSV export branch — buyers
+    if (format === 'csv' && exportType === 'buyers') {
+      const allBuyers = await sql`
+        SELECT b.id, b.name, b.contact_name, b.email, b.phone, b.category,
+               b.state, b.metro, b.zip_codes, b.price_per_lead, b.exclusive,
+               b.pilot, b.pilot_leads_remaining, b.active, b.created_at,
+               (SELECT COUNT(*)::int FROM parentcare_routing r WHERE r.buyer_id = b.id) AS leads_received
+        FROM parentcare_buyers b ORDER BY b.id
+      `;
+      const headers = ['id','name','contact_name','email','phone','category','state','metro','zip_codes','price_per_lead','exclusive','pilot','pilot_leads_remaining','active','created_at','leads_received'];
+      const rows = [headers.join(',')];
+      for (const b of allBuyers) {
+        rows.push([
+          b.id, b.name, b.contact_name, b.email, b.phone, b.category, b.state, b.metro,
+          (b.zip_codes || []).join(';'),
+          b.price_per_lead, b.exclusive, b.pilot, b.pilot_leads_remaining, b.active,
+          b.created_at, b.leads_received
+        ].map(csvCell).join(','));
+      }
+      const fname = `parentcare-buyers-${new Date().toISOString().slice(0,10)}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
+      res.setHeader('Cache-Control', 'no-store');
+      return res.send(rows.join('\r\n'));
+    }
+
+    // CSV export branch — leads
+    if (format === 'csv') {
+      const allLeads = await sql`
+        SELECT l.*,
+          (SELECT json_agg(json_build_object('buyer', b.name, 'response', r.buyer_response, 'price', r.price_paid))
+             FROM parentcare_routing r LEFT JOIN parentcare_buyers b ON b.id = r.buyer_id
+             WHERE r.lead_id = l.id) AS routings
+        FROM parentcare_leads l
+        WHERE (${tier}::text = '' OR l.tier = ${tier})
+          AND (${status}::text = '' OR l.status = ${status})
+        ORDER BY l.ts DESC
+      `;
+      const zipMap = await getZipLocations(allLeads.map(l => l.zip));
+      const headers = ['id','ts','tier','score','status','name','phone','email','zip','city','state',
+        'who_needs_care','main_concern','location_now','level_help','urgency','payment',
+        'source','utm_source','utm_medium','utm_campaign','referer',
+        'consent_ip','consent_ts','consent_version','routings'];
+      const rows = [headers.join(',')];
+      for (const l of allLeads) {
+        const loc = zipMap[l.zip] || {};
+        const routingsStr = (l.routings || []).map(r => `${r.buyer || 'aggregator'}:${r.response || 'pending'}${r.price ? '@$'+r.price : ''}`).join(' | ');
+        rows.push([
+          l.id, l.ts ? new Date(l.ts).toISOString() : '', l.tier, l.score, l.status,
+          l.name, l.phone, l.email, l.zip, loc.city || '', loc.state || l.state,
+          l.who_needs_care, l.main_concern, l.location_now, l.level_help, l.urgency, l.payment,
+          l.source, l.utm_source, l.utm_medium, l.utm_campaign, l.referer,
+          l.consent_ip, l.consent_ts ? new Date(l.consent_ts).toISOString() : '', l.consent_version,
+          routingsStr
+        ].map(csvCell).join(','));
+      }
+      const fname = `parentcare-leads-${new Date().toISOString().slice(0,10)}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
+      res.setHeader('Cache-Control', 'no-store');
+      return res.send(rows.join('\r\n'));
+    }
 
     const leads = await sql`
       SELECT l.id, l.ts, l.tier, l.score, l.status, l.zip, l.state,
@@ -172,6 +246,9 @@ app.get('/admin/parentcare', async (req, res) => {
       ORDER BY active DESC, name
     `;
 
+    // Resolve ZIP → city for the rows we are about to render. Cached in DB.
+    const zipMap = await getZipLocations(leads.map(l => l.zip));
+
     const tierColor = (t) => t==='high' ? '#5a7a5a' : t==='medium' ? '#c4622d' : '#888';
     const fmtPhone = (p) => {
       const d = String(p||'').replace(/\D/g,'');
@@ -200,12 +277,17 @@ app.get('/admin/parentcare', async (req, res) => {
         ? `<br><a href="mailto:${adminEsc(l.email)}" style="font-size:11.5px;color:#3d2b1f;text-decoration:none">✉ ${adminEsc(l.email)}</a>`
         : '';
 
+      const loc = zipMap[l.zip] || {};
+      const cityLine = loc.city
+        ? `${adminEsc(loc.city)}, ${adminEsc(loc.state || l.state || '')}`
+        : adminEsc(l.state || '—');
+
       return `<tr>
         <td style="font-size:11px;color:#555;white-space:nowrap;line-height:1.45">${fmtFullTs(l.ts)}<br><span style="color:#aaa;font-size:10px">#${l.id}</span></td>
         <td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${tierColor(l.tier)}">${(l.tier||'').toUpperCase()}</span> <span style="font-size:11px;color:#888">${l.score}</span></td>
         <td><strong>${adminEsc(l.name||'')}</strong><br><span style="font-size:11px;color:#888">caring for ${labelFor('who_needs_care', l.who_needs_care)}</span></td>
         <td>${phoneHtml}${emailHtml}</td>
-        <td style="font-weight:700;font-size:13px">${adminEsc(l.zip||'—')}<br><span style="font-size:11px;color:#888;font-weight:400">${adminEsc(l.state||'—')}</span></td>
+        <td style="font-weight:700;font-size:13px">${adminEsc(l.zip||'—')}<br><span style="font-size:11px;color:#888;font-weight:400">${cityLine}</span></td>
         <td style="font-size:12px">${labelFor('urgency', l.urgency)}<br><span style="color:#888">${labelFor('level_help', l.level_help)}</span></td>
         <td style="font-size:11px">${labelFor('location_now', l.location_now)}<br>${concernArr.map(c => labelFor('main_concern', c)).join(', ')}</td>
         <td style="font-size:11px">${labelFor('payment', l.payment)}</td>
@@ -551,12 +633,15 @@ app.get('/admin/parentcare/lead/:id', async (req, res) => {
       ['Referer',            lead.referer || '—'],
     ];
 
+    const detailZipMap = await getZipLocations([lead.zip]);
+    const detailLoc = detailZipMap[lead.zip] || {};
     const familyFields = [
       ['Caller name',        adminEsc(lead.name || '—')],
       ['Phone',              lead.phone ? `<a href="tel:${lead.phone}" style="color:#c4622d;font-weight:700">${fmtPhone(lead.phone)}</a>` : '—'],
       ['Email',              lead.email ? `<a href="mailto:${adminEsc(lead.email)}" style="color:#c4622d;font-weight:600">${adminEsc(lead.email)}</a>` : '—'],
       ['ZIP',                adminEsc(lead.zip || '—')],
-      ['State',              adminEsc(lead.state || '—')],
+      ['City',               detailLoc.city ? adminEsc(detailLoc.city) : '—'],
+      ['State',              adminEsc(detailLoc.state || lead.state || '—')],
       ['Metro',              adminEsc(lead.metro || '—')],
     ];
 

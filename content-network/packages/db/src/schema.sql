@@ -248,3 +248,14 @@ CREATE TABLE IF NOT EXISTS parentcare_dnc (
 );
 CREATE INDEX IF NOT EXISTS idx_pc_dnc_phone ON parentcare_dnc(phone);
 CREATE INDEX IF NOT EXISTS idx_pc_dnc_email ON parentcare_dnc(email);
+
+-- ZIP → city/state cache. Lazily populated from zippopotam.us API the
+-- first time a ZIP is queried, reused forever.
+CREATE TABLE IF NOT EXISTS parentcare_zip_cache (
+  zip          VARCHAR(5) PRIMARY KEY,
+  city         TEXT,
+  state_full   TEXT,
+  state_code   VARCHAR(2),
+  county       TEXT,
+  fetched_at   TIMESTAMPTZ DEFAULT NOW()
+);

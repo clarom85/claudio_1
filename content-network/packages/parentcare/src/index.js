@@ -11,3 +11,4 @@ export { renderParentCarePrivacy, renderParentCareTerms, LEGAL_META } from './le
 export { sendEmail } from './mailer.js';
 export { processSubmission } from './pipeline.js';
 export { tryAggregatorFallback, AGGREGATOR_PROVIDERS } from './aggregator-router.js';
+export { getZipLocations, getZipLocation } from './zip-locator.js';
