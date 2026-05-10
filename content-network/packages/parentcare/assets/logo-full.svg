@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Medicare Price Guide — full horizontal lockup. Transparent bg. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="600" height="160">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 150" width="540" height="150">
   <!-- ── ICON: heart-tree on the left ── -->
   <g transform="translate(15 12)">
     <g fill="#5d7a3e">
@@ -54,6 +54,4 @@
   <text x="160" y="98" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="40" fill="#3d2b1f" letter-spacing="-0.5">Medicare</text>
   <text x="160" y="135" font-family="Georgia, 'Times New Roman', serif" font-weight="500" font-size="36" fill="#3d2b1f" letter-spacing="-0.3">Price Guide</text>
 
-  <!-- ── TAGLINE ── -->
-  <text x="395" y="135" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="400" font-size="14" fill="#7a6a5a">Made for sons that care</text>
 </svg>

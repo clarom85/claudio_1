@@ -105,15 +105,16 @@ ${PARENTCARE_QUIZ_CSS}
         <li><span class="pc-tick">✓</span> No obligation, ever</li>
       </ul>
     </div>
-    <div class="pc-hero-card" aria-hidden="true">
-      <div class="pc-hero-card-quote">"Mom is coming home from the hospital and we don't know what to do."</div>
-      <div class="pc-hero-card-cite">— Lisa, Tampa, FL</div>
-      <div class="pc-hero-card-divider"></div>
+    <aside class="pc-hero-tagline" aria-hidden="true">
+      <div class="pc-hero-tagline-mark">&ldquo;</div>
+      <div class="pc-hero-tagline-text">Made for sons<br>that care.</div>
+      <div class="pc-hero-tagline-divider"></div>
       <div class="pc-hero-card-stats">
-        <div><strong>70%</strong><span>of adults over 65 will need long-term care</span></div>
+        <div><strong>70%</strong><span>of adults 65+ will need long-term care</span></div>
         <div><strong>$34/hr</strong><span>median in-home caregiver cost in 2026</span></div>
       </div>
-    </div>
+      <div class="pc-hero-tagline-cite">&mdash; medicarepriceguide.com</div>
+    </aside>
   </section>
 
   <!-- TRUST SECTION -->
@@ -319,29 +320,42 @@ const PARENTCARE_QUIZ_CSS = `
   font-weight:700;
 }
 
-.pc-hero-card{
+/* HERO TAGLINE — display block on the right of the hero, brand-defining */
+.pc-hero-tagline{
   background:var(--pc-white);
   border:1px solid var(--pc-border);
   border-radius:var(--pc-radius);
-  padding:36px 32px;
+  padding:40px 36px 32px;
   box-shadow:var(--pc-shadow-lg);
   position:relative;
+  text-align:left;
 }
-.pc-hero-card::before{
+.pc-hero-tagline::before{
   content:'';position:absolute;top:-1px;left:-1px;right:-1px;height:5px;
   background:linear-gradient(90deg,var(--pc-terra) 0%,var(--pc-sage) 100%);
   border-radius:var(--pc-radius) var(--pc-radius) 0 0;
 }
-.pc-hero-card-quote{
+.pc-hero-tagline-mark{
+  font-family:var(--pc-ff-head);
+  font-size:80px;
+  line-height:.55;
+  color:var(--pc-sage);
+  opacity:.35;
+  margin-bottom:6px;
+  user-select:none;
+}
+.pc-hero-tagline-text{
   font-family:var(--pc-ff-head);
   font-style:italic;
-  font-size:22px;
-  line-height:1.45;
-  color:var(--pc-warm);
-  margin:0 0 14px;
+  font-weight:500;
+  font-size:clamp(38px,5vw,52px);
+  line-height:1.05;
+  color:var(--pc-sage);
+  letter-spacing:-0.5px;
+  margin:0 0 22px;
 }
-.pc-hero-card-cite{font-size:13px;color:var(--pc-muted);letter-spacing:.5px;margin-bottom:24px}
-.pc-hero-card-divider{height:1px;background:var(--pc-border);margin:0 0 24px}
+.pc-hero-tagline-divider{height:1px;background:var(--pc-border);margin:0 0 22px}
+.pc-hero-tagline-cite{font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:var(--pc-muted);margin-top:18px;font-weight:600}
 .pc-hero-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .pc-hero-card-stats > div{display:flex;flex-direction:column}
 .pc-hero-card-stats strong{font-family:var(--pc-ff-head);font-size:34px;font-weight:600;color:var(--pc-terra);line-height:1.1}
@@ -535,7 +549,9 @@ const PARENTCARE_QUIZ_CSS = `
 /* MOBILE */
 @media (max-width:860px){
   .pc-hero{grid-template-columns:1fr;gap:36px;padding:48px 24px}
-  .pc-hero-card{order:-1}
+  .pc-hero-card,.pc-hero-tagline{order:-1}
+  .pc-hero-tagline{padding:32px 26px 26px}
+  .pc-hero-tagline-text{font-size:36px}
   .pc-trust-inner{grid-template-columns:1fr;gap:32px}
   .pc-quiz{padding:48px 16px}
   .pc-steps-track{padding:24px 22px;min-height:440px}
@@ -546,8 +562,9 @@ const PARENTCARE_QUIZ_CSS = `
 }
 @media (max-width:480px){
   .pc-hero{padding:32px 18px;gap:28px}
-  .pc-hero-card{padding:24px 22px}
-  .pc-hero-card-quote{font-size:19px}
+  .pc-hero-tagline{padding:26px 22px 22px}
+  .pc-hero-tagline-text{font-size:30px}
+  .pc-hero-tagline-mark{font-size:60px}
   .pc-hero-card-stats strong{font-size:28px}
   .pc-trust{padding:40px 18px}
   .pc-quiz{padding:32px 12px}
