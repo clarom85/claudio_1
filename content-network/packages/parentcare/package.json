@@ -10,7 +10,10 @@
     "./scoring": "./src/scoring.js",
     "./buyer-router": "./src/buyer-router.js",
     "./email-templates": "./src/email-templates.js",
-    "./legal": "./src/legal.js"
+    "./legal": "./src/legal.js",
+    "./cta-banner": "./src/cta-banner.js",
+    "./mailer": "./src/mailer.js",
+    "./pipeline": "./src/pipeline.js"
   },
   "dependencies": {
     "@content-network/db": "1.0.0"
