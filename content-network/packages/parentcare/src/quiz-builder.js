@@ -191,7 +191,7 @@ ${stepsHtml}
 
       <!-- ERROR state -->
       <div class="pc-error-box" id="pc-error-box" hidden role="alert">
-        <p>We couldn't process your request. <a href="#" id="pc-retry">Please try again</a> or email us at <a href="mailto:contact@vireonmedia.com">contact@vireonmedia.com</a>.</p>
+        <p>We couldn't process your request. <a href="#" id="pc-retry">Please try again</a> or email us at <a href="mailto:partners@medicarepriceguide.com">partners@medicarepriceguide.com</a>.</p>
       </div>
     </div>
   </section>
@@ -200,7 +200,7 @@ ${stepsHtml}
   <section class="pc-bottom-note">
     <div class="pc-bottom-inner">
       <p>${esc(siteName)} is operated by Vireon Media. ParentCare Finder is an information service that connects families with local senior care providers. We are not a healthcare provider, healthcare facility, or licensed senior placement agency. We may receive compensation when we connect you with a provider in our network.</p>
-      <p><a href="/find-care/privacy/">Privacy Policy</a> &middot; <a href="/find-care/terms/">Terms of Service</a> &middot; <a href="mailto:dnc@vireonmedia.com">Do-not-call requests</a></p>
+      <p><a href="/find-care/privacy/">Privacy Policy</a> &middot; <a href="/find-care/terms/">Terms of Service</a> &middot; <a href="mailto:dnc@medicarepriceguide.com">Do-not-call requests</a></p>
     </div>
   </section>
 </main>

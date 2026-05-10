@@ -27,7 +27,7 @@ const CREAM = '#faf6f1';
 const FROM = process.env.ALERT_EMAIL_FROM
   ? `ParentCare Finder <${process.env.ALERT_EMAIL_FROM}>`
   : 'ParentCare Finder <onboarding@resend.dev>';
-const REPLY_TO = 'romanazziclaudio@gmail.com';
+const REPLY_TO = process.env.PARENTCARE_REPLY_TO || 'vireonmediaadv@gmail.com';
 
 function fmtPhone(d) {
   d = String(d || '').replace(/\D/g, '');

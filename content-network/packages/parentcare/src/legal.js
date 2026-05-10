@@ -11,10 +11,14 @@ import { CONSENT_VERSION, CONSENT_TEXT } from './quiz-config.js';
 const BRAND = 'ParentCare Finder';
 const OPERATOR = 'Vireon Media';
 const HOST_DOMAIN = 'medicarepriceguide.com';
-const PRIVACY_EMAIL = `privacy@vireonmedia.com`;
-const DNC_EMAIL = `dnc@vireonmedia.com`;
-const LEGAL_EMAIL = `legal@vireonmedia.com`;
-const ARB_EMAIL = `arbitration-optout@vireonmedia.com`;
+// Email aliases live on medicarepriceguide.com via Cloudflare Email Routing,
+// all forwarded to vireonmediaadv@gmail.com. Vireon Media remains the
+// operating-company brand name; the inbound email infra is consolidated
+// on the consumer-facing domain.
+const PRIVACY_EMAIL = `privacy@medicarepriceguide.com`;
+const DNC_EMAIL = `dnc@medicarepriceguide.com`;
+const LEGAL_EMAIL = `legal@medicarepriceguide.com`;
+const ARB_EMAIL = `arbitration-optout@medicarepriceguide.com`;
 
 function todayPretty() {
   return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });

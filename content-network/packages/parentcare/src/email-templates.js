@@ -12,7 +12,7 @@ const FROM_NAME = 'ParentCare Finder';
 // Use the already-verified Resend domain until vireonmedia.com is verified.
 // Override with ALERT_EMAIL_FROM env var when ready.
 const FROM_EMAIL = process.env.ALERT_EMAIL_FROM || 'onboarding@resend.dev';
-const REPLY_TO = 'romanazziclaudio@gmail.com';
+const REPLY_TO = process.env.PARENTCARE_REPLY_TO || 'vireonmediaadv@gmail.com';
 const TERRA = '#c4622d';
 const SAGE = '#5a7a5a';
 const WARM = '#3d2b1f';
@@ -92,7 +92,7 @@ export function buyerLeadEmail({ lead, buyer, routingId }) {
     </div>
   </div>
   <p style="font-size:11px;color:#aaa;text-align:center;margin:18px 0 0">
-    ParentCare Finder &middot; operated by Vireon Media &middot; <a href="mailto:partners@vireonmedia.com" style="color:#aaa">partners@vireonmedia.com</a>
+    ParentCare Finder &middot; operated by Vireon Media &middot; <a href="mailto:partners@medicarepriceguide.com" style="color:#aaa">partners@medicarepriceguide.com</a>
   </p>
 </div>
 </body></html>`;
@@ -113,7 +113,7 @@ export function buyerLeadEmail({ lead, buyer, routingId }) {
     '',
     `Reply to this email with: good lead | bad fit | could not reach | tour scheduled.`,
     '',
-    `ParentCare Finder · Vireon Media · partners@vireonmedia.com`,
+    `ParentCare Finder · Vireon Media · partners@medicarepriceguide.com`,
   ].filter(Boolean).join('\n');
 
   return { from: `${FROM_NAME} <${FROM_EMAIL}>`, replyTo: REPLY_TO, to: buyer.email, subject, html, text };
@@ -165,7 +165,7 @@ export function leadConfirmationEmail({ lead }) {
     ParentCare Finder &middot; operated by Vireon Media<br>
     <a href="https://medicarepriceguide.com/find-care/privacy/" style="color:#aaa">Privacy</a> &middot;
     <a href="https://medicarepriceguide.com/find-care/terms/" style="color:#aaa">Terms</a> &middot;
-    <a href="mailto:dnc@vireonmedia.com?subject=Please%20remove%20me" style="color:#aaa">Opt out</a>
+    <a href="mailto:dnc@medicarepriceguide.com?subject=Please%20remove%20me" style="color:#aaa">Opt out</a>
   </p>
 </div>
 </body></html>`;
@@ -182,7 +182,7 @@ export function leadConfirmationEmail({ lead }) {
     `• Estimated cost ranges for your area`,
     `• Next steps if you decide to move forward (no pressure)`,
     '',
-    `Want to opt out? Reply STOP or email dnc@vireonmedia.com.`,
+    `Want to opt out? Reply STOP or email dnc@medicarepriceguide.com.`,
     '',
     `ParentCare Finder · operated by Vireon Media`,
   ].join('\n');
@@ -283,7 +283,7 @@ export function buyerWelcomeEmail({ buyer }) {
     </div>
   </div>
   <p style="font-size:11px;color:#aaa;text-align:center;margin:18px 0 0">
-    To opt out at any time, just reply STOP or email <a href="mailto:dnc@vireonmedia.com" style="color:#aaa">dnc@vireonmedia.com</a>.
+    To opt out at any time, just reply STOP or email <a href="mailto:dnc@medicarepriceguide.com" style="color:#aaa">dnc@medicarepriceguide.com</a>.
   </p>
 </div>
 </body></html>`;
@@ -341,7 +341,7 @@ Thanks for considering.
 
 Claudio Romanazzi
 Vireon Media — ParentCare Finder
-romanazziclaudio@gmail.com
+partners@medicarepriceguide.com
 `;
   return { subject, text };
 }

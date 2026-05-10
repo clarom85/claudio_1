@@ -73,7 +73,8 @@ WHERE id = 1;
 ```
 PARENTCARE_ADMIN_TOKEN=<random-32-char-string>
 RESEND_API_KEY=<existing key, already configured for alerts>
-ALERT_EMAIL_TO=romanazziclaudio@gmail.com
+ALERT_EMAIL_TO=vireonmediaadv@gmail.com
+PARENTCARE_REPLY_TO=vireonmediaadv@gmail.com   # optional override; defaults to vireonmediaadv@gmail.com
 ```
 
 ### 4. Build the page
