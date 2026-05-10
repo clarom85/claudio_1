@@ -1,0 +1,18 @@
+{
+  "name": "@content-network/parentcare",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./quiz-config": "./src/quiz-config.js",
+    "./quiz-builder": "./src/quiz-builder.js",
+    "./scoring": "./src/scoring.js",
+    "./buyer-router": "./src/buyer-router.js",
+    "./email-templates": "./src/email-templates.js",
+    "./legal": "./src/legal.js"
+  },
+  "dependencies": {
+    "@content-network/db": "1.0.0"
+  }
+}

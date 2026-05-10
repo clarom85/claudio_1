@@ -18,7 +18,10 @@
     "pm2:restart": "pm2 restart all",
     "pm2:stop":   "pm2 stop all",
     "pm2:logs":   "pm2 logs",
-    "health":     "node packages/vps/src/health-check.js"
+    "health":     "node packages/vps/src/health-check.js",
+    "pc:build":   "node packages/vps/src/build-parentcare-page.js --domain=medicarepriceguide.com",
+    "pc:seed":    "node packages/parentcare/src/seed-buyers.js",
+    "pc:outreach":"node packages/parentcare/src/outreach-cli.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

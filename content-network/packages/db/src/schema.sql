@@ -144,3 +144,103 @@ CREATE INDEX IF NOT EXISTS idx_price_snapshots_niche ON price_snapshots(niche_sl
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS tokens_in INTEGER DEFAULT 0;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS tokens_out INTEGER DEFAULT 0;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS model_used TEXT;
+
+-- ============================================================
+-- PARENTCARE FINDER — Lead generation system
+-- ============================================================
+
+-- Buyer registry (home care agencies, assisted living, ecc.)
+CREATE TABLE IF NOT EXISTS parentcare_buyers (
+  id              SERIAL PRIMARY KEY,
+  name            TEXT NOT NULL,
+  contact_name    TEXT,
+  email           TEXT NOT NULL,
+  phone           TEXT,
+  category        TEXT NOT NULL,            -- 'home_care'|'assisted_living'|'memory_care'|'placement_advisor'|'medical_alert'
+  zip_codes       TEXT[] DEFAULT '{}',      -- ZIP codes serviti
+  state           TEXT NOT NULL,            -- 'FL','TX','AZ',ecc.
+  metro           TEXT,                     -- 'tampa-st-pete','phoenix-mesa',ecc.
+  price_per_lead  NUMERIC(8,2) DEFAULT 50,
+  exclusive       BOOLEAN DEFAULT FALSE,
+  active          BOOLEAN DEFAULT TRUE,
+  pilot           BOOLEAN DEFAULT TRUE,     -- primi 5 lead gratis
+  pilot_leads_remaining INTEGER DEFAULT 5,
+  notes           TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pc_buyers_active ON parentcare_buyers(active, category);
+CREATE INDEX IF NOT EXISTS idx_pc_buyers_state ON parentcare_buyers(state, active);
+
+-- Lead inquiries from quiz
+CREATE TABLE IF NOT EXISTS parentcare_leads (
+  id              SERIAL PRIMARY KEY,
+  ts              TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Quiz answers
+  who_needs_care  TEXT,                     -- 'mother'|'father'|'spouse'|'grandparent'|'self'|'other'
+  main_concern    TEXT,                     -- 'lives_alone'|'recent_fall'|'memory_issues'|'post_hospital'|...
+  location_now    TEXT,                     -- 'home'|'hospital'|'rehab'|'assisted_living'|'nursing_home'
+  level_help      TEXT,                     -- 'few_hours'|'daily'|'overnight'|'24_7'|'assisted_living'|'memory_care'
+  urgency         TEXT,                     -- 'immediate'|'this_week'|'this_month'|'planning'
+  payment         TEXT,                     -- 'private_pay'|'ltc_insurance'|'medicaid'|'va'|'unsure'
+  zip             VARCHAR(10),
+  state           TEXT,
+  metro           TEXT,
+
+  -- Contact
+  name            TEXT,
+  phone           TEXT,
+  email           TEXT,
+
+  -- TCPA/FTSA consent capture (audit trail)
+  consent_text    TEXT NOT NULL,
+  consent_version VARCHAR(20),
+  consent_ip      INET,
+  consent_ua      TEXT,
+  consent_url     TEXT,
+  consent_ts      TIMESTAMPTZ DEFAULT NOW(),
+  checkbox_checked BOOLEAN DEFAULT TRUE,
+
+  -- Scoring + status
+  score           INTEGER DEFAULT 0,
+  tier            TEXT DEFAULT 'low',       -- 'high'|'medium'|'low'
+  status          TEXT DEFAULT 'new',       -- 'new'|'routed'|'sold'|'rejected'|'duplicate'|'dnc'
+  source          TEXT DEFAULT 'quiz',      -- traffic source
+  utm_source      TEXT,
+  utm_medium      TEXT,
+  utm_campaign    TEXT,
+  referer         TEXT,
+  notes           TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_pc_leads_ts ON parentcare_leads(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_pc_leads_status ON parentcare_leads(status);
+CREATE INDEX IF NOT EXISTS idx_pc_leads_zip ON parentcare_leads(zip);
+CREATE INDEX IF NOT EXISTS idx_pc_leads_phone ON parentcare_leads(phone);
+CREATE INDEX IF NOT EXISTS idx_pc_leads_email ON parentcare_leads(email);
+
+-- Lead routing log (which lead → which buyer, accept/reject)
+CREATE TABLE IF NOT EXISTS parentcare_routing (
+  id              SERIAL PRIMARY KEY,
+  lead_id         INTEGER REFERENCES parentcare_leads(id) ON DELETE CASCADE,
+  buyer_id        INTEGER REFERENCES parentcare_buyers(id),
+  routed_at       TIMESTAMPTZ DEFAULT NOW(),
+  buyer_response  TEXT,                     -- 'accepted'|'rejected'|'no_response'|'pending'
+  response_at     TIMESTAMPTZ,
+  reject_reason   TEXT,
+  price_paid      NUMERIC(8,2),
+  notes           TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_pc_routing_lead ON parentcare_routing(lead_id);
+CREATE INDEX IF NOT EXISTS idx_pc_routing_buyer ON parentcare_routing(buyer_id, routed_at DESC);
+
+-- DNC (Do Not Contact) list — federal/state DNC + internal opt-outs
+CREATE TABLE IF NOT EXISTS parentcare_dnc (
+  id              SERIAL PRIMARY KEY,
+  phone           TEXT,
+  email           TEXT,
+  source          TEXT,                     -- 'opt_out'|'fed_dnc'|'state_dnc'|'manual'|'litigation_risk'
+  added_at        TIMESTAMPTZ DEFAULT NOW(),
+  notes           TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_pc_dnc_phone ON parentcare_dnc(phone);
+CREATE INDEX IF NOT EXISTS idx_pc_dnc_email ON parentcare_dnc(email);

@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "dependencies": {
     "@content-network/db": "*",
+    "@content-network/parentcare": "*",
     "dotenv": "^16.4.5",
     "imapflow": "^1.0.162"
   }
