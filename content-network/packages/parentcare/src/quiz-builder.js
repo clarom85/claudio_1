@@ -167,17 +167,31 @@ ${stepsHtml}
         </div>
       </form>
 
+      <!-- MATCHING state (shown for ~3.5s after submit before success) -->
+      <div class="pc-matching" id="pc-matching" hidden aria-live="polite">
+        <div class="pc-matching-spinner" aria-hidden="true">
+          <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="90 50"/></svg>
+        </div>
+        <h2>Matching you with trusted local options…</h2>
+        <ul class="pc-matching-steps">
+          <li class="pc-ms-step" data-step="1"><span class="pc-ms-icon" aria-hidden="true"></span>Reviewing your answers</li>
+          <li class="pc-ms-step" data-step="2"><span class="pc-ms-icon" aria-hidden="true"></span>Finding providers in your area</li>
+          <li class="pc-ms-step" data-step="3"><span class="pc-ms-icon" aria-hidden="true"></span>Matching with the right care option</li>
+        </ul>
+        <p class="pc-matching-foot">This usually takes a few seconds. Please don't close this window.</p>
+      </div>
+
       <!-- SUCCESS state -->
       <div class="pc-success" id="pc-success" hidden role="status" aria-live="polite">
         <div class="pc-success-icon">${ICONS.heart}</div>
         <h2>Thank you. We've received your assessment.</h2>
         <p>Based on what you shared, we're matching you with trusted local providers in your area. <strong>Expect a call or email within the next few hours</strong> from a senior care advisor — usually the same day.</p>
-        <p class="pc-success-note">Want to learn more while you wait? Read our guides on <a href="/medicare-coverage/">what Medicare covers</a> and <a href="/in-home-care-costs/">what in-home care actually costs in your state</a>.</p>
+        <p class="pc-success-note">Want to learn more while you wait? Read our guide to the <a href="/best-home-care-services-for-aging-parents/">best home care services for aging parents</a> or check <a href="/assisted-living-facility-cost/">how much assisted living actually costs in 2026</a>.</p>
       </div>
 
       <!-- ERROR state -->
       <div class="pc-error-box" id="pc-error-box" hidden role="alert">
-        <p>We couldn't process your request. <a href="#" id="pc-retry">Please try again</a> or call us at <a href="tel:+18555555555">(855) 555-5555</a>.</p>
+        <p>We couldn't process your request. <a href="#" id="pc-retry">Please try again</a> or email us at <a href="mailto:contact@vireonmedia.com">contact@vireonmedia.com</a>.</p>
       </div>
     </div>
   </section>
@@ -478,6 +492,24 @@ const PARENTCARE_QUIZ_CSS = `
 .pc-submit{background:var(--pc-sage);font-size:17px;padding:16px 32px}
 .pc-submit:hover{background:#456845}
 
+/* MATCHING (loading state shown post-submit before success) */
+.pc-matching{padding:56px 36px;text-align:center}
+.pc-matching-spinner{width:64px;height:64px;margin:0 auto 22px;color:var(--pc-terra);animation:pc-spin 1.1s linear infinite}
+.pc-matching-spinner svg{width:100%;height:100%}
+@keyframes pc-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.pc-matching h2{font-family:var(--pc-ff-head);font-weight:500;font-size:26px;color:var(--pc-warm);margin:0 0 26px;line-height:1.25}
+.pc-matching-steps{list-style:none;padding:0;margin:0 auto 28px;max-width:340px;text-align:left}
+.pc-ms-step{display:flex;align-items:center;gap:14px;font-size:15px;color:var(--pc-muted);padding:9px 0;opacity:.4;transition:opacity .35s var(--pc-ease),color .35s var(--pc-ease)}
+.pc-ms-step.is-active{opacity:1;color:var(--pc-warm)}
+.pc-ms-step.is-done{opacity:1;color:var(--pc-sage)}
+.pc-ms-icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid var(--pc-border);background:var(--pc-white);display:flex;align-items:center;justify-content:center;transition:all .35s var(--pc-ease);position:relative}
+.pc-ms-step.is-active .pc-ms-icon{border-color:var(--pc-terra);background:var(--pc-terra)}
+.pc-ms-step.is-active .pc-ms-icon::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff;animation:pc-pulse 1s ease-in-out infinite}
+@keyframes pc-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.6);opacity:.5}}
+.pc-ms-step.is-done .pc-ms-icon{border-color:var(--pc-sage);background:var(--pc-sage)}
+.pc-ms-step.is-done .pc-ms-icon::after{content:'✓';color:#fff;font-weight:700;font-size:13px;line-height:1}
+.pc-matching-foot{font-size:13px;color:var(--pc-muted);margin:0}
+
 /* SUCCESS */
 .pc-success{padding:64px 36px;text-align:center}
 .pc-success-icon{
@@ -562,8 +594,10 @@ const PARENTCARE_QUIZ_JS = `
   var btnBack = document.getElementById('pc-back');
   var btnNext = document.getElementById('pc-next');
   var btnSubmit = document.getElementById('pc-submit');
+  var matching = document.getElementById('pc-matching');
   var success = document.getElementById('pc-success');
   var errorBox = document.getElementById('pc-error-box');
+  var matchingSteps = matching ? matching.querySelectorAll('.pc-ms-step') : [];
 
   // Smooth-scroll into the quiz when the hero CTA is clicked
   document.querySelectorAll('[data-pc-start]').forEach(function(b){
@@ -723,6 +757,28 @@ const PARENTCARE_QUIZ_JS = `
     if (idx > 0) setIdx(idx - 1, 'back');
   }
 
+  function startMatchingAnimation(){
+    if (!matchingSteps.length) return;
+    // Step 1 active immediately, step 2 at 1.1s, step 3 at 2.3s.
+    // Each step turns "done" 1.0s after becoming "active".
+    var schedule = [
+      { i: 0, at: 0,    state: 'is-active' },
+      { i: 0, at: 1100, state: 'is-done'   },
+      { i: 1, at: 1100, state: 'is-active' },
+      { i: 1, at: 2300, state: 'is-done'   },
+      { i: 2, at: 2300, state: 'is-active' },
+      { i: 2, at: 3400, state: 'is-done'   },
+    ];
+    schedule.forEach(function(s){
+      setTimeout(function(){
+        var el = matchingSteps[s.i];
+        if (!el) return;
+        if (s.state === 'is-done'){ el.classList.remove('is-active'); el.classList.add('is-done'); }
+        else { el.classList.add(s.state); }
+      }, s.at);
+    });
+  }
+
   async function submit(e){
     e.preventDefault();
     var step = steps[idx];
@@ -731,7 +787,6 @@ const PARENTCARE_QUIZ_JS = `
     answers[step.dataset.id] = v;
 
     btnSubmit.disabled = true;
-    btnSubmit.innerHTML = 'Sending…';
 
     var contact = answers.contact || {};
     var payload = {
@@ -752,6 +807,14 @@ const PARENTCARE_QUIZ_JS = `
       referer: document.referrer || ''
     };
 
+    // Switch to matching view immediately, animate steps in parallel with API call
+    form.style.display = 'none';
+    matching.hidden = false;
+    matching.scrollIntoView({behavior:'smooth', block:'start'});
+    var animationStart = Date.now();
+    var MIN_LOADING_MS = 3500;
+    startMatchingAnimation();
+
     try {
       var resp = await fetch(API_URL, {
         method: 'POST',
@@ -766,14 +829,25 @@ const PARENTCARE_QUIZ_JS = `
       try {
         if (window.gtag) window.gtag('event','generate_lead',{ value: 50, currency: 'USD' });
       } catch(_){}
-      form.style.display = 'none';
-      btnBack.hidden = btnNext.hidden = btnSubmit.hidden = true;
-      success.hidden = false;
-      success.scrollIntoView({behavior:'smooth', block:'start'});
+
+      // Hold the matching view until the animation finishes
+      var elapsed = Date.now() - animationStart;
+      var wait = Math.max(MIN_LOADING_MS - elapsed, 0);
+      setTimeout(function(){
+        matching.hidden = true;
+        success.hidden = false;
+        success.scrollIntoView({behavior:'smooth', block:'start'});
+      }, wait);
     } catch(err){
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = 'See My Care Options →';
-      errorBox.hidden = false;
+      // On error, also wait briefly so the user sees the matching page
+      var elapsedErr = Date.now() - animationStart;
+      var waitErr = Math.max(1200 - elapsedErr, 0);
+      setTimeout(function(){
+        matching.hidden = true;
+        form.style.display = '';
+        btnSubmit.disabled = false;
+        errorBox.hidden = false;
+      }, waitErr);
       console.error('[parentcare] submit failed:', err);
     }
   }
