@@ -439,8 +439,8 @@ const PARENTCARE_QUIZ_CSS = `
 
 /* CONSENT */
 .pc-consent{margin-top:22px;padding:16px 18px;background:var(--pc-warm-cream);border:1px solid var(--pc-border);border-radius:var(--pc-radius-sm)}
-.pc-consent-row{display:flex;gap:12px;cursor:pointer;align-items:flex-start}
-.pc-consent-row input{position:absolute;opacity:0;pointer-events:none}
+.pc-consent-row{display:flex;gap:12px;cursor:pointer;align-items:flex-start;position:relative}
+.pc-consent-row input{position:absolute;opacity:0;width:22px;height:22px;margin:0;cursor:pointer;left:18px;top:18px;z-index:2}
 .pc-consent-box{
   flex-shrink:0;width:22px;height:22px;border:2px solid var(--pc-border);
   background:var(--pc-white);border-radius:5px;margin-top:2px;
@@ -450,6 +450,7 @@ const PARENTCARE_QUIZ_CSS = `
 .pc-consent-box::after{content:'✓';color:var(--pc-white);font-weight:700;font-size:14px;opacity:0;transition:opacity .15s}
 .pc-consent-row.is-checked .pc-consent-box{background:var(--pc-sage);border-color:var(--pc-sage)}
 .pc-consent-row.is-checked .pc-consent-box::after{opacity:1}
+.pc-consent-row input:focus-visible + .pc-consent-box{box-shadow:0 0 0 3px rgba(196,98,45,.25)}
 .pc-consent-text{font-size:12.5px;line-height:1.65;color:var(--pc-muted)}
 
 /* NAV */
@@ -471,6 +472,7 @@ const PARENTCARE_QUIZ_CSS = `
   box-shadow:var(--pc-shadow-sm);
   transition:transform .15s var(--pc-ease),background .2s var(--pc-ease),box-shadow .2s var(--pc-ease);
 }
+.pc-next[hidden],.pc-submit[hidden]{display:none}
 .pc-next:hover,.pc-submit:hover{background:var(--pc-terra-dark);transform:translateY(-1px);box-shadow:var(--pc-shadow)}
 .pc-next:disabled,.pc-submit:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .pc-submit{background:var(--pc-sage);font-size:17px;padding:16px 32px}
@@ -608,11 +610,9 @@ const PARENTCARE_QUIZ_JS = `
     if (kind === 'contact'){
       var consentRow = step.querySelector('.pc-consent-row');
       var consentInput = step.querySelector('#pc-consent-cb');
-      consentRow.addEventListener('click', function(e){
-        if (e.target.tagName === 'A') return; // allow link clicks
-        if (e.target !== consentInput){
-          consentInput.checked = !consentInput.checked;
-        }
+      // The native <label> already toggles the input on click; we only
+      // mirror the visual state and clear errors when it changes.
+      consentInput.addEventListener('change', function(){
         consentRow.classList.toggle('is-checked', consentInput.checked);
         clearError(step);
       });
