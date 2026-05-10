@@ -10,3 +10,4 @@ export { renderQuizPageBody } from './quiz-builder.js';
 export { renderParentCarePrivacy, renderParentCareTerms, LEGAL_META } from './legal.js';
 export { sendEmail } from './mailer.js';
 export { processSubmission } from './pipeline.js';
+export { tryAggregatorFallback, AGGREGATOR_PROVIDERS } from './aggregator-router.js';

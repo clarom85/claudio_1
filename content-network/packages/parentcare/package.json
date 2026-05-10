@@ -13,7 +13,8 @@
     "./legal": "./src/legal.js",
     "./cta-banner": "./src/cta-banner.js",
     "./mailer": "./src/mailer.js",
-    "./pipeline": "./src/pipeline.js"
+    "./pipeline": "./src/pipeline.js",
+    "./aggregator-router": "./src/aggregator-router.js"
   },
   "dependencies": {
     "@content-network/db": "1.0.0"

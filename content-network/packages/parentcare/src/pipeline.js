@@ -20,6 +20,7 @@ import { scoreLead, categorizeLead } from './scoring.js';
 import { findBuyers, logRouting, markLeadRouted, isOnDnc, isDuplicate } from './buyer-router.js';
 import { buyerLeadEmail, leadConfirmationEmail, unmatchedLeadAlert } from './email-templates.js';
 import { sendEmail } from './mailer.js';
+import { tryAggregatorFallback } from './aggregator-router.js';
 
 // State derivation from ZIP — minimal, FL-focused for pilot.
 // Full ZCTA→state mapping would be a 30k-row CSV; we ship a tiny lookup
@@ -169,7 +170,26 @@ export async function processSubmission({ payload, ip, userAgent, refererUrl }) 
   }
 
   if (!buyers.length) {
-    // Internal alert — no buyer match
+    // 6b. Try aggregator fallback (no-op unless PARENTCARE_AGGREGATOR_ENABLED=true).
+    // Returns { ok, provider, payout, attempts } so we can audit-trail the
+    // attempts even when every provider passes.
+    const aggResult = await tryAggregatorFallback(fullLead);
+    if (aggResult.ok) {
+      // Persist as a synthetic routing row so the admin dashboard sees it.
+      await sql`
+        INSERT INTO parentcare_routing (lead_id, buyer_id, buyer_response, price_paid, notes)
+        VALUES (${leadId}, NULL, 'accepted', ${aggResult.payout || null},
+                ${'aggregator:' + aggResult.provider})
+      `;
+      await sql`UPDATE parentcare_leads SET status = 'routed' WHERE id = ${leadId}`;
+      if (emailLower) {
+        const conf = leadConfirmationEmail({ lead: fullLead });
+        if (conf) await sendEmail(conf);
+      }
+      return { ok: true, status: 'routed_aggregator', leadId, provider: aggResult.provider };
+    }
+
+    // Internal alert — no buyer match and aggregator passed (or disabled)
     const alert = unmatchedLeadAlert({ lead: fullLead, alertEmail: process.env.ALERT_EMAIL_TO });
     if (alert) await sendEmail(alert);
     // Still send confirmation to the family — set expectation we'll follow up

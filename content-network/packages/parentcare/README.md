@@ -159,6 +159,38 @@ Prints subject + body to stdout — copy/paste into Gmail.
 
 ---
 
+## Aggregator fallback (Month 3+)
+
+When direct buyers are not enough or geo coverage is incomplete, the
+pipeline can fall back to programmatic lead networks. The integration
+is shipped as a stub — every provider is no-op until configured.
+
+**Master switch** (off by default):
+```
+PARENTCARE_AGGREGATOR_ENABLED=true
+PARENTCARE_AGGREGATOR_PRIORITY=caring,px,mediaalpha
+```
+
+**Provider onboarding URLs**:
+
+| Provider | How to apply | Realistic timing | Pricing |
+|---|---|---|---|
+| Caring.com | partnersuccess@caring.com / (888) 808-0453 | Month 3 | $80–120 per call ≥90s |
+| PX.com | (949) 313-7099 — request publisher onboarding | Month 4–6 | $25–60/lead, programmatic |
+| MediaAlpha | mediaalpha.com/contact | Last resort | $20–40/lead |
+| A Place for Mom | Awin: ui.awin.com/merchant-profile/112362 — affiliate-only, NOT API | Anytime | $30/lead, 15-day cookie |
+
+A Place for Mom is intentionally NOT in the programmatic fallback —
+it is a cookie-based affiliate, so handle it as a static link in the
+unmatched-lead success page rather than as an API call.
+
+When applying, mention:
+- TCPA-clean traffic with full consent audit trail (`consent_text`,
+  `consent_ip`, `consent_ts`, `consent_version` all stored per lead)
+- 8-step assessment quiz with conditional branching, not a generic form
+- Adult-children persona, not seniors directly (better intent)
+- Florida primary, expanding US-wide
+
 ## Validation milestones (60 days)
 
 - ✅ **GO**: 3+ buyers paying, 10+ leads sold at $50, 1 buyer asks for more volume
