@@ -171,6 +171,10 @@ CREATE TABLE IF NOT EXISTS parentcare_buyers (
 CREATE INDEX IF NOT EXISTS idx_pc_buyers_active ON parentcare_buyers(active, category);
 CREATE INDEX IF NOT EXISTS idx_pc_buyers_state ON parentcare_buyers(state, active);
 
+-- Buyer portal token (shared in welcome email + every lead delivery)
+ALTER TABLE parentcare_buyers ADD COLUMN IF NOT EXISTS auth_token TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_pc_buyers_auth_token ON parentcare_buyers(auth_token) WHERE auth_token IS NOT NULL;
+
 -- Lead inquiries from quiz
 CREATE TABLE IF NOT EXISTS parentcare_leads (
   id              SERIAL PRIMARY KEY,

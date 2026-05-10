@@ -10,7 +10,12 @@
  */
 
 import 'dotenv/config';
+import { randomBytes } from 'crypto';
 import { sql } from '@content-network/db';
+
+function generateToken() {
+  return randomBytes(20).toString('hex');
+}
 
 // Tampa-St. Pete ZIP codes (broad coverage for pilot — narrow per buyer later)
 const TAMPA_ZIPS = [
@@ -90,16 +95,24 @@ async function run() {
     await sql`
       INSERT INTO parentcare_buyers (
         name, contact_name, email, phone, category, zip_codes, state, metro,
-        price_per_lead, exclusive, pilot, pilot_leads_remaining, active, notes
+        price_per_lead, exclusive, pilot, pilot_leads_remaining, active, notes, auth_token
       ) VALUES (
         ${b.name}, ${b.contact_name}, ${b.email}, ${b.phone}, ${b.category},
         ${b.zip_codes}, ${b.state}, ${b.metro},
         ${b.price_per_lead}, ${b.exclusive}, ${b.pilot}, ${b.pilot_leads_remaining}, ${b.active},
-        ${b.notes}
+        ${b.notes}, ${generateToken()}
       )
     `;
     inserted++;
   }
+
+  // Backfill missing auth_token for any buyer without one
+  const missing = await sql`SELECT id FROM parentcare_buyers WHERE auth_token IS NULL`;
+  for (const m of missing) {
+    await sql`UPDATE parentcare_buyers SET auth_token = ${generateToken()} WHERE id = ${m.id}`;
+  }
+  if (missing.length) console.log(`Backfilled auth_token for ${missing.length} existing buyer(s).`);
+
   console.log(`Seeded buyers: ${inserted} inserted, ${skipped} already present.`);
   console.log(`\nIMPORTANT: All seeded buyers are inactive by default.`);
   console.log(`After signing an agreement, activate via:\n  UPDATE parentcare_buyers SET active=TRUE, email='real@agency.com', name='Real Name' WHERE id=<id>;\n`);

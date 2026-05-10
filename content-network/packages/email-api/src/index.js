@@ -283,6 +283,221 @@ ${buyers.length ? `<table style="max-width:760px">
   }
 });
 
+// ── BUYER PORTAL: GET /buyer-portal?token=... ─────────────────
+// Mobile-first single-page view of leads routed to a single buyer.
+// Token-based auth (no password): the same token is delivered with
+// every lead-notification email + welcome onboarding email.
+app.get('/buyer-portal', async (req, res) => {
+  const token = (req.query.token || '').trim();
+  if (!token) return res.status(400).send('Missing token');
+
+  try {
+    const buyers = await sql`
+      SELECT id, name, contact_name, email, category, metro, state,
+             pilot, pilot_leads_remaining, price_per_lead, active
+      FROM parentcare_buyers
+      WHERE auth_token = ${token}
+      LIMIT 1
+    `;
+    if (!buyers.length) return res.status(403).send('Invalid token');
+    const buyer = buyers[0];
+
+    const routings = await sql`
+      SELECT r.id AS routing_id, r.routed_at, r.buyer_response, r.price_paid,
+             r.response_at, r.notes,
+             l.id AS lead_id, l.name, l.phone, l.email, l.zip,
+             l.who_needs_care, l.urgency, l.level_help, l.location_now,
+             l.payment, l.main_concern, l.tier, l.score
+      FROM parentcare_routing r
+      JOIN parentcare_leads l ON l.id = r.lead_id
+      WHERE r.buyer_id = ${buyer.id}
+      ORDER BY r.routed_at DESC
+      LIMIT 200
+    `;
+
+    const stats = {
+      total: routings.length,
+      good: routings.filter(r => r.buyer_response === 'accepted').length,
+      bad: routings.filter(r => r.buyer_response === 'rejected').length,
+      pending: routings.filter(r => !r.buyer_response || r.buyer_response === 'pending').length,
+      tour: routings.filter(r => (r.notes || '').toLowerCase().includes('tour')).length,
+    };
+
+    const fmtPhone = (p) => {
+      const d = String(p || '').replace(/\D/g, '');
+      if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+      return p || '—';
+    };
+    const fmtDate = (d) => new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const esc = (s='') => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    const rows = routings.map(r => {
+      const concerns = (r.main_concern || '').split(',').filter(Boolean).map(c => labelFor('main_concern', c)).join(', ');
+      const status = r.buyer_response || 'pending';
+      const statusColor = status === 'accepted' ? '#5a7a5a' : status === 'rejected' ? '#a8521f' : '#7a6a5a';
+      const isPending = !r.buyer_response || r.buyer_response === 'pending';
+
+      return `<div class="lead-card" data-routing-id="${r.routing_id}">
+        <div class="lead-head">
+          <div>
+            <div class="lead-name">${esc(r.name || '—')} <span class="lead-zip">· ${esc(r.zip || '')}</span></div>
+            <div class="lead-meta">${esc(labelFor('who_needs_care', r.who_needs_care))} · ${esc(labelFor('urgency', r.urgency))} · ${esc(labelFor('level_help', r.level_help))}</div>
+          </div>
+          <div class="lead-tier tier-${esc(r.tier || 'low')}">${esc((r.tier || '').toUpperCase())}</div>
+        </div>
+        <div class="lead-body">
+          <a href="tel:${esc(r.phone || '')}" class="lead-phone">📞 ${esc(fmtPhone(r.phone))}</a>
+          ${r.email ? `<a href="mailto:${esc(r.email)}" class="lead-email">✉ ${esc(r.email)}</a>` : ''}
+          <div class="lead-note">${esc(labelFor('location_now', r.location_now))} · ${esc(labelFor('payment', r.payment))}${concerns ? ' · ' + concerns : ''}</div>
+          <div class="lead-time">Sent ${esc(fmtDate(r.routed_at))}</div>
+        </div>
+        ${isPending ? `<div class="lead-actions">
+          <button class="btn-good"  data-action="accepted">✓ Good lead</button>
+          <button class="btn-tour"  data-action="accepted" data-note="tour">📅 Tour booked</button>
+          <button class="btn-noans" data-action="no_response">📵 No answer</button>
+          <button class="btn-bad"   data-action="rejected">✗ Bad fit</button>
+        </div>` : `<div class="lead-status" style="color:${statusColor}">Marked as <strong>${esc(status)}</strong>${r.notes ? ' (' + esc(r.notes) + ')' : ''}${r.response_at ? ' · ' + esc(fmtDate(r.response_at)) : ''}</div>`}
+      </div>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>${esc(buyer.name)} — Lead Portal</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#faf6f1;color:#3d2b1f;line-height:1.5;padding:0 0 60px}
+  .topbar{background:#3d2b1f;color:rgba(255,255,255,.92);padding:18px 20px}
+  .topbar h1{font-size:18px;font-weight:600;margin-bottom:2px}
+  .topbar .sub{font-size:12px;color:rgba(255,255,255,.65)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;padding:16px 18px;background:#fff;border-bottom:1px solid #e6dccf;position:sticky;top:0;z-index:10}
+  .stat{text-align:center}
+  .stat-num{font-size:24px;font-weight:700;color:#c4622d;line-height:1}
+  .stat-lbl{font-size:11px;color:#7a6a5a;letter-spacing:.5px;text-transform:uppercase;margin-top:4px}
+  .lead-card{background:#fff;border:1px solid #e6dccf;border-radius:10px;padding:16px;margin:12px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .lead-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+  .lead-name{font-size:16px;font-weight:700}
+  .lead-zip{font-size:13px;color:#7a6a5a;font-weight:400}
+  .lead-meta{font-size:12.5px;color:#7a6a5a;margin-top:2px}
+  .lead-tier{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;background:#888;flex-shrink:0;letter-spacing:.5px}
+  .lead-tier.tier-high{background:#5a7a5a}
+  .lead-tier.tier-medium{background:#c4622d}
+  .lead-tier.tier-low{background:#888}
+  .lead-body{padding-top:8px;border-top:1px solid #f0e8de}
+  .lead-phone,.lead-email{display:inline-block;margin-right:14px;margin-top:6px;color:#c4622d;font-weight:600;text-decoration:none;font-size:14px}
+  .lead-note{font-size:13px;color:#3d2b1f;margin-top:8px}
+  .lead-time{font-size:11px;color:#aaa;margin-top:8px}
+  .lead-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid #f0e8de}
+  .lead-actions button{padding:11px 8px;font-size:13px;font-weight:700;border:none;border-radius:8px;cursor:pointer;color:#fff;letter-spacing:.2px;transition:opacity .15s,transform .15s}
+  .lead-actions button:active{transform:scale(.97)}
+  .lead-actions button:disabled{opacity:.5;cursor:not-allowed}
+  .btn-good{background:#5a7a5a}
+  .btn-tour{background:#456845}
+  .btn-noans{background:#888}
+  .btn-bad{background:#a8521f}
+  .lead-status{margin-top:12px;padding-top:12px;border-top:1px solid #f0e8de;font-size:13px;font-weight:600}
+  .empty{text-align:center;padding:60px 20px;color:#7a6a5a;font-size:14px}
+  @media(max-width:480px){
+    .lead-card{margin:10px 12px;padding:14px}
+    .lead-actions{grid-template-columns:1fr 1fr}
+    .stats{padding:12px 14px;gap:8px}
+    .stat-num{font-size:20px}
+  }
+</style></head><body>
+<header class="topbar">
+  <h1>${esc(buyer.name)}</h1>
+  <div class="sub">${esc(buyer.metro || buyer.state || '')} · ${esc(buyer.category)}${buyer.pilot ? ' · ' + buyer.pilot_leads_remaining + ' free pilot leads remaining' : ' · $' + Number(buyer.price_per_lead).toFixed(0) + '/lead'}</div>
+</header>
+<section class="stats">
+  <div class="stat"><div class="stat-num">${stats.total}</div><div class="stat-lbl">Total</div></div>
+  <div class="stat"><div class="stat-num" style="color:#5a7a5a">${stats.good}</div><div class="stat-lbl">Good</div></div>
+  <div class="stat"><div class="stat-num" style="color:#456845">${stats.tour}</div><div class="stat-lbl">Tours</div></div>
+  <div class="stat"><div class="stat-num" style="color:#7a6a5a">${stats.pending}</div><div class="stat-lbl">Pending</div></div>
+  <div class="stat"><div class="stat-num" style="color:#a8521f">${stats.bad}</div><div class="stat-lbl">Bad</div></div>
+</section>
+${routings.length ? rows : '<div class="empty">No leads yet. We will email you the moment a qualified family inquiry comes in for your area.</div>'}
+<script>
+(function(){
+  var TOKEN = ${JSON.stringify(token)};
+  document.addEventListener('click', async function(e){
+    var btn = e.target.closest('.lead-actions button');
+    if (!btn) return;
+    var card = btn.closest('.lead-card');
+    var routingId = card.dataset.routingId;
+    var action = btn.dataset.action;
+    var note = btn.dataset.note || '';
+    var allBtns = card.querySelectorAll('.lead-actions button');
+    allBtns.forEach(function(b){b.disabled = true});
+    btn.innerHTML = 'Saving…';
+    try {
+      var resp = await fetch('/api/parentcare/buyer-feedback', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ token: TOKEN, routing_id: parseInt(routingId), response: action, notes: note })
+      });
+      var data = await resp.json();
+      if (!data.ok) throw new Error(data.error || 'fail');
+      // Replace actions with status row
+      var statusText = action === 'accepted' && note === 'tour' ? 'Tour booked' :
+                       action === 'accepted' ? 'Good lead' :
+                       action === 'rejected' ? 'Bad fit' : 'No answer';
+      var statusColor = action === 'accepted' ? '#5a7a5a' : action === 'rejected' ? '#a8521f' : '#888';
+      var actionsEl = card.querySelector('.lead-actions');
+      var newDiv = document.createElement('div');
+      newDiv.className = 'lead-status';
+      newDiv.style.color = statusColor;
+      newDiv.innerHTML = 'Marked as <strong>' + statusText + '</strong> · just now';
+      actionsEl.parentNode.replaceChild(newDiv, actionsEl);
+    } catch(err){
+      btn.innerHTML = '⚠ Try again';
+      allBtns.forEach(function(b){b.disabled = false});
+      console.error(err);
+    }
+  });
+})();
+</script>
+</body></html>`;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex,nofollow');
+    res.send(html);
+  } catch (err) {
+    console.error('[buyer-portal] error:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// ── BUYER PORTAL: POST /api/parentcare/buyer-feedback ──────────
+app.post('/api/parentcare/buyer-feedback', async (req, res) => {
+  const { token, routing_id, response, notes } = req.body || {};
+  if (!token || !routing_id || !['accepted','rejected','no_response'].includes(response)) {
+    return res.status(400).json({ ok: false, error: 'invalid' });
+  }
+  try {
+    // Verify token belongs to buyer that owns this routing
+    const r = await sql`
+      SELECT r.id FROM parentcare_routing r
+      JOIN parentcare_buyers b ON b.id = r.buyer_id
+      WHERE r.id = ${routing_id} AND b.auth_token = ${String(token).trim()}
+      LIMIT 1
+    `;
+    if (!r.length) return res.status(403).json({ ok: false, error: 'forbidden' });
+
+    await sql`
+      UPDATE parentcare_routing
+      SET buyer_response = ${response},
+          notes = COALESCE(NULLIF(${notes || ''}, ''), notes),
+          response_at = NOW()
+      WHERE id = ${routing_id}
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[buyer-feedback] error:', err.message);
+    res.status(500).json({ ok: false, error: 'server' });
+  }
+});
+
 // ── ADMIN: feedback toggle (mark routing accepted/rejected) ───
 app.post('/admin/parentcare/feedback', async (req, res) => {
   if (!requireAdminToken(req, res)) return;

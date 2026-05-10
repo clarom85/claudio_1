@@ -79,6 +79,11 @@ export function buyerLeadEmail({ lead, buyer, routingId }) {
         <a href="tel:${lead.phone}" style="background:${SAGE};color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:6px;display:inline-block;font-size:15px;letter-spacing:.3px">Call ${fmtPhone(lead.phone)}</a>
       </div>
 
+      ${buyer.auth_token ? `<div style="text-align:center;margin:14px 0 8px">
+        <a href="https://medicarepriceguide.com/buyer-portal?token=${buyer.auth_token}" style="font-size:13px;color:${TERRA};text-decoration:none;font-weight:600">Open lead portal &rarr;</a>
+        <p style="font-size:11px;color:#aaa;margin-top:4px">Mark this lead good/bad/no-answer with one tap, or just reply to this email.</p>
+      </div>` : ''}
+
       <p style="font-size:12px;color:#7a6a5a;line-height:1.7;margin-top:24px;border-top:1px solid #f0e8de;padding-top:16px">
         Routing ID: ${routingId} &middot; Lead ID: ${lead.id}<br>
         Reply to this email with feedback after contact: <strong>good lead</strong>, <strong>bad fit</strong>, <strong>could not reach</strong>, or <strong>tour scheduled</strong>. This helps us improve the quality of leads we send you.<br>
