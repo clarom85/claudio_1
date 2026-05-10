@@ -190,45 +190,45 @@ const CONTENT = `
 </section>
 `.trim();
 
-const SCHEMA_MARKUP = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Article',
-      '@id': `https://medicarepriceguide.com/${SLUG}/#article`,
-      headline: TITLE,
-      datePublished: PUB_DATE,
-      dateModified: PUB_DATE,
-      description: META,
-      author: { '@type':'Person', name: 'Nancy Williams', url: 'https://medicarepriceguide.com/author/nancy-williams/' },
-      publisher: { '@type':'Organization', name: 'Medicare Price Guide', url: 'https://medicarepriceguide.com' },
-      mainEntityOfPage: `https://medicarepriceguide.com/${SLUG}/`,
-      articleSection: 'Senior Care',
-      wordCount: 2400,
-    },
-    {
-      '@type': 'FAQPage',
-      mainEntity: [
-        { '@type':'Question', name:'Does Medicare pay for someone to come home and help my mother shower?',
-          acceptedAnswer:{ '@type':'Answer', text:'Only if it is part of a skilled home health episode and the help is intermittent. If your mother does not also need a nurse, physical therapist, or occupational therapist, Medicare will not pay for personal care alone.' } },
-        { '@type':'Question', name:'How long does Medicare cover home health after a hospital stay?',
-          acceptedAnswer:{ '@type':'Answer', text:'There is no fixed limit, but episodes are typically certified in 60-day blocks. As long as your parent remains homebound and continues to need a skilled service, the agency can recertify.' } },
-        { '@type':'Question', name:'When should I consider assisted living instead of in-home care?',
-          acceptedAnswer:{ '@type':'Answer', text:'Three signals point toward assisted living: 24-hour supervision is needed, in-home care has stretched past about 12 hours per day, or the family caregiver is showing signs of burnout despite paid help.' } },
-        { '@type':'Question', name:'What is the single biggest mistake families make in the first month?',
-          acceptedAnswer:{ '@type':'Answer', text:'Trying to absorb everything alone for too long. Families who bring in even a few hours of paid help in week one or two consistently report better recoveries, fewer crises, and lower long-term costs.' } },
-      ]
-    },
-    {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type':'ListItem', position:1, name:'Home', item:'https://medicarepriceguide.com/' },
-        { '@type':'ListItem', position:2, name:'Caring for Aging Parents', item:'https://medicarepriceguide.com/category/caring-for-aging-parents/' },
-        { '@type':'ListItem', position:3, name: TITLE, item: `https://medicarepriceguide.com/${SLUG}/` }
-      ]
-    }
-  ]
-};
+const SCHEMA_MARKUP = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `https://medicarepriceguide.com/${SLUG}/#article`,
+    headline: TITLE,
+    datePublished: PUB_DATE,
+    dateModified: PUB_DATE,
+    description: META,
+    author: { '@type':'Person', name: 'Nancy Williams', url: 'https://medicarepriceguide.com/author/nancy-williams/' },
+    publisher: { '@type':'Organization', name: 'Medicare Price Guide', url: 'https://medicarepriceguide.com' },
+    mainEntityOfPage: `https://medicarepriceguide.com/${SLUG}/`,
+    articleSection: 'Senior Care',
+    wordCount: 2400,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      { '@type':'Question', name:'Does Medicare pay for someone to come home and help my mother shower?',
+        acceptedAnswer:{ '@type':'Answer', text:'Only if it is part of a skilled home health episode and the help is intermittent. If your mother does not also need a nurse, physical therapist, or occupational therapist, Medicare will not pay for personal care alone.' } },
+      { '@type':'Question', name:'How long does Medicare cover home health after a hospital stay?',
+        acceptedAnswer:{ '@type':'Answer', text:'There is no fixed limit, but episodes are typically certified in 60-day blocks. As long as your parent remains homebound and continues to need a skilled service, the agency can recertify.' } },
+      { '@type':'Question', name:'When should I consider assisted living instead of in-home care?',
+        acceptedAnswer:{ '@type':'Answer', text:'Three signals point toward assisted living: 24-hour supervision is needed, in-home care has stretched past about 12 hours per day, or the family caregiver is showing signs of burnout despite paid help.' } },
+      { '@type':'Question', name:'What is the single biggest mistake families make in the first month?',
+        acceptedAnswer:{ '@type':'Answer', text:'Trying to absorb everything alone for too long. Families who bring in even a few hours of paid help in week one or two consistently report better recoveries, fewer crises, and lower long-term costs.' } },
+    ]
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type':'ListItem', position:1, name:'Home', item:'https://medicarepriceguide.com/' },
+      { '@type':'ListItem', position:2, name:'Caring for Aging Parents', item:'https://medicarepriceguide.com/category/caring-for-aging-parents/' },
+      { '@type':'ListItem', position:3, name: TITLE, item: `https://medicarepriceguide.com/${SLUG}/` }
+    ]
+  }
+];
 
 async function run() {
   // 1. Niche
