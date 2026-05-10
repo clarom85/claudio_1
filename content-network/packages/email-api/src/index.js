@@ -179,6 +179,13 @@ app.get('/admin/parentcare', async (req, res) => {
       return p || '—';
     };
 
+    const fmtFullTs = (d) => {
+      const dt = new Date(d);
+      const date = dt.toLocaleDateString('en-US', { timeZone:'America/New_York', month:'short', day:'numeric', year:'numeric' });
+      const time = dt.toLocaleTimeString('en-US', { timeZone:'America/New_York', hour:'2-digit', minute:'2-digit' });
+      return `${date} · ${time} EST`;
+    };
+
     const leadRows = leads.map(l => {
       const concernArr = (l.main_concern || '').split(',').filter(Boolean);
       const routingsHtml = (l.routings || []).map(r => {
@@ -186,18 +193,25 @@ app.get('/admin/parentcare', async (req, res) => {
         return `<div style="font-size:11px;color:#555;margin-bottom:2px"><strong>${adminEsc(r.buyer_name||'?')}</strong> · <span style="color:${respCol}">${adminEsc(r.response||'pending')}</span>${r.price ? ' · $' + Number(r.price).toFixed(0) : ''}</div>`;
       }).join('') || '<span style="color:#bbb;font-size:11px">—</span>';
 
+      const phoneHtml = l.phone
+        ? `<a href="tel:${l.phone}" style="color:#c4622d;font-weight:600;text-decoration:none;display:inline-block">📞 ${fmtPhone(l.phone)}</a>`
+        : '<span style="color:#aaa">no phone</span>';
+      const emailHtml = l.email
+        ? `<br><a href="mailto:${adminEsc(l.email)}" style="font-size:11.5px;color:#3d2b1f;text-decoration:none">✉ ${adminEsc(l.email)}</a>`
+        : '';
+
       return `<tr>
-        <td style="font-size:11px;color:#888;white-space:nowrap">${new Date(l.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+        <td style="font-size:11px;color:#555;white-space:nowrap;line-height:1.45">${fmtFullTs(l.ts)}<br><span style="color:#aaa;font-size:10px">#${l.id}</span></td>
         <td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${tierColor(l.tier)}">${(l.tier||'').toUpperCase()}</span> <span style="font-size:11px;color:#888">${l.score}</span></td>
         <td><strong>${adminEsc(l.name||'')}</strong><br><span style="font-size:11px;color:#888">caring for ${labelFor('who_needs_care', l.who_needs_care)}</span></td>
-        <td><a href="tel:${l.phone}" style="color:#c4622d;font-weight:600;text-decoration:none">${fmtPhone(l.phone)}</a>${l.email ? '<br><span style="font-size:11px;color:#888">'+adminEsc(l.email)+'</span>':''}</td>
-        <td style="font-weight:700">${adminEsc(l.zip||'—')}<br><span style="font-size:11px;color:#888">${adminEsc(l.state||'')}</span></td>
+        <td>${phoneHtml}${emailHtml}</td>
+        <td style="font-weight:700;font-size:13px">${adminEsc(l.zip||'—')}<br><span style="font-size:11px;color:#888;font-weight:400">${adminEsc(l.state||'—')}</span></td>
         <td style="font-size:12px">${labelFor('urgency', l.urgency)}<br><span style="color:#888">${labelFor('level_help', l.level_help)}</span></td>
         <td style="font-size:11px">${labelFor('location_now', l.location_now)}<br>${concernArr.map(c => labelFor('main_concern', c)).join(', ')}</td>
         <td style="font-size:11px">${labelFor('payment', l.payment)}</td>
         <td>${routingsHtml}</td>
         <td><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#f0e8de;color:#7a6a5a;text-transform:uppercase">${adminEsc(l.status)}</span></td>
-        <td style="font-size:11px;text-align:center"><a href="?token=${adminEsc(req.query.token)}&action=feedback&id=${l.id}" style="color:#c4622d;text-decoration:none;font-size:11px">edit</a></td>
+        <td style="font-size:11px;text-align:center"><a href="/admin/parentcare/lead/${l.id}?token=${adminEsc(req.query.token)}" style="color:#c4622d;text-decoration:none;font-size:12px;font-weight:600">view →</a></td>
       </tr>`;
     }).join('');
 
@@ -495,6 +509,161 @@ app.post('/api/parentcare/buyer-feedback', async (req, res) => {
   } catch (err) {
     console.error('[buyer-feedback] error:', err.message);
     res.status(500).json({ ok: false, error: 'server' });
+  }
+});
+
+// ── ADMIN: GET /admin/parentcare/lead/:id ─────────────────────
+app.get('/admin/parentcare/lead/:id', async (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!id) return res.status(400).send('invalid id');
+  try {
+    const [lead] = await sql`SELECT * FROM parentcare_leads WHERE id = ${id}`;
+    if (!lead) return res.status(404).send('lead not found');
+
+    const routings = await sql`
+      SELECT r.*, b.name AS buyer_name, b.email AS buyer_email,
+             b.phone AS buyer_phone, b.category AS buyer_category, b.metro AS buyer_metro
+      FROM parentcare_routing r
+      LEFT JOIN parentcare_buyers b ON b.id = r.buyer_id
+      WHERE r.lead_id = ${id}
+      ORDER BY r.routed_at ASC
+    `;
+
+    const concerns = (lead.main_concern || '').split(',').filter(Boolean);
+    const fmtFull = (d) => d ? new Date(d).toLocaleString('en-US', { timeZone:'America/New_York', dateStyle:'full', timeStyle:'medium' }) + ' EST' : '—';
+    const fmtPhone = (p) => {
+      const dd = String(p||'').replace(/\D/g,'');
+      if (dd.length === 10) return `(${dd.slice(0,3)}) ${dd.slice(3,6)}-${dd.slice(6)}`;
+      return p || '—';
+    };
+    const tierCol = lead.tier === 'high' ? '#5a7a5a' : lead.tier === 'medium' ? '#c4622d' : '#888';
+
+    const fields = [
+      ['Lead ID',            `#${lead.id}`],
+      ['Submitted',          fmtFull(lead.ts)],
+      ['Status',             (lead.status || '').toUpperCase()],
+      ['Tier',               `<span style="color:${tierCol};font-weight:700">${(lead.tier||'').toUpperCase()}</span> · score ${lead.score}`],
+      ['Source',             lead.source || '—'],
+      ['UTM source',         lead.utm_source || '—'],
+      ['UTM medium',         lead.utm_medium || '—'],
+      ['UTM campaign',       lead.utm_campaign || '—'],
+      ['Referer',            lead.referer || '—'],
+    ];
+
+    const familyFields = [
+      ['Caller name',        adminEsc(lead.name || '—')],
+      ['Phone',              lead.phone ? `<a href="tel:${lead.phone}" style="color:#c4622d;font-weight:700">${fmtPhone(lead.phone)}</a>` : '—'],
+      ['Email',              lead.email ? `<a href="mailto:${adminEsc(lead.email)}" style="color:#c4622d;font-weight:600">${adminEsc(lead.email)}</a>` : '—'],
+      ['ZIP',                adminEsc(lead.zip || '—')],
+      ['State',              adminEsc(lead.state || '—')],
+      ['Metro',              adminEsc(lead.metro || '—')],
+    ];
+
+    const careFields = [
+      ['Caring for',         labelFor('who_needs_care', lead.who_needs_care)],
+      ['Currently at',       labelFor('location_now', lead.location_now)],
+      ['Care level needed',  labelFor('level_help', lead.level_help)],
+      ['Urgency',            labelFor('urgency', lead.urgency)],
+      ['Payment',            labelFor('payment', lead.payment)],
+      ['Concerns',           concerns.length ? concerns.map(c => labelFor('main_concern', c)).join(', ') : '—'],
+    ];
+
+    const consentFields = [
+      ['Consent version',    adminEsc(lead.consent_version || '—')],
+      ['Consent timestamp',  fmtFull(lead.consent_ts)],
+      ['Consent IP',         adminEsc(lead.consent_ip || '—')],
+      ['Consent URL',        adminEsc(lead.consent_url || '—')],
+      ['User-Agent',         `<span style="font-size:11px;color:#888">${adminEsc(lead.consent_ua || '—')}</span>`],
+      ['Checkbox',           lead.checkbox_checked ? 'YES' : 'NO'],
+    ];
+
+    const fieldRows = (rows) => rows.map(([k,v]) => `<tr>
+      <td style="padding:8px 14px 8px 0;font-size:11px;color:#7a6a5a;letter-spacing:.5px;text-transform:uppercase;font-weight:600;width:170px;vertical-align:top">${k}</td>
+      <td style="padding:8px 0;color:#3d2b1f;font-size:14px;line-height:1.6">${v}</td>
+    </tr>`).join('');
+
+    const routingHtml = routings.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
+      <thead><tr style="background:#3d2b1f;color:#fff">
+        <th style="padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase">Buyer</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase">Sent</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase">Response</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase">Replied</th>
+        <th style="padding:8px 10px;text-align:right;font-size:11px;letter-spacing:.5px;text-transform:uppercase">Price</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase">Notes</th>
+      </tr></thead>
+      <tbody>${routings.map(r => {
+        const respCol = r.buyer_response === 'accepted' ? '#5a7a5a' : r.buyer_response === 'rejected' ? '#a8521f' : '#888';
+        return `<tr style="border-bottom:1px solid #f0e8de">
+          <td style="padding:9px 10px"><strong>${adminEsc(r.buyer_name || 'aggregator')}</strong>${r.buyer_metro ? '<br><span style="font-size:11px;color:#888">'+adminEsc(r.buyer_metro)+'</span>' : ''}</td>
+          <td style="padding:9px 10px;font-size:11.5px;color:#555">${fmtFull(r.routed_at)}</td>
+          <td style="padding:9px 10px;color:${respCol};font-weight:700">${adminEsc(r.buyer_response || 'pending').toUpperCase()}</td>
+          <td style="padding:9px 10px;font-size:11.5px;color:#555">${r.response_at ? fmtFull(r.response_at) : '<span style="color:#aaa">—</span>'}</td>
+          <td style="padding:9px 10px;text-align:right">${r.price_paid ? '$' + Number(r.price_paid).toFixed(2) : '<span style="color:#aaa">—</span>'}</td>
+          <td style="padding:9px 10px;font-size:12px;color:#555">${adminEsc(r.notes || '')}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>` : '<div style="padding:18px;color:#888;font-size:13px;background:#faf6f1;border-radius:6px">No routing yet — lead is in initial state.</div>';
+
+    const consentBox = lead.consent_text ? `<details style="background:#faf6f1;padding:14px 18px;border-radius:6px;border:1px solid #e6dccf;margin-top:8px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:#7a6a5a;letter-spacing:.5px;text-transform:uppercase">Consent text shown to user</summary>
+      <pre style="margin:12px 0 0;font-size:12px;line-height:1.6;color:#3d2b1f;white-space:pre-wrap;font-family:inherit">${adminEsc(lead.consent_text)}</pre>
+    </details>` : '';
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lead #${lead.id} — ParentCare Admin</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;background:#faf6f1;color:#3d2b1f;margin:0;padding:24px;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:32px;margin:0 0 4px}
+  .sub{color:#7a6a5a;font-size:13px;margin-bottom:24px}
+  .back{color:#c4622d;font-size:13px;text-decoration:none;font-weight:600}
+  .card{background:#fff;border:1px solid #e6dccf;border-radius:10px;padding:24px 28px;margin-bottom:18px}
+  .card h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:22px;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid #f0e8de}
+  table.kv{width:100%;border-collapse:collapse}
+</style></head><body>
+<div class="wrap">
+  <a href="/admin/parentcare?token=${adminEsc(req.query.token)}" class="back">← back to all leads</a>
+  <h1>Lead #${lead.id}</h1>
+  <div class="sub">${adminEsc(lead.name || '—')} · ${adminEsc(lead.zip || '—')} · ${fmtFull(lead.ts)}</div>
+
+  <div class="card">
+    <h2>Family contact</h2>
+    <table class="kv"><tbody>${fieldRows(familyFields)}</tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>Care needs</h2>
+    <table class="kv"><tbody>${fieldRows(careFields)}</tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>Lead metadata</h2>
+    <table class="kv"><tbody>${fieldRows(fields)}</tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>Routing history</h2>
+    ${routingHtml}
+  </div>
+
+  <div class="card">
+    <h2>Consent audit trail</h2>
+    <table class="kv"><tbody>${fieldRows(consentFields)}</tbody></table>
+    ${consentBox}
+  </div>
+
+  <p style="font-size:12px;color:#aaa;text-align:center;margin:32px 0 0">
+    <a href="/admin/parentcare?token=${adminEsc(req.query.token)}" style="color:#c4622d">← back to dashboard</a>
+  </p>
+</div>
+</body></html>`;
+    res.setHeader('Content-Type','text/html');
+    res.setHeader('Cache-Control','no-store');
+    res.send(html);
+  } catch (err) {
+    console.error('[admin lead detail] error:', err);
+    res.status(500).send(`<pre>Error: ${err.message}</pre>`);
   }
 });
 

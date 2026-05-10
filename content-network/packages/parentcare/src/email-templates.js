@@ -214,6 +214,109 @@ Admin: https://medicarepriceguide.com/admin/parentcare?token=__SET__&id=${lead.i
 }
 
 // ─────────────────────────────────────────────────────────
+// Welcome email — sent to a buyer the moment we activate them
+// (after they've signed the pilot agreement / replied "yes").
+// Includes their personal portal token, expectations, and the
+// communication contract.
+// ─────────────────────────────────────────────────────────
+export function buyerWelcomeEmail({ buyer }) {
+  const firstName = (buyer.contact_name || '').split(' ')[0] || 'there';
+  const portalUrl = `https://medicarepriceguide.com/buyer-portal?token=${buyer.auth_token}`;
+  const subject = `Welcome to ParentCare Finder — ${buyer.name} is live`;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${CREAM};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${WARM}">
+<div style="max-width:620px;margin:0 auto;padding:24px 16px">
+  <div style="background:#fff;border-radius:10px;border:1px solid #e6dccf;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.06)">
+    <div style="background:${SAGE};color:#fff;padding:26px 28px">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.85;margin-bottom:4px">Welcome aboard</div>
+      <h1 style="font-family:Georgia,serif;font-weight:500;font-size:26px;margin:0">You're now live in our Tampa network.</h1>
+    </div>
+    <div style="padding:26px 28px">
+      <p style="font-size:15px;line-height:1.7;margin:0 0 18px">
+        Hi ${fmtPhone ? '' : ''}${escapeName(firstName)},<br><br>
+        Thanks for joining the ${buyer.metro || 'Tampa-St.Pete'} pilot. We've activated <strong>${escapeName(buyer.name)}</strong> in our system and you're ready to receive qualified family inquiries from your service area.
+      </p>
+
+      <div style="background:${CREAM};border-left:3px solid ${TERRA};padding:16px 18px;margin:22px 0;border-radius:4px">
+        <p style="font-size:13px;line-height:1.65;margin:0">
+          <strong style="color:${TERRA}">Your pilot terms</strong><br>
+          ${buyer.pilot_leads_remaining || 5} qualified leads at no cost &middot; then $${Number(buyer.price_per_lead || 50).toFixed(0)}/lead, no contract<br>
+          Pay only for leads you mark "good" or "tour booked"
+        </p>
+      </div>
+
+      <h3 style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:${TERRA};font-weight:700;margin:30px 0 10px">How it works</h3>
+      <ol style="font-size:14px;line-height:1.8;padding-left:22px;margin:0 0 24px">
+        <li>A family completes our 8-step care assessment at <a href="https://medicarepriceguide.com/find-care/" style="color:${TERRA}">medicarepriceguide.com/find-care</a>.</li>
+        <li>Our system scores the inquiry, matches it to your ZIP coverage, and emails you the full contact details within 60 seconds.</li>
+        <li>You call the family — usually best within the hour.</li>
+        <li>You give us feedback in one tap from the lead portal (or just reply to the email): <strong style="color:${SAGE}">Good</strong>, <strong style="color:#456845">Tour booked</strong>, <strong style="color:#888">No answer</strong>, or <strong style="color:#a8521f">Bad fit</strong>.</li>
+        <li>End of month: we send a one-page summary email with all leads, outcomes, and the invoice.</li>
+      </ol>
+
+      <div style="background:${WARM};border-radius:8px;padding:22px;margin:24px 0;text-align:center">
+        <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:700;margin:0 0 8px">Your private lead portal</p>
+        <p style="font-size:13px;color:rgba(255,255,255,.85);margin:0 0 14px;line-height:1.5">Bookmark this on your phone — it's the fastest way to mark feedback. No login, no app to install.</p>
+        <a href="${portalUrl}" style="background:${TERRA};color:#fff;text-decoration:none;font-weight:700;padding:13px 28px;border-radius:6px;display:inline-block;font-size:14px;letter-spacing:.3px">Open Lead Portal &rarr;</a>
+      </div>
+
+      <h3 style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:${TERRA};font-weight:700;margin:30px 0 10px">What to expect first week</h3>
+      <ul style="font-size:14px;line-height:1.8;padding-left:22px;margin:0 0 24px">
+        <li><strong>Volume varies.</strong> Some weeks 3–5 leads, some weeks 1–2. We don't pad volume with junk — quality over quantity.</li>
+        <li><strong>Most leads come Monday–Thursday, 9am–5pm.</strong> That's when adult children search after a parent's hospital visit or a fall.</li>
+        <li><strong>Phone-first wins.</strong> Lead-to-call within 30 minutes converts ~3x better than 1+ hour. Even a quick "I got your inquiry, let me find a good time" beats radio silence.</li>
+        <li><strong>Feedback closes the loop.</strong> The more you mark good vs bad, the more our routing learns what fits your agency. Aim to give feedback within 24h.</li>
+      </ul>
+
+      <h3 style="font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:${TERRA};font-weight:700;margin:30px 0 10px">Compliance &amp; consent</h3>
+      <p style="font-size:13.5px;line-height:1.7;margin:0 0 18px;color:${WARM}">
+        Every lead carries a complete TCPA/FTSA consent audit trail (text shown to user, IP, timestamp, user-agent, version). When you call, you can say <em>"I received your inquiry from medicarepriceguide.com"</em> — that's accurate and consented. We retain consent records for 4 years.
+      </p>
+
+      <p style="font-size:14px;line-height:1.7;margin:24px 0 0;border-top:1px solid #f0e8de;padding-top:18px">
+        Anything unclear? Just reply to this email. I read every message personally and aim to answer within 24 hours.<br><br>
+        Looking forward to delivering your first lead.<br><br>
+        Claudio Romanazzi<br>
+        <span style="color:#7a6a5a;font-size:13px">ParentCare Finder &middot; a Vireon Media property<br><a href="mailto:partners@medicarepriceguide.com" style="color:${TERRA}">partners@medicarepriceguide.com</a></span>
+      </p>
+    </div>
+  </div>
+  <p style="font-size:11px;color:#aaa;text-align:center;margin:18px 0 0">
+    To opt out at any time, just reply STOP or email <a href="mailto:dnc@vireonmedia.com" style="color:#aaa">dnc@vireonmedia.com</a>.
+  </p>
+</div>
+</body></html>`;
+
+  const text = [
+    `Welcome to ParentCare Finder, ${firstName}.`,
+    ``,
+    `${buyer.name} is now live in our Tampa network.`,
+    ``,
+    `Pilot terms: ${buyer.pilot_leads_remaining || 5} free qualified leads, then $${Number(buyer.price_per_lead || 50).toFixed(0)}/lead, no contract. Pay only for leads you mark "good" or "tour booked".`,
+    ``,
+    `How it works:`,
+    `1. Family completes our 8-step care assessment at medicarepriceguide.com/find-care`,
+    `2. We email you the full contact details within 60 seconds, scored and ZIP-matched`,
+    `3. You call the family (best within 1h)`,
+    `4. You give us feedback in one tap: Good / Tour booked / No answer / Bad fit`,
+    `5. End of month: one-page summary email + invoice`,
+    ``,
+    `Your private lead portal (bookmark this on your phone):`,
+    portalUrl,
+    ``,
+    `Reply to this email anytime — Claudio reads every message.`,
+    ``,
+    `ParentCare Finder · a Vireon Media property`,
+    `partners@medicarepriceguide.com`,
+  ].join('\n');
+
+  return { from: `${FROM_NAME} <${FROM_EMAIL}>`, replyTo: REPLY_TO, to: buyer.email, subject, html, text };
+}
+
+function escapeName(s = '') { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─────────────────────────────────────────────────────────
 // Cold outreach to potential buyers (manual, but template ready)
 // ─────────────────────────────────────────────────────────
 export function buyerOutreachTemplate({ buyerName, contactName = 'there', metro = 'Tampa-St. Pete' }) {

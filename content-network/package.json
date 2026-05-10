@@ -22,7 +22,8 @@
     "pc:build":   "node packages/vps/src/build-parentcare-page.js --domain=medicarepriceguide.com",
     "pc:seed":    "node packages/parentcare/src/seed-buyers.js",
     "pc:outreach":"node packages/parentcare/src/outreach-cli.js",
-    "pc:report":  "node packages/parentcare/src/monthly-buyer-report.js"
+    "pc:report":  "node packages/parentcare/src/monthly-buyer-report.js",
+    "pc:welcome": "node packages/parentcare/src/welcome-buyer.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
